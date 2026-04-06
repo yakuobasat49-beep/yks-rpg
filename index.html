@@ -11847,6 +11847,7 @@ function _applyImport(parsed){
   try{
     Object.assign(S, parsed);
     save();
+    sessionStorage.setItem("yks_justImported","1");
     toast('✅ Veriler yüklendi! Sayfa yenileniyor...');
     setTimeout(()=>location.reload(), 1200);
   }catch(e){ toast('❌ Yükleme hatası: '+e.message); }
@@ -15809,6 +15810,11 @@ function cloudSave(){
 
 async function cloudLoad(){
   if(!_fbUser || !window._fbDb) return false;
+  if(sessionStorage.getItem("yks_justImported")){
+    sessionStorage.removeItem("yks_justImported");
+    setTimeout(()=>cloudSave(),1000);
+    return false;
+  }
   try{
     const { doc, getDoc } = window._fbFirestore;
     const ref = doc(window._fbDb, 'users', _fbUser.uid, 'data', 'state');
@@ -15816,7 +15822,7 @@ async function cloudLoad(){
     if(!snap.exists()) return false;
     const remote = snap.data()?.state;
     if(!remote) return false;
-    if((remote.totalXp||0) >= (S.totalXp||0)){
+    if((remote.xp||0) >= (S.xp||0)){
       const p = remote;
       const ms = {};
       SUBJ.forEach(sb => {
