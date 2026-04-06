@@ -11706,72 +11706,99 @@ function buildNav(){
 // ═══════════════════ AYARLAR ═══════════════════
 function renderSettings(){
   const pg = document.getElementById('page');
-  const totalXp = S.xp||0;
-  const streak = S.streak||0;
-  const subjectCount = (S.subjects||[]).length;
-  const uniCount = (S.unis||[]).length;
+  const totalXp = S.xp || 0;
+  const streak = S.streak || 0;
+  const studiedSubjects = Object.values(S.subjects||{}).filter(s=>(s.xp||0)>0).length;
+  const totalSubjects = Object.keys(S.subjects||{}).length || 0;
+  const denemeCount = (S.denemeler||[]).length;
+  const badgeCount = (S.badges||[]).length;
+  const bankCount = (S.soruBankalari||[]).length;
+  const totalQ = S.questions || 0;
+  const uniCount = (S.unis||[]).filter(u=>u.fav).length;
 
-  function sCard(title, content){
-    return `<div style="background:var(--c1);border:1px solid var(--br);border-radius:13px;padding:14px;margin-bottom:10px;">
-      <div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;">${title}</div>
+  function sCard(icon, title, content){
+    return `<div style="background:var(--c1);border:1px solid var(--br);border-radius:14px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;">${icon} ${title}</div>
       ${content}
     </div>`;
   }
 
   function sRow(label, sub, action){
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--br);">
-      <div><div style="font-size:12px;font-weight:700;">${label}</div>${sub?`<div style="font-size:10px;color:var(--t3);margin-top:1px;">${sub}</div>`:''}</div>
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--br);">
+      <div style="flex:1;padding-right:8px;"><div style="font-size:12px;font-weight:700;">${label}</div>${sub?`<div style="font-size:10px;color:var(--t3);margin-top:2px;">${sub}</div>`:''}</div>
       ${action}
     </div>`;
   }
 
   const actionBtn = (label, bg, onclick) =>
-    `<button onclick="${onclick}" style="background:${bg};border:none;border-radius:8px;color:#fff;padding:7px 13px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">${label}</button>`;
+    `<button onclick="${onclick}" style="background:${bg};border:none;border-radius:8px;color:#fff;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;">${label}</button>`;
 
   let html = heroH();
+  html += `<div style="font-size:18px;font-weight:900;margin-bottom:14px;">⚙️ Ayarlar</div>`;
 
-  html += `<div style="font-size:18px;font-weight:900;margin-bottom:16px;">⚙️ Ayarlar</div>`;
-
-  // Profil özeti
-  html += sCard('👤 Profil', `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-      <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--pu),var(--pk));display:flex;align-items:center;justify-content:center;font-size:22px;">⚔️</div>
+  // ── PROFİL KARTI ──
+  const lvl = typeof getLvl === 'function' ? getLvl(totalXp) : (S.level||1);
+  const rank = typeof getRank === 'function' ? getRank(lvl) : '';
+  html += sCard('👤','Profil',`
+    <div style="display:flex;align-items:center;gap:13px;margin-bottom:14px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--pu),var(--pk));display:flex;align-items:center;justify-content:center;font-size:24px;border:2.5px solid var(--gold);box-shadow:0 0 14px rgba(124,77,255,.35);flex-shrink:0;">⚔️</div>
       <div>
-        <div style="font-size:15px;font-weight:900;">${S.myName||'YKS Savaşçısı'}</div>
-        <div style="font-size:10px;color:var(--t3);">Seviye ${S.level||1} · ${totalXp.toLocaleString('tr')} XP · 🔥 ${streak} gün seri</div>
+        <div style="font-size:16px;font-weight:900;">${S.myName||'YKS Savaşçısı'}</div>
+        <div style="font-size:10px;color:var(--gold);font-weight:700;">${rank}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px;">Sv ${lvl} · ${totalXp.toLocaleString('tr')} XP · 🔥 ${streak} gün</div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-      <div style="background:var(--c2);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:var(--pu);">${subjectCount}</div><div style="font-size:8px;color:var(--t3);">Ders</div></div>
-      <div style="background:var(--c2);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:var(--gold);">${(S.denemes||[]).length}</div><div style="font-size:8px;color:var(--t3);">Deneme</div></div>
-      <div style="background:var(--c2);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:#22c55e;">${uniCount}</div><div style="font-size:8px;color:var(--t3);">Üniversite</div></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+      <div style="background:var(--c2);border-radius:9px;padding:9px 4px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:var(--pu);">${studiedSubjects}/${totalSubjects}</div>
+        <div style="font-size:8px;color:var(--t3);margin-top:2px;">Ders</div>
+      </div>
+      <div style="background:var(--c2);border-radius:9px;padding:9px 4px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:var(--gold);">${denemeCount}</div>
+        <div style="font-size:8px;color:var(--t3);margin-top:2px;">Deneme</div>
+      </div>
+      <div style="background:var(--c2);border-radius:9px;padding:9px 4px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:#f472b6;">${badgeCount}</div>
+        <div style="font-size:8px;color:var(--t3);margin-top:2px;">Rozet</div>
+      </div>
+      <div style="background:var(--c2);border-radius:9px;padding:9px 4px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:#22c55e;">${bankCount}</div>
+        <div style="font-size:8px;color:var(--t3);margin-top:2px;">Soru Bank.</div>
+      </div>
     </div>
   `);
 
-  // Veri Aktarımı
-  html += sCard('💾 Veri Aktarımı',
-    sRow('📤 Verileri Dışa Aktar','Tüm ilerleme, bölümler, hedefler JSON olarak indir', actionBtn('İndir','linear-gradient(135deg,var(--gr),#2e7d32)','exportData()')) +
+  // ── VERİ AKTARIMI ──
+  html += sCard('💾','Veri Aktarımı',
+    sRow('📤 Verileri Dışa Aktar','Tüm ilerleme, bölümler, hedefler JSON olarak indir', actionBtn('İndir','linear-gradient(135deg,#43a047,#2e7d32)','exportData()')) +
     sRow('📥 Verileri İçe Aktar','JSON dosyasından tüm verileri geri yükle', actionBtn('Yükle','linear-gradient(135deg,var(--bl),#1565c0)','importData()')) +
-    sRow('🔗 Veriyi Kopyala','Veriyi panoya kopyala (başka cihaza taşı)', actionBtn('Kopyala','linear-gradient(135deg,var(--pu),var(--pk))','copyDataToClipboard()')) +
-    `<div style="padding:9px 0;">
-      <div style="font-size:12px;font-weight:700;margin-bottom:8px;">📋 Veri Yapıştır</div>
-      <textarea id="import-paste-area" placeholder="Kopyaladığın JSON verisini buraya yapıştır..." style="width:100%;height:90px;padding:8px 10px;border-radius:8px;border:1px solid var(--br);background:var(--c2);color:var(--t1);font-size:11px;font-family:Nunito,sans-serif;resize:none;outline:none;box-sizing:border-box;margin-bottom:6px;"></textarea>
+    sRow('🔗 Panoya Kopyala','Veriyi kopyala → başka cihazda yapıştır', actionBtn('Kopyala','linear-gradient(135deg,var(--pu),var(--pk))','copyDataToClipboard()')) +
+    `<div style="padding:10px 0 2px;">
+      <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:7px;">📋 JSON Yapıştır</div>
+      <textarea id="import-paste-area" placeholder="Kopyaladığın JSON verisini buraya yapıştır..." style="width:100%;height:80px;padding:8px 10px;border-radius:8px;border:1px solid var(--br);background:var(--c2);color:var(--t1);font-size:11px;font-family:Nunito,sans-serif;resize:none;outline:none;box-sizing:border-box;margin-bottom:6px;"></textarea>
       <button onclick="importFromPaste()" style="width:100%;padding:9px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Yapıştırılan Veriyi Yükle</button>
     </div>`
   );
 
-  // Uygulama
-  html += sCard('📱 Uygulama',
-    sRow('Ana Ekrana Ekle (Android/iOS)','Chrome\'de "..." → Ana ekrana ekle', `<button onclick="triggerPwaInstall()" style="background:linear-gradient(135deg,#1a73e8,#0d47a1);border:none;border-radius:8px;color:#fff;padding:7px 13px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Yükle 📲</button>`) +
-    sRow('Önbelleği Temizle','Üniversite arama cache\'ini sil (sorun yaşarsan)', actionBtn('Temizle','#5f5e5a','clearUniCache()')) +
-    `<div style="padding:9px 0 0;"><div style="font-size:10px;color:var(--t3);line-height:1.7;">Uygulama sürümü: <b style="color:var(--t1);">v4.0</b> · 
-    <a href="https://yokatlas.yok.gov.tr" target="_blank" style="color:var(--pu);text-decoration:none;">YÖK Atlas</a></div></div>`
-  );
+  // ── UYGULAMA BİLGİSİ ──
+  html += sCard('📱','Uygulama',`
+    <div style="font-size:11px;color:var(--t3);line-height:2;padding:2px 0;">
+      Sürüm: <b style="color:var(--t1);">v4.0</b> &nbsp;·&nbsp;
+      <a href="https://yokatlas.yok.gov.tr" target="_blank" style="color:var(--pu);text-decoration:none;font-weight:700;">YÖK Atlas ↗</a>
+    </div>
+    <div style="background:var(--c2);border-radius:10px;padding:10px 12px;margin-top:6px;font-size:11px;color:var(--t2);line-height:2;">
+      📱 <b>Android/iPhone:</b> Tarayıcı menüsü → "Ana ekrana ekle"<br>
+      💻 <b>PC (Chrome/Edge):</b> Adres çubuğu sağındaki ➕ simgesi
+    </div>
+  `);
 
-  // Tehlikeli bölge
-  html += sCard('⚠️ Sıfırlama',
-    sRow('XP & Seviye Sıfırla','Ders ilerlemeni koru, sadece XP\'yi sıfırla', actionBtn('Sıfırla','rgba(229,57,53,0.8)','resetXpOnly()')) +
-    sRow('Tüm Verileri Sil','⚠️ Geri alınamaz! Her şey silinir', actionBtn('Sil','#c62828','resetAll()')).replace('border-bottom:1px solid var(--br)','')
+  // ── TEHLİKELİ BÖLGE ──
+  html += sCard('⚠️','Sıfırlama',
+    sRow('XP & Seviye Sıfırla','Ders ilerlemeni koru, sadece XP\'yi sıfırla', actionBtn('Sıfırla','rgba(229,57,53,0.85)','resetXpOnly()')) +
+    `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
+      <div><div style="font-size:12px;font-weight:700;">Tüm Verileri Sil</div><div style="font-size:10px;color:var(--rd);margin-top:2px;">⚠️ Geri alınamaz! Her şey silinir</div></div>
+      <button onclick="resetAll()" style="background:#b71c1c;border:none;border-radius:8px;color:#fff;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;flex-shrink:0;">Sil</button>
+    </div>`
   );
 
   pg.innerHTML = html;
@@ -15856,6 +15883,7 @@ window.fbGoogleLogin = async function(){
 window.fbSkipLogin = function(){
   const o = document.getElementById('fb-login-overlay');
   if(o) o.style.display = 'none';
+  localStorage.setItem('yks_guestMode', '1');
 };
 
 window.fbShowUserMenu = function(){
@@ -15892,6 +15920,7 @@ onAuthStateChanged(auth, async user => {
   _fbUser = user;
   if(user){
     if(overlay) overlay.style.display = 'none';
+    localStorage.removeItem('yks_guestMode');
     const badge  = document.getElementById('fb-user-badge');
     const avatar = document.getElementById('fb-user-avatar');
     if(badge)  badge.style.display = 'block';
@@ -15902,7 +15931,7 @@ onAuthStateChanged(auth, async user => {
   } else {
     const badge = document.getElementById('fb-user-badge');
     if(badge) badge.style.display = 'none';
-    if(overlay) overlay.style.display = 'flex';
+    if(overlay && !localStorage.getItem('yks_guestMode')) overlay.style.display = 'flex';
   }
 });
 </script>
