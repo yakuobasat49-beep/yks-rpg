@@ -15861,9 +15861,8 @@ window.fbShowUserMenu = function(){
   }
 };
 
-// save() fonksiyonunu cloudsave ile genişlet
-const _origSave = save;
-window.save = function(){ _origSave(); cloudSave(); };
+// Cloud sync: save() dokunulmadı, ayrı interval ile sync
+setInterval(()=>{ cloudSave(); }, 30000); // 30sn'de bir buluta yaz
 </script>
 
 <!-- Firebase Modular SDK — eval gerektirmez -->
