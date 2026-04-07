@@ -14906,1252 +14906,716 @@ document.addEventListener('keydown',function(e){
 },{passive:false});
 
 </script>
-<script id="uni-system-v6">
-// ═══════════════════════════════════════════════════
-// YKS RPG — ÜNİVERSİTE SİSTEMİ v7 (SIMPLE & CLEAN)
-// Saf statik: UNI_DB + manuel bölüm ekleme. API yok.
-// ═══════════════════════════════════════════════════
+<script id="uni-system-v8">
+// ═══════════════════════════════════════════════════════════════════
+// YKS RPG — ÜNİVERSİTE SİSTEMİ v8 "ATLAS PRO"
+// Tüm üniversiteler + kapsamlı bölüm tarayıcısı + Wikipedia desteği
+// ═══════════════════════════════════════════════════════════════════
+(function(){
 
-// ── Yardımcılar ──
-const _TC = {SAY:'#ef4444', EA:'#f59e0b', 'SÖZ':'#3b82f6', 'DİL':'#a855f7'};
+// ─── Wikipedia URL Haritası ───────────────────────────────────────
+const _WIKI = {
+  odtu:'Orta_Doğu_Teknik_Üniversitesi', boun:'Boğaziçi_Üniversitesi',
+  itu:'İstanbul_Teknik_Üniversitesi', hac:'Hacettepe_Üniversitesi',
+  ankara:'Ankara_Üniversitesi', bilkent:'Bilkent_Üniversitesi',
+  gsu:'Galatasaray_Üniversitesi', marmara:'Marmara_Üniversitesi',
+  koc:'Koç_Üniversitesi', sabanci:'Sabancı_Üniversitesi',
+  istanbul:'İstanbul_Üniversitesi', gazi:'Gazi_Üniversitesi',
+  yildiz:'Yıldız_Teknik_Üniversitesi', ege:'Ege_Üniversitesi',
+  deu:'Dokuz_Eylül_Üniversitesi', ataturk:'Atatürk_Üniversitesi',
+  uludag:'Uludağ_Üniversitesi', selcuk:'Selçuk_Üniversitesi',
+  erciyes:'Erciyes_Üniversitesi', akdeniz:'Akdeniz_Üniversitesi',
+  cukurova:'Çukurova_Üniversitesi', karadeniz:'Karadeniz_Teknik_Üniversitesi',
+  mersin:'Mersin_Üniversitesi', sakarya:'Sakarya_Üniversitesi',
+  kocaeli:'Kocaeli_Üniversitesi', anadolu:'Anadolu_Üniversitesi',
+  bilgi:'İstanbul_Bilgi_Üniversitesi', tobb:'TOBB_Ekonomi_ve_Teknoloji_Üniversitesi',
+  bahcesehir:'Bahçeşehir_Üniversitesi', yeditepe:'Yeditepe_Üniversitesi',
+  baskent:'Başkent_Üniversitesi', medipol:'İstanbul_Medipol_Üniversitesi',
+  ozyegin:'Özyeğin_Üniversitesi', atilim:'Atılım_Üniversitesi',
+  osmangazi:'Eskişehir_Osmangazi_Üniversitesi', gaziantep:'Gaziantep_Üniversitesi',
+  ondokuzmayis:'Ondokuz_Mayıs_Üniversitesi', karabuk:'Karabük_Üniversitesi',
+  trakya:'Trakya_Üniversitesi', pamukkale:'Pamukkale_Üniversitesi',
+  suleyman:'Süleyman_Demirel_Üniversitesi', inonu:'İnönü_Üniversitesi',
+  celal:'Manisa_Celal_Bayar_Üniversitesi', bulent:'Bülent_Ecevit_Üniversitesi',
+  firat:'Fırat_Üniversitesi', dicle:'Dicle_Üniversitesi',
+  harran:'Harran_Üniversitesi', kahramanmaras:'Kahramanmaraş_Sütçü_İmam_Üniversitesi',
+  afyon:'Afyon_Kocatepe_Üniversitesi', balikesir:'Balıkesir_Üniversitesi',
+  sakarya:'Sakarya_Üniversitesi', rize:'Recep_Tayyip_Erdoğan_Üniversitesi',
+  bilecik:'Bilecik_Şeyh_Edebali_Üniversitesi', yasar:'Yaşar_Üniversitesi',
+  izmir_ekonomi:'İzmir_Ekonomi_Üniversitesi', halic:'Haliç_Üniversitesi',
+  ticaret:'İstanbul_Ticaret_Üniversitesi', maltepe:'Maltepe_Üniversitesi',
+  beykent:'Beykent_Üniversitesi', kadir_has:'Kadir_Has_Üniversitesi',
+  nisantasi:'Nişantaşı_Üniversitesi', altinbas:'Altınbaş_Üniversitesi',
+  aydin:'İstanbul_Aydın_Üniversitesi', ufuk:'Ufuk_Üniversitesi',
+  cankaya:'Çankaya_Üniversitesi', ozyegin:'Özyeğin_Üniversitesi',
+  gelisim:'İstanbul_Gelişim_Üniversitesi', muğla:'Muğla_Sıtkı_Koçman_Üniversitesi',
+};
 
-function _wikiUrl(page){ return 'https://tr.wikipedia.org/wiki/' + encodeURIComponent(page); }
+// ─── Kapsamlı Bölüm Veritabanı (90+ bölüm) ───────────────────────
+const _BD = [
+  // SAY — Sağlık
+  {n:'Tıp',t:'SAY',i:'🏥',c:'Sağlık',d:'6 yıl'},
+  {n:'Diş Hekimliği',t:'SAY',i:'🦷',c:'Sağlık',d:'5 yıl'},
+  {n:'Eczacılık',t:'SAY',i:'💊',c:'Sağlık',d:'5 yıl'},
+  {n:'Veteriner',t:'SAY',i:'🐾',c:'Sağlık',d:'5 yıl'},
+  {n:'Hemşirelik',t:'SAY',i:'💉',c:'Sağlık'},
+  {n:'Fizyoterapi ve Rehabilitasyon',t:'SAY',i:'🏃',c:'Sağlık'},
+  {n:'Beslenme ve Diyetetik',t:'SAY',i:'🥗',c:'Sağlık'},
+  {n:'Odyoloji',t:'SAY',i:'👂',c:'Sağlık'},
+  {n:'Dil ve Konuşma Terapisi',t:'SAY',i:'🗣️',c:'Sağlık'},
+  {n:'Ergoterapi',t:'SAY',i:'🤲',c:'Sağlık'},
+  // SAY — Mühendislik
+  {n:'Bilgisayar Mühendisliği',t:'SAY',i:'💻',c:'Mühendislik'},
+  {n:'Yazılım Mühendisliği',t:'SAY',i:'👨‍💻',c:'Mühendislik'},
+  {n:'Elektrik-Elektronik Mühendisliği',t:'SAY',i:'⚡',c:'Mühendislik'},
+  {n:'Makine Mühendisliği',t:'SAY',i:'⚙️',c:'Mühendislik'},
+  {n:'İnşaat Mühendisliği',t:'SAY',i:'🏗️',c:'Mühendislik'},
+  {n:'Kimya Mühendisliği',t:'SAY',i:'🧪',c:'Mühendislik'},
+  {n:'Endüstri Mühendisliği',t:'SAY',i:'🏭',c:'Mühendislik'},
+  {n:'Çevre Mühendisliği',t:'SAY',i:'🌿',c:'Mühendislik'},
+  {n:'Gıda Mühendisliği',t:'SAY',i:'🍎',c:'Mühendislik'},
+  {n:'Havacılık ve Uzay Mühendisliği',t:'SAY',i:'🚀',c:'Mühendislik'},
+  {n:'Mekatronik Mühendisliği',t:'SAY',i:'🤖',c:'Mühendislik'},
+  {n:'Biyomedikal Mühendisliği',t:'SAY',i:'🔬',c:'Mühendislik'},
+  {n:'Petrol ve Doğalgaz Mühendisliği',t:'SAY',i:'🛢️',c:'Mühendislik'},
+  {n:'Nükleer Enerji Mühendisliği',t:'SAY',i:'⚛️',c:'Mühendislik'},
+  {n:'Metalurji ve Malzeme Mühendisliği',t:'SAY',i:'🔧',c:'Mühendislik'},
+  {n:'Jeoloji Mühendisliği',t:'SAY',i:'🪨',c:'Mühendislik'},
+  {n:'Harita Mühendisliği',t:'SAY',i:'🗺️',c:'Mühendislik'},
+  {n:'Tekstil Mühendisliği',t:'SAY',i:'🧵',c:'Mühendislik'},
+  {n:'Deniz Ulaştırma İşletme Mühendisliği',t:'SAY',i:'🚢',c:'Mühendislik'},
+  {n:'Biyoteknoloji',t:'SAY',i:'🧬',c:'Mühendislik'},
+  {n:'Yapay Zeka Mühendisliği',t:'SAY',i:'🤖',c:'Mühendislik'},
+  // SAY — Temel Bilimler
+  {n:'Matematik',t:'SAY',i:'📐',c:'Temel Bilimler'},
+  {n:'Fizik',t:'SAY',i:'⚛️',c:'Temel Bilimler'},
+  {n:'Kimya',t:'SAY',i:'🧫',c:'Temel Bilimler'},
+  {n:'Biyoloji',t:'SAY',i:'🧬',c:'Temel Bilimler'},
+  {n:'İstatistik',t:'SAY',i:'📊',c:'Temel Bilimler'},
+  {n:'Astronomi ve Uzay Bilimleri',t:'SAY',i:'🔭',c:'Temel Bilimler'},
+  // SAY — Öğretmenlik
+  {n:'Matematik Öğretmenliği',t:'SAY',i:'📐',c:'Öğretmenlik'},
+  {n:'Fen Bilgisi Öğretmenliği',t:'SAY',i:'🔬',c:'Öğretmenlik'},
+  {n:'Bilgisayar ve Öğretim Teknolojileri',t:'SAY',i:'💻',c:'Öğretmenlik'},
+  // EA — Hukuk & Sosyal
+  {n:'Hukuk',t:'EA',i:'⚖️',c:'Hukuk'},
+  {n:'İşletme',t:'EA',i:'💼',c:'İşletme'},
+  {n:'İktisat',t:'EA',i:'📈',c:'İktisat'},
+  {n:'Psikoloji',t:'EA',i:'🧠',c:'Psikoloji'},
+  {n:'Uluslararası İlişkiler',t:'EA',i:'🌍',c:'Siyaset'},
+  {n:'Siyaset Bilimi ve Kamu Yönetimi',t:'EA',i:'🏛️',c:'Siyaset'},
+  {n:'Kamu Yönetimi',t:'EA',i:'🏢',c:'Siyaset'},
+  {n:'Maliye',t:'EA',i:'💰',c:'İşletme'},
+  {n:'Muhasebe ve Finansal Yönetim',t:'EA',i:'📒',c:'İşletme'},
+  {n:'Ekonometri',t:'EA',i:'📊',c:'İktisat'},
+  {n:'Uluslararası Ticaret',t:'EA',i:'🚢',c:'İşletme'},
+  {n:'Bankacılık ve Finans',t:'EA',i:'🏦',c:'İşletme'},
+  {n:'Sigortacılık',t:'EA',i:'📋',c:'İşletme'},
+  {n:'Çalışma Ekonomisi ve End. İlişkileri',t:'EA',i:'👷',c:'İktisat'},
+  {n:'Sağlık Yönetimi',t:'EA',i:'🏥',c:'Sağlık Yönetimi'},
+  {n:'Yönetim Bilişim Sistemleri',t:'EA',i:'💻',c:'İşletme'},
+  {n:'İşletme Bilişim Sistemleri',t:'EA',i:'🖥️',c:'İşletme'},
+  {n:'Turizm İşletmeciliği',t:'EA',i:'✈️',c:'Turizm'},
+  {n:'Gastronomi ve Mutfak Sanatları',t:'EA',i:'👨‍🍳',c:'Turizm'},
+  {n:'Spor Yöneticiliği',t:'EA',i:'⚽',c:'Spor'},
+  // EA — Mimarlık & Tasarım
+  {n:'Mimarlık',t:'EA',i:'🏛️',c:'Mimarlık'},
+  {n:'Şehir ve Bölge Planlama',t:'EA',i:'🗺️',c:'Mimarlık'},
+  {n:'Endüstri Ürünleri Tasarımı',t:'EA',i:'🎨',c:'Tasarım'},
+  {n:'İç Mimarlık ve Çevre Tasarımı',t:'EA',i:'🏠',c:'Tasarım'},
+  {n:'Peyzaj Mimarlığı',t:'EA',i:'🌳',c:'Tasarım'},
+  {n:'Grafik Tasarımı',t:'EA',i:'🖼️',c:'Tasarım'},
+  {n:'Moda ve Tekstil Tasarımı',t:'EA',i:'👗',c:'Tasarım'},
+  // EA — Öğretmenlik
+  {n:'Sınıf Öğretmenliği',t:'EA',i:'📚',c:'Öğretmenlik'},
+  {n:'Okul Öncesi Öğretmenliği',t:'EA',i:'🧒',c:'Öğretmenlik'},
+  {n:'Psikolojik Danışmanlık ve Rehberlik',t:'EA',i:'🤝',c:'Öğretmenlik'},
+  {n:'Özel Eğitim Öğretmenliği',t:'EA',i:'♿',c:'Öğretmenlik'},
+  // SÖZ
+  {n:'Türk Dili ve Edebiyatı',t:'SÖZ',i:'📖',c:'Edebiyat'},
+  {n:'Tarih',t:'SÖZ',i:'🏺',c:'Sosyal Bilimler'},
+  {n:'Felsefe',t:'SÖZ',i:'🤔',c:'Sosyal Bilimler'},
+  {n:'Sosyoloji',t:'SÖZ',i:'👥',c:'Sosyal Bilimler'},
+  {n:'Arkeoloji',t:'SÖZ',i:'⛏️',c:'Sosyal Bilimler'},
+  {n:'Sanat Tarihi',t:'SÖZ',i:'🎨',c:'Sanat'},
+  {n:'Coğrafya',t:'SÖZ',i:'🌍',c:'Sosyal Bilimler'},
+  {n:'Sosyal Hizmet',t:'SÖZ',i:'🤝',c:'Sosyal Hizmet'},
+  {n:'Eğitim Bilimleri',t:'SÖZ',i:'📚',c:'Eğitim'},
+  {n:'Türkçe Öğretmenliği',t:'SÖZ',i:'📝',c:'Öğretmenlik'},
+  {n:'Tarih Öğretmenliği',t:'SÖZ',i:'📜',c:'Öğretmenlik'},
+  {n:'Sosyal Bilgiler Öğretmenliği',t:'SÖZ',i:'🌍',c:'Öğretmenlik'},
+  {n:'Halkla İlişkiler ve Reklamcılık',t:'SÖZ',i:'📢',c:'İletişim'},
+  {n:'Gazetecilik',t:'SÖZ',i:'📰',c:'İletişim'},
+  {n:'Radyo, Televizyon ve Sinema',t:'SÖZ',i:'🎬',c:'İletişim'},
+  {n:'Yeni Medya',t:'SÖZ',i:'📱',c:'İletişim'},
+  {n:'Güzel Sanatlar (Resim)',t:'SÖZ',i:'🎨',c:'Sanat'},
+  {n:'Müzik',t:'SÖZ',i:'🎵',c:'Sanat'},
+  {n:'Tiyatro',t:'SÖZ',i:'🎭',c:'Sanat'},
+  // DİL
+  {n:'İngiliz Dili ve Edebiyatı',t:'DİL',i:'🇬🇧',c:'Dil'},
+  {n:'Alman Dili ve Edebiyatı',t:'DİL',i:'🇩🇪',c:'Dil'},
+  {n:'Fransız Dili ve Edebiyatı',t:'DİL',i:'🇫🇷',c:'Dil'},
+  {n:'Arap Dili ve Edebiyatı',t:'DİL',i:'🇸🇦',c:'Dil'},
+  {n:'Rus Dili ve Edebiyatı',t:'DİL',i:'🇷🇺',c:'Dil'},
+  {n:'Çin Dili ve Edebiyatı',t:'DİL',i:'🇨🇳',c:'Dil'},
+  {n:'Japon Dili ve Edebiyatı',t:'DİL',i:'🇯🇵',c:'Dil'},
+  {n:'İspanyol Dili ve Edebiyatı',t:'DİL',i:'🇪🇸',c:'Dil'},
+  {n:'İtalyan Dili ve Edebiyatı',t:'DİL',i:'🇮🇹',c:'Dil'},
+  {n:'Mütercim Tercümanlık (İngilizce)',t:'DİL',i:'🔤',c:'Çeviri'},
+  {n:'Mütercim Tercümanlık (Fransızca)',t:'DİL',i:'🔤',c:'Çeviri'},
+  {n:'Mütercim Tercümanlık (Almanca)',t:'DİL',i:'🔤',c:'Çeviri'},
+  {n:'İngilizce Öğretmenliği',t:'DİL',i:'🇬🇧',c:'Öğretmenlik'},
+  {n:'Almanca Öğretmenliği',t:'DİL',i:'🇩🇪',c:'Öğretmenlik'},
+  {n:'Fransızca Öğretmenliği',t:'DİL',i:'🇫🇷',c:'Öğretmenlik'},
+  {n:'Arapça Öğretmenliği',t:'DİL',i:'🇸🇦',c:'Öğretmenlik'},
+];
 
-// ── Üniversite listesi sayfası ──
-renderTargets = function(){
-  const unis = S.unis || [];
-  const hedef = unis.find(u => u.hedefDept != null);
-  const rest   = unis.filter(u => u.hedefDept == null);
+// ─── Renkler ─────────────────────────────────────────────────────
+const TC = {SAY:'#ef4444',EA:'#f59e0b','SÖZ':'#3b82f6','DİL':'#a855f7'};
+const TBG = {SAY:'rgba(239,68,68,.12)',EA:'rgba(245,158,11,.12)','SÖZ':'rgba(59,130,246,.12)','DİL':'rgba(168,85,247,.12)'};
+const DEFAULT_IDS = new Set(['odtu','boun','itu','hac','ankara','bilkent','gsu','marmara','koc','sabanci','istanbul','gazi','yildiz','ege']);
 
-  function uniCard(u, isHedef){
-    const depts = u.depts || [];
-    const hdObj = (isHedef && u.hedefDept != null) ? depts[u.hedefDept] : depts[0] || null;
-    const dtc   = hdObj ? (_TC[hdObj.type] || '#7c4dff') : '#7c4dff';
-    const db    = (typeof UNI_DB !== 'undefined' && UNI_DB[u.id]) || {};
-    const photo = u.photo || db.coverPhoto || '';
-    const bg    = u.bg || 'linear-gradient(135deg,#1a1a2e,#4c1d95)';
+// ─── Helpers ──────────────────────────────────────────────────────
+function _wUrl(id, name) {
+  const pg = _WIKI[id];
+  if(pg) return 'https://tr.wikipedia.org/wiki/' + pg;
+  if(name) return 'https://tr.wikipedia.org/wiki/' + encodeURIComponent(name.replace(/ /g,'_'));
+  return null;
+}
 
-    let h = `<button onclick="uniOpen('${u.id}')" style="display:block;width:100%;text-align:left;border:none;padding:0;cursor:pointer;font-family:Nunito,sans-serif;margin-bottom:8px;">`;
-
-    if(isHedef){
-      h += `<div style="border-radius:16px;overflow:hidden;border:1.5px solid rgba(245,166,35,0.55);box-shadow:0 4px 20px rgba(245,166,35,0.1);">`;
-      h += `<div style="position:relative;height:88px;background:${bg};overflow:hidden;">`;
-      if(photo) h += `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;opacity:.5;" onerror="this.style.display='none'"/>`;
-      h += `<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(8,8,26,0.85));"></div>`;
-      h += `<div style="position:absolute;top:8px;left:10px;background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.5);border-radius:100px;padding:2px 9px;font-size:8px;font-weight:900;color:var(--gold);">🎯 HEDEF ÜNİVERSİTEM</div>`;
-      if(u.tip) h += `<div style="position:absolute;top:8px;right:10px;font-size:7px;font-weight:900;padding:2px 7px;border-radius:4px;background:${u.tip==='Vakıf'?'rgba(168,85,247,0.7)':'rgba(59,130,246,0.7)'};color:#fff;">${u.tip}</div>`;
-      h += `<div style="position:absolute;bottom:8px;left:10px;right:10px;">`;
-      h += `<div style="font-size:14px;font-weight:900;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.fullName||u.name}</div>`;
-      if(u.sehir) h += `<div style="font-size:9px;color:rgba(255,255,255,.6);">📍 ${u.sehir}</div>`;
-      h += `</div></div>`;
-      // Alt bilgi
-      h += `<div style="background:var(--c1);padding:10px 13px;">`;
-      if(hdObj){
-        h += `<div style="display:flex;align-items:center;gap:6px;">`;
-        h += `<span style="font-size:8px;font-weight:900;padding:2px 6px;border-radius:100px;background:${dtc}20;color:${dtc};border:1px solid ${dtc}35;">${hdObj.type}</span>`;
-        h += `<span style="font-size:11px;font-weight:800;">${hdObj.name}</span>`;
-        if(hdObj.score && hdObj.score !== '—') h += `<span style="margin-left:auto;font-size:11px;font-weight:900;color:var(--gold);">${hdObj.score}</span>`;
-        h += `</div>`;
-      } else {
-        h += `<div style="font-size:10px;color:var(--t3);font-style:italic;">Bölüm seçilmedi → detaya gir</div>`;
+function _score(deptName, uniId) {
+  const db = (typeof UNI_DB !== 'undefined') ? UNI_DB[uniId] : null;
+  if(db?.yokAtlasByDept?.[deptName]) {
+    const ya = db.yokAtlasByDept[deptName];
+    const p = ya.puanlar ? ya.puanlar[ya.puanlar.length-1] : null;
+    return p ? (+p).toFixed(3) : null;
+  }
+  if(typeof DEPT_DB !== 'undefined') {
+    const uInfo = (typeof ALL_UNI_LIST!=='undefined'?ALL_UNI_LIST:[]).find(u=>u.id===uniId);
+    for(const d of DEPT_DB) {
+      if(d.name !== deptName || !d.scores) continue;
+      for(const [k,v] of Object.entries(d.scores)) {
+        if(uInfo && (k===uInfo.name || uInfo.name.includes(k.split(' ')[0]))) return String(v);
       }
-      if(depts.length > 1) h += `<div style="margin-top:5px;font-size:9px;color:var(--pu);font-weight:700;">+${depts.length-1} bölüm daha</div>`;
-      h += `</div></div>`;
-    } else {
-      // Kompakt kart
-      h += `<div style="background:var(--c1);border:1px solid var(--br);border-radius:13px;padding:11px 13px;display:flex;align-items:center;gap:10px;">`;
-      h += `<div style="width:42px;height:42px;border-radius:10px;background:${bg};flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid rgba(255,255,255,.07);">`;
-      if(photo) h += `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>`;
-      else h += '🏛️';
-      h += `</div>`;
-      h += `<div style="flex:1;min-width:0;">`;
-      h += `<div style="font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.name}</div>`;
-      h += `<div style="font-size:9px;color:var(--t3);margin-top:1px;">📍 ${u.sehir||'—'}`;
-      if(u.tip) h += ` <span style="font-size:7px;font-weight:800;padding:1px 4px;border-radius:3px;background:${u.tip==='Vakıf'?'rgba(168,85,247,0.5)':'rgba(59,130,246,0.5)'};color:#fff;">${u.tip}</span>`;
-      h += `</div>`;
-      if(hdObj){
-        h += `<div style="margin-top:4px;display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:5px;background:${dtc}15;border:1px solid ${dtc}30;">`;
-        h += `<span style="font-size:7px;font-weight:900;color:${dtc};">${hdObj.type}</span>`;
-        h += `<span style="font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">${hdObj.name}</span>`;
-        if(hdObj.score && hdObj.score !== '—') h += `<span style="font-size:8px;color:var(--gold);font-weight:800;margin-left:2px;">${hdObj.score}</span>`;
-        h += `</div>`;
-      } else {
-        h += `<div style="margin-top:4px;font-size:9px;color:rgba(124,77,255,0.6);font-weight:700;">+ Bölüm ekle</div>`;
-      }
-      h += `</div>`;
-      h += `<div style="flex-shrink:0;color:var(--t3);font-size:16px;">›</div>`;
-      h += `</div>`;
-    }
-    h += `</button>`;
-    return h;
-  }
-
-  let html = heroH();
-
-  // ── Başlık + Sekme çubuğu ──
-  html += `<div style="margin-bottom:12px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div>
-        <div style="font-size:18px;font-weight:900;">🏛️ Üniversite Atlası</div>
-        <div style="font-size:9px;color:var(--t3);font-weight:700;margin-top:2px;">${unis.length ? unis.length + ' takipte' : 'Hayalini takibe al'}</div>
-      </div>
-      <button onclick="uniAddOpen()" style="background:linear-gradient(135deg,var(--pu),var(--pk));border:none;border-radius:11px;color:#fff;padding:9px 14px;font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">＋ Ekle</button>
-    </div>
-    <div style="display:flex;gap:5px;background:rgba(0,0,0,.2);padding:3px;border-radius:12px;">
-      <button id="uni-tab-list" onclick="uniTabSwitch('list')" style="flex:1;padding:8px 4px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;font-size:10px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">📋 Takip Listem</button>
-      <button id="uni-tab-atlas" onclick="uniTabSwitch('atlas')" style="flex:1;padding:8px 4px;border-radius:10px;border:none;background:transparent;color:var(--t3);font-size:10px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">🔭 Atlas Ara</button>
-    </div>
-  </div>`;
-
-  // ── Takip listesi paneli ──
-  html += `<div id="uni-panel-list">`;
-  if(!unis.length){
-    html += `<div style="background:linear-gradient(135deg,rgba(124,77,255,.08),rgba(224,64,251,.04));border:1.5px dashed rgba(124,77,255,.3);border-radius:18px;padding:36px 20px;text-align:center;margin-bottom:14px;">`;
-    html += `<div style="font-size:48px;margin-bottom:10px;">🎓</div>`;
-    html += `<div style="font-size:15px;font-weight:900;margin-bottom:6px;">Üniversite Listesi Boş</div>`;
-    html += `<div style="font-size:11px;color:var(--t3);margin-bottom:18px;line-height:1.7;">Atlas'tan arama yap veya ekle butonuyla üniversite ekle.</div>`;
-    html += `<button onclick="uniTabSwitch('atlas')" style="background:linear-gradient(135deg,var(--pu),var(--pk));border:none;border-radius:12px;color:#fff;padding:13px 28px;font-size:13px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">🔭 Atlas'ta Ara</button>`;
-    html += `</div>`;
-  } else {
-    if(hedef) html += uniCard(hedef, true);
-    if(rest.length){
-      html += `<div style="font-size:9px;font-weight:900;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin:10px 0 7px;">📋 Takip Listesi <span style="color:var(--pu);">(${rest.length})</span></div>`;
-      rest.forEach(u => { html += uniCard(u, false); });
     }
   }
-  html += `</div>`;
+  return null;
+}
 
-  // ── Atlas arama paneli ──
-  html += `<div id="uni-panel-atlas" style="display:none;">${typeof buildAtlasPanel === 'function' ? buildAtlasPanel() : ''}</div>`;
-
-  document.getElementById('page').innerHTML = html;
-  // Sekme durumunu geri yükle
-  const _at = window._uniActiveTab || 'list';
-  if(_at === 'atlas') setTimeout(()=>uniTabSwitch('atlas'), 10);
-};
-
-// ── Üniversite detay overlay'i ──
-window.uniOpen = function(uid){
-  const u = (S.unis||[]).find(x => x.id === uid);
-  if(!u){ toast('Üniversite bulunamadı'); return; }
-  window._currentUniDet = uid;
-
-  const db     = (typeof UNI_DB !== 'undefined' && UNI_DB[uid]) || {};
-  const depts  = u.depts || [];
-  const isH    = u.hedefDept != null;
-  const photo  = u.photo || db.coverPhoto || '';
-  const bg     = u.bg || 'linear-gradient(135deg,#0e0e28,#1a0d40)';
-  const wiki   = db.wikiPage || null;
-
-  let html = '';
-
-  // ─ WRAPPER (arka plan için) ─
-  html += `<div style="background:var(--c1);border-radius:22px 22px 0 0;overflow:hidden;min-height:100px;">`;
-
-  // ─ COVER ─
-  html += `<div style="position:relative;height:155px;background:${bg};overflow:hidden;flex-shrink:0;">`;
-  if(photo) html += `<img src="${photo}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;" onerror="this.style.display='none'"/>`;
-  html += `<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.05),rgba(8,8,26,.9));"></div>`;
-  // Üst bar
-  html += `<div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:11px;">`;
-  html += `<label style="cursor:pointer;"><input type="file" accept="image/*" style="display:none;" onchange="uniSetPhoto('${uid}',this)"/>`;
-  html += `<div style="background:rgba(0,0,0,.45);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:5px 10px;font-size:9px;font-weight:800;color:rgba(255,255,255,.8);">📷 Fotoğraf</div></label>`;
-  html += `<button onclick="closeOv('ov-uni')" style="background:rgba(0,0,0,.45);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.15);border-radius:50%;width:30px;height:30px;color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;">✕</button>`;
-  html += `</div>`;
-  // Alt bilgi
-  html += `<div style="position:absolute;bottom:10px;left:13px;right:13px;">`;
-  html += `<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">`;
-  if(u.tip) html += `<span style="font-size:7px;font-weight:900;padding:2px 7px;border-radius:4px;background:${u.tip==='Vakıf'?'rgba(168,85,247,.75)':'rgba(59,130,246,.75)'};color:#fff;">${u.tip}</span>`;
-  if(isH) html += `<span style="font-size:7px;font-weight:900;padding:2px 7px;border-radius:4px;background:rgba(245,166,35,.25);color:var(--gold);border:1px solid rgba(245,166,35,.4);">🎯 HEDEFİM</span>`;
-  if(u.sehir) html += `<span style="font-size:9px;color:rgba(255,255,255,.65);">📍 ${u.sehir}</span>`;
-  html += `</div>`;
-  html += `<div style="font-size:19px;font-weight:900;color:#fff;line-height:1.2;text-shadow:0 2px 12px rgba(0,0,0,.9);">${u.fullName||u.name}</div>`;
-  html += `</div></div>`;
-
-  // ─ İÇERİK ─
-  html += `<div style="padding:14px 14px 28px;">`;
-
-  // Üniversite bilgileri (statik UNI_DB)
-  const chips = [];
-  if(db.kurulusYili) chips.push({i:'📅', v:db.kurulusYili, l:'Kuruluş'});
-  if(db.ogrenciSayisi) chips.push({i:'👥', v:db.ogrenciSayisi, l:'Öğrenci'});
-  if(db.dil) chips.push({i:'🌍', v:db.dil, l:'Dil'});
-  if(db.kampus) chips.push({i:'🏞️', v:db.kampus.split('(')[0].trim(), l:'Kampüs'});
-
-  if(db.ozet || chips.length || wiki){
-    html += `<div style="background:rgba(124,77,255,.06);border:1px solid rgba(124,77,255,.18);border-radius:13px;padding:12px;margin-bottom:13px;">`;
-    if(db.ozet) html += `<div style="font-size:11px;color:var(--t2);line-height:1.65;margin-bottom:${chips.length?'10px':'0'};">${db.ozet}</div>`;
-    if(chips.length){
-      html += `<div style="display:grid;grid-template-columns:repeat(${Math.min(chips.length,4)},1fr);gap:5px;${db.ozet?'':''}">`;
-      chips.forEach(c => {
-        html += `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:6px 4px;text-align:center;">`;
-        html += `<div style="font-size:13px;margin-bottom:2px;">${c.i}</div>`;
-        html += `<div style="font-size:9px;font-weight:800;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.v}</div>`;
-        html += `<div style="font-size:7px;color:var(--t3);font-weight:700;">${c.l}</div>`;
-        html += `</div>`;
-      });
-      html += `</div>`;
-    }
-    if(db.ozellikler && db.ozellikler.length){
-      html += `<div style="display:flex;flex-direction:column;gap:3px;margin-top:9px;">`;
-      db.ozellikler.slice(0,4).forEach(o => {
-        html += `<div style="display:flex;align-items:flex-start;gap:6px;font-size:10px;color:var(--t2);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);">`;
-        html += `<span style="color:var(--pu);flex-shrink:0;">✦</span><span style="line-height:1.5;">${o}</span></div>`;
-      });
-      html += `</div>`;
-    }
-    if(wiki){
-      html += `<a href="${_wikiUrl(wiki)}" target="_blank" style="display:flex;align-items:center;gap:7px;margin-top:10px;padding:8px 11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;text-decoration:none;color:var(--t2);font-size:10px;font-weight:700;">`;
-      html += `<span style="font-size:16px;">🌐</span> Wikipedia'da Görüntüle <span style="margin-left:auto;font-size:12px;opacity:.5;">↗</span></a>`;
-    }
-    html += `</div>`;
-  }
-
-  // ─ BÖLÜMLER ─
-  html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">`;
-  html += `<div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;">📚 Bölümlerim</div>`;
-  if(depts.length) html += `<div style="font-size:9px;font-weight:800;background:rgba(124,77,255,.12);color:var(--pu);padding:2px 8px;border-radius:100px;">${depts.length} bölüm</div>`;
-  html += `</div>`;
-
-  if(depts.length){
-    html += `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">`;
-    depts.forEach(function(d, i){
-      const dtc = _TC[d.type] || '#7c4dff';
-      const isHD = u.hedefDept === i;
-      html += `<div style="background:${isHD?'rgba(245,166,35,.06)':'var(--c2)'};border-radius:11px;padding:10px 12px;border:1.5px solid ${isHD?'rgba(245,166,35,.45)':'rgba(255,255,255,.06)'};position:relative;overflow:hidden;">`;
-      html += `<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${dtc};border-radius:11px 0 0 11px;"></div>`;
-      html += `<div style="display:flex;align-items:center;gap:9px;margin-left:8px;">`;
-      html += `<div style="flex:1;min-width:0;">`;
-      html += `<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">`;
-      html += `<span style="font-size:8px;font-weight:900;padding:2px 6px;border-radius:100px;background:${dtc}20;color:${dtc};border:1px solid ${dtc}35;">${d.type}</span>`;
-      html += `<span style="font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name}</span>`;
-      if(isHD) html += `<span>🎯</span>`;
-      html += `</div>`;
-      if(d.score && d.score !== '—'){
-        html += `<div style="display:flex;align-items:center;gap:8px;">`;
-        html += `<div style="font-size:9px;color:var(--t3);">Taban: <b style="color:var(--gold);font-size:11px;">${d.score}</b></div>`;
-        if(d.rank && d.rank !== '—') html += `<div style="font-size:9px;color:var(--t3);">Sıra: <b style="color:${dtc};">${d.rank}</b></div>`;
-        html += `</div>`;
-      }
-      html += `</div>`;
-      html += `<div style="display:flex;gap:4px;flex-shrink:0;">`;
-      html += `<button onclick="uniSetHedef('${uid}',${i})" title="${isHD?'Hedeften çıkar':'Hedef yap'}" style="background:${isHD?'rgba(239,68,68,.1)':'rgba(245,166,35,.1)'};border:1px solid ${isHD?'rgba(239,68,68,.3)':'rgba(245,166,35,.3)'};border-radius:8px;color:${isHD?'#ef4444':'var(--gold)'};padding:6px 8px;font-size:12px;cursor:pointer;line-height:1;">${isHD?'✕':'🎯'}</button>`;
-      html += `<button onclick="uniRemoveDept('${uid}',${i})" style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);border-radius:8px;color:#ef4444;padding:6px 8px;font-size:12px;cursor:pointer;line-height:1;">🗑</button>`;
-      html += `</div></div></div>`;
-    });
-    html += `</div>`;
-  } else {
-    html += `<div style="background:rgba(124,77,255,.05);border:1.5px dashed rgba(124,77,255,.2);border-radius:12px;padding:16px;text-align:center;margin-bottom:12px;">`;
-    html += `<div style="font-size:10px;color:var(--t3);">Henüz bölüm eklenmedi — aşağıdan ekle ↓</div>`;
-    html += `</div>`;
-  }
-
-  // ─ BÖLÜM EKLE FORMU ─
-  html += `<div style="background:rgba(124,77,255,.06);border:1.5px solid rgba(124,77,255,.2);border-radius:14px;padding:13px;margin-bottom:13px;">`;
-  html += `<div style="font-size:10px;font-weight:900;color:rgba(124,77,255,.85);margin-bottom:8px;">➕ Bölüm Ekle</div>`;
-  // Sekme çubuğu
-  html += `<div style="display:flex;gap:3px;background:rgba(0,0,0,.2);border-radius:9px;padding:3px;margin-bottom:10px;">`;
-  html += `<button id="dept-tab-name" onclick="uniDeptTabSwitch('name','${uid}')" style="flex:1;padding:6px 4px;border-radius:7px;border:none;background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;font-size:9px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">🔍 Bölüm Adı</button>`;
-  html += `<button id="dept-tab-yop" onclick="uniDeptTabSwitch('yop','${uid}')" style="flex:1;padding:6px 4px;border-radius:7px;border:none;background:transparent;color:var(--t3);font-size:9px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">📋 YÖP Kodu</button>`;
-  html += `</div>`;
-  // Panel 1: isim ile ekle
-  html += `<div id="dept-panel-name-${uid}">`;
-  html += `<input type="text" id="dept-name-inp" placeholder="Bölüm adı (örn: Tıp, Bilgisayar Müh.)" style="margin-bottom:7px;"/>`;
-  html += `<div style="display:flex;gap:6px;margin-bottom:7px;">`;
-  html += `<select id="dept-type-sel" style="flex:1;padding:7px 10px;border-radius:7px;border:1px solid var(--br);background:var(--c2);color:var(--t1);font-size:12px;font-family:Nunito,sans-serif;outline:none;">`;
-  ['SAY','EA','SÖZ','DİL'].forEach(t => { html += `<option value="${t}">${t}</option>`; });
-  html += `</select>`;
-  html += `<input type="text" id="dept-score-inp" placeholder="Taban puan (isteğe bağlı)" style="flex:1.5;margin:0;"/>`;
-  html += `</div>`;
-  html += `<button onclick="uniAddDept('${uid}')" style="width:100%;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;font-size:12px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">Bölümü Kaydet</button>`;
-  html += `</div>`;
-  // Panel 2: YÖP kodu ile ekle
-  html += `<div id="dept-panel-yop-${uid}" style="display:none;">`;
-  html += `<div style="font-size:9px;color:var(--t3);line-height:1.6;margin-bottom:8px;padding:7px 9px;background:rgba(0,0,0,.15);border-radius:8px;">`;
-  html += `💡 <b style="color:var(--t2)">YÖP kodu</b> nedir? <a href="https://yokatlas.yok.gov.tr" target="_blank" style="color:var(--pu);">yokatlas.yok.gov.tr</a>'da bir bölüme tıkla → URL'deki <code style="background:rgba(124,77,255,.15);padding:1px 4px;border-radius:3px;">y=XXXXXXXXX</code> kısmı koddur.`;
-  html += `</div>`;
-  html += `<div style="display:flex;gap:6px;margin-bottom:8px;">`;
-  html += `<input type="text" id="dept-yop-inp-${uid}" placeholder="9 haneli YÖP kodu (örn: 104710227)" maxlength="12" style="flex:1;margin:0;" oninput="this.value=this.value.replace(/\D/g,'')"/>`;
-  html += `<button onclick="uniAddByYopCode('${uid}')" style="padding:9px 12px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;flex-shrink:0;">📡 Getir</button>`;
-  html += `</div>`;
-  html += `<div id="yop-result-${uid}"></div>`;
-  html += `</div>`;
-  html += `</div>`;
-
-  // ─ ALT BUTONLAR ─
-  html += `<div style="display:flex;gap:7px;">`;
-  html += `<button onclick="uniDelete('${uid}')" style="padding:10px 14px;border-radius:11px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.06);color:#ef4444;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;flex-shrink:0;">🗑 Sil</button>`;
-  html += `<button onclick="closeOv('ov-uni')" style="flex:1;padding:10px;border-radius:11px;border:1px solid var(--br);background:var(--c2);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">Kapat</button>`;
-  html += `</div>`;
-  html += `</div>`; // padding wrapper
-  html += `</div>`; // background wrapper
-
-  document.getElementById('uni-det-in').innerHTML = html;
-  showOv('ov-uni');
-};
-
-// ── Bölüm ekle ──
-window.uniAddDept = function(uid){
-  const u = (S.unis||[]).find(x => x.id === uid); if(!u) return;
-  const name  = (document.getElementById('dept-name-inp')?.value || '').trim();
-  const type  = document.getElementById('dept-type-sel')?.value || 'SAY';
-  const score = (document.getElementById('dept-score-inp')?.value || '').trim() || '—';
-  if(!name){ toast('Bölüm adını gir!'); return; }
-  if(!u.depts) u.depts = [];
-  if(u.depts.some(d => d.name === name)){ toast('Bu bölüm zaten ekli!'); return; }
-  u.depts.push({ name, type, score, rank:'—' });
-  save();
-  toast(`✅ ${name} eklendi!`);
-  window.uniOpen(uid);
-};
-
-// ── Bölüm sekme geçişi ──
-window.uniDeptTabSwitch = function(tab, uid){
-  const pName = document.getElementById('dept-panel-name-' + uid);
-  const pYop  = document.getElementById('dept-panel-yop-' + uid);
-  const tName = document.getElementById('dept-tab-name');
-  const tYop  = document.getElementById('dept-tab-yop');
-  if(!pName || !pYop) return;
-  const on  = 'background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;';
-  const off = 'background:transparent;color:var(--t3);';
-  if(tab === 'name'){
-    pName.style.display=''; pYop.style.display='none';
-    if(tName) tName.style.cssText += on;
-    if(tYop)  tYop.style.cssText  += off;
-  } else {
-    pName.style.display='none'; pYop.style.display='';
-    if(tYop)  tYop.style.cssText  += on;
-    if(tName) tName.style.cssText += off;
-  }
-};
-
-// ── YÖP kodu ile bölüm getir ve ekle ──
-window.uniAddByYopCode = async function(uid){
-  const u = (S.unis||[]).find(x => x.id === uid); if(!u) return;
-  const inp = document.getElementById('dept-yop-inp-' + uid);
-  const res = document.getElementById('yop-result-' + uid);
-  const code = (inp?.value || '').trim().replace(/\D/g,'');
-  if(code.length < 6){ toast('Geçerli bir YÖP kodu gir!'); return; }
-  if(!res) return;
-
-  res.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:rgba(124,77,255,.07);border-radius:9px;border:1px solid rgba(124,77,255,.2);">
-    <div style="width:13px;height:13px;border:2px solid rgba(124,77,255,.25);border-top-color:var(--pu);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;"></div>
-    <div style="font-size:10px;color:var(--pu);font-weight:800;">📡 YÖK Atlas'tan veri çekiliyor… (kod: ${code})</div>
-  </div>`;
-
-  try {
-    // Önce ATLAS_DB'de YÖP kodunu ara
-    let entry = typeof ATLAS_DB !== 'undefined' ? ATLAS_DB.find(r => r.yop === code) : null;
-
-    if(!entry){
-      // Bulunamadı — Claude API ile çek (bu uygulama claude.ai içinde çalışıyorsa)
-      try {
-        const resp2 = await fetch('https://api.anthropic.com/v1/messages', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:800,
-            tools:[{type:'web_search_20250305',name:'web_search'}],
-            messages:[{role:'user',content:`yokatlas.yok.gov.tr/lisans.php?y=${code} sayfasındaki bölümün adı, üniversitesi, 2024 taban puanı ve başarı sırası nedir? Sadece JSON döndür: {"bolumAdi":"...","uniAdi":"...","puanTuru":"SAY","puan":490.000,"sira":1000,"kont":80}`}]
-          })
-        });
-        if(resp2.ok){
-          const d2 = await resp2.json();
-          const t2 = (d2.content||[]).filter(b=>b.type==='text').map(b=>b.text||'').join('');
-          const m2 = t2.match(/\{[^{}]+\}/);
-          if(m2){ const obj=JSON.parse(m2[0]); entry = {bolum:obj.bolumAdi,uni:obj.uniAdi,tip:obj.puanTuru||'SAY',puan:obj.puan,sira:obj.sira,kont:obj.kont,yop:code}; }
-        }
-      } catch(e2){}
-    }
-
-    if(!entry) throw new Error('YÖP kodu veritabanında bulunamadı: ' + code + '\nYokatlas.yok.gov.tr/lisans.php?y=' + code + ' adresini kontrol et.');
-
-    const puanTuru = entry.tip || 'SAY';
-    const bolumAdi = entry.bolum || ('Bölüm (YÖP: ' + code + ')');
-    const uniAdi   = entry.uni   || (u.fullName || u.name);
-
-    const yillar  = entry.yillar  || [2024];
-    const siralar = entry.siralar || [entry.sira];
-    const puanlar = entry.puanlar || [entry.puan||null];
-    const konts   = entry.yillar ? entry.yillar.map(()=>entry.kont||null) : [entry.kont||null];
-
-    const latestSira = siralar[siralar.length - 1];
-    const latestPuan = puanlar[puanlar.length - 1];
-    const latestKont = konts[konts.length - 1];
-    const typeColor  = {SAY:'#e53935',EA:'#f39c12','SÖZ':'#1e88e5','DİL':'#8e24aa'};
-    const tc = typeColor[puanTuru] || 'var(--pu)';
-
-    res.innerHTML = `<div style="background:rgba(0,0,0,.2);border-radius:11px;padding:11px;border:1px solid rgba(67,160,71,.25);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div>
-          <div style="font-size:12px;font-weight:900;">${bolumAdi}</div>
-          <div style="font-size:9px;color:var(--t3);margin-top:2px;">${uniAdi}</div>
-        </div>
-        <span style="font-size:9px;padding:2px 8px;border-radius:6px;background:${tc}22;color:${tc};font-weight:900;">${puanTuru}</span>
-      </div>
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        ${latestPuan ? `<div style="flex:1;background:rgba(245,166,35,.09);border:1px solid rgba(245,166,35,.2);border-radius:8px;padding:6px 8px;text-align:center;">
-          <div style="font-size:14px;font-weight:900;color:var(--gold);">${typeof latestPuan==='number'?latestPuan.toFixed(3):latestPuan}</div>
-          <div style="font-size:7px;color:var(--t3);font-weight:800;">TABAN PUAN</div>
-        </div>` : ''}
-        ${latestSira ? `<div style="flex:1;background:rgba(124,77,255,.09);border:1px solid rgba(124,77,255,.2);border-radius:8px;padding:6px 8px;text-align:center;">
-          <div style="font-size:13px;font-weight:900;color:var(--pu);">~${parseInt(latestSira).toLocaleString('tr-TR')}</div>
-          <div style="font-size:7px;color:var(--t3);font-weight:800;">BAŞARI SIRASI</div>
-        </div>` : ''}
-        ${latestKont ? `<div style="flex:1;background:rgba(30,136,229,.09);border:1px solid rgba(30,136,229,.2);border-radius:8px;padding:6px 8px;text-align:center;">
-          <div style="font-size:14px;font-weight:900;color:var(--bl);">${latestKont}</div>
-          <div style="font-size:7px;color:var(--t3);font-weight:800;">KONTENJAN</div>
-        </div>` : ''}
-      </div>
-      <div style="font-size:8px;color:var(--t3);margin-bottom:9px;">📅 Yıllar: ${yillar.join(' · ')} — YÖK Atlas · yokatlas.yok.gov.tr</div>
-      <button onclick="uniSaveYopResult('${uid}','${code}')" style="width:100%;padding:9px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;font-size:12px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">＋ Bu Bölümü Ekle</button>
-    </div>`;
-
-    // Geçici sakla
-    window._yopResult = window._yopResult || {};
-    window._yopResult[uid + '_' + code] = {
-      name: bolumAdi, type: puanTuru,
-      score: latestPuan ? (typeof latestPuan==='number'?latestPuan.toFixed(3):String(latestPuan)) : '—',
-      rank: latestSira ? '~' + parseInt(latestSira).toLocaleString('tr-TR') + '. sıra' : '—',
-      kontenjan: latestKont || null,
-      note: '📡 YÖK Atlas · kod: ' + code,
-      yokAtlas: { bolum: bolumAdi, yillar, siralar, puanlar, kontenjan: konts, yerlesen: konts, _fromYok: true }
+function _ensureUni(uid) {
+  if(!S.unis) S.unis = [];
+  let u = S.unis.find(x=>x.id===uid);
+  if(!u) {
+    const info = (typeof ALL_UNI_LIST!=='undefined'?ALL_UNI_LIST:[]).find(x=>x.id===uid);
+    if(!info) return null;
+    const db = (typeof UNI_DB!=='undefined') ? UNI_DB[uid] : null;
+    u = {
+      id:uid, name:info.name,
+      fullName: db?.tamAd || db?.fullName || info.name,
+      sehir:info.sehir, tip:info.tip,
+      dil: db?.dil || '',
+      depts:[], selDept:-1,
+      note: db?.ozet || '',
+      bg:info.bg, emoji:'🏛️', photo:null
     };
-  } catch(e) {
-    res.innerHTML = `<div style="padding:10px;background:rgba(229,57,53,.07);border:1px solid rgba(229,57,53,.2);border-radius:9px;font-size:10px;color:#ef5350;font-weight:700;">
-      ❌ Veri çekilemedi: ${e.message}<br>
-      <span style="color:var(--t3);font-weight:600;font-size:9px;">Kodu kontrol et veya farklı bir proxy dene. YÖK Atlas bazen yavaş yanıt verebilir.</span>
-    </div>`;
-  }
-};
-
-window.uniSaveYopResult = function(uid, code){
-  const key = uid + '_' + code;
-  const d = window._yopResult && window._yopResult[key];
-  if(!d){ toast('Önce veriyi getir!'); return; }
-  const u = (S.unis||[]).find(x => x.id === uid); if(!u) return;
-  if(!u.depts) u.depts = [];
-  if(u.depts.some(x => x.name === d.name)){ toast('Bu bölüm zaten ekli!'); return; }
-  if(d.yokAtlas){
-    if(!u.yokAtlasByDept) u.yokAtlasByDept = {};
-    u.yokAtlasByDept[d.name] = d.yokAtlas;
-  }
-  u.depts.push({ name: d.name, type: d.type, score: d.score, rank: d.rank, kontenjan: d.kontenjan });
-  u.selDept = u.depts.length - 1;
-  save(); confetti();
-  toast('✅ ' + d.name + ' eklendi!');
-  window.uniOpen(uid);
-};
-
-// ── Hedef bölüm ──
-window.uniSetHedef = function(uid, deptIdx){
-  const u = (S.unis||[]).find(x => x.id === uid); if(!u) return;
-  if(u.hedefDept === deptIdx){ u.hedefDept = null; toast('Hedef kaldırıldı'); }
-  else { u.hedefDept = deptIdx; toast('🎯 Hedef bölüm seçildi!'); }
-  save(); renderTargets(); window.uniOpen(uid);
-};
-
-// ── Bölüm sil ──
-window.uniRemoveDept = function(uid, deptIdx){
-  const u = (S.unis||[]).find(x => x.id === uid); if(!u) return;
-  if(!confirm('Bu bölümü silmek istiyor musun?')) return;
-  u.depts.splice(deptIdx, 1);
-  if(u.hedefDept === deptIdx) u.hedefDept = null;
-  else if(u.hedefDept > deptIdx) u.hedefDept--;
-  save(); toast('Bölüm silindi'); window.uniOpen(uid);
-};
-
-// ── Üniversite sil ──
-window.uniDelete = function(uid){
-  if(!confirm('Bu üniversiteyi silmek istiyor musun?')) return;
-  S.unis = (S.unis||[]).filter(x => x.id !== uid);
-  save(); closeOv('ov-uni'); renderTargets(); toast('Üniversite silindi 🗑');
-};
-
-// ── Fotoğraf ──
-window.uniSetPhoto = function(uid, input){
-  const u = (S.unis||[]).find(x => x.id === uid); if(!u) return;
-  const file = input.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    u.photo = e.target.result;
+    S.unis.push(u);
     save();
-    renderTargets(); // listeyi yenile — fotoğraf hemen görünsün
-    toast('📸 Fotoğraf eklendi!');
-    window.uniOpen(uid); // overlay'i de yenile
-  };
-  reader.readAsDataURL(file);
-};
-
-// ══════════════════════════════════════════
-// ÜNİVERSİTE EKLEME OVERLAY
-// ══════════════════════════════════════════
-window.uniAddOpen = function(prefill){
-  let ov = document.getElementById('ov-add-uni-v6');
-  if(!ov){
-    ov = document.createElement('div');
-    ov.id = 'ov-add-uni-v6';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:500;display:flex;align-items:flex-end;justify-content:center;padding:0;backdrop-filter:blur(4px);';
-    document.body.appendChild(ov);
   }
-  ov.style.display = 'flex';
+  return u;
+}
 
-  ov.innerHTML = `<div style="background:var(--c1);border:1px solid rgba(124,77,255,.2);border-radius:22px 22px 0 0;padding:0;max-width:500px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;animation:popIn .3s cubic-bezier(.4,0,.2,1);">
-    <div style="display:flex;justify-content:center;padding:10px 0 0;"><div style="width:38px;height:4px;border-radius:100px;background:rgba(255,255,255,.12);"></div></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px 12px;">
-      <div>
-        <div style="font-size:16px;font-weight:900;">🔍 Üniversite Ekle</div>
-        <div style="font-size:9px;color:var(--t3);font-weight:700;margin-top:1px;">Türkiye'deki herhangi bir üniversiteyi arayabilirsin</div>
-      </div>
-      <button onclick="document.getElementById('ov-add-uni-v6').style.display='none'" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:var(--t2);padding:6px 11px;cursor:pointer;font-size:12px;font-family:Nunito,sans-serif;">✕</button>
-    </div>
-    <div style="padding:0 16px 12px;">
-      <div style="display:flex;gap:7px;background:var(--c2);border:1.5px solid rgba(124,77,255,.35);border-radius:13px;padding:4px 4px 4px 13px;" id="uni-search-wrap">
-        <input type="text" id="uni-add-inp" placeholder="Üniversite adı veya şehir... (ODTÜ, Tıp, İstanbul...)"
-          style="flex:1;padding:8px 0;border:none;background:transparent;color:var(--t1);font-size:12px;font-family:Nunito,sans-serif;outline:none;margin:0;"
-          value="${prefill||''}"
-          onkeydown="if(event.key==='Enter'){event.preventDefault();uniDoSearch();}"
-          onfocus="document.getElementById('uni-search-wrap').style.borderColor='var(--pu)'"
-          onblur="document.getElementById('uni-search-wrap').style.borderColor='rgba(124,77,255,0.35)'"/>
-        <button onclick="uniDoSearch()" style="background:linear-gradient(135deg,var(--pu),var(--pk));border:none;border-radius:10px;color:#fff;padding:9px 16px;font-size:12px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;flex-shrink:0;">Ara</button>
-      </div>
-    </div>
-    <div style="overflow-y:auto;padding:0 16px 28px;flex:1;-webkit-overflow-scrolling:touch;">
-      <div id="uni-add-results" style="min-height:40px;margin-bottom:14px;"></div>
-      <div style="border-top:1px solid var(--br);padding-top:13px;">
-        <div style="font-size:9px;font-weight:900;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:9px;">⭐ Popüler Üniversiteler</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          ${['ODTÜ','Boğaziçi','İTÜ','Hacettepe','Bilkent','Koç','Sabancı','Gazi','Marmara','YTÜ','DEÜ','KTÜ','Ege','Selçuk','Erciyes','Ankara','Uludağ','Akdeniz','Anadolu','Çukurova','Atatürk','Bahçeşehir','Medipol','Yeditepe','OMÜ'].map(n=>`<button onclick="document.getElementById('uni-add-inp').value='${n}';uniDoSearch()" style="padding:5px 10px;border-radius:9px;border:1px solid var(--br);background:var(--c2);color:var(--t2);font-size:10px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">${n}</button>`).join('')}
-        </div>
-        <div style="margin-top:12px;border-top:1px solid var(--br);padding-top:12px;">
-          <div style="font-size:9px;font-weight:900;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:9px;">✏️ Listede Yoksa Manuel Ekle</div>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            <input type="text" id="uni-manual-name" placeholder="Üniversite adı (tam adı yaz)" style="margin:0;"/>
-            <div style="display:flex;gap:6px;">
-              <input type="text" id="uni-manual-sehir" placeholder="Şehir" style="margin:0;flex:1;"/>
-              <select id="uni-manual-tip" style="flex:1;padding:7px 10px;border-radius:7px;border:1px solid var(--br);background:var(--c2);color:var(--t1);font-size:12px;font-family:Nunito,sans-serif;outline:none;">
-                <option value="Devlet">Devlet</option>
-                <option value="Vakıf">Vakıf</option>
-              </select>
-            </div>
-            <button onclick="uniManualAdd()" style="padding:9px;border-radius:9px;border:none;background:var(--c2);border:1px solid var(--br);color:var(--t2);font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Ekle</button>
+// ─── State ────────────────────────────────────────────────────────
+window._uA = {tab:'list', filter:'Tümü', detTab:'Tümü', detQ:'', detUid:null};
+
+// ══════════════════════════════════════════════════════════════════
+// MAIN PAGE
+// ══════════════════════════════════════════════════════════════════
+renderTargets = function() {
+  const unis = S.unis || [];
+  const hedef = unis.find(u=>u.hedefDept!=null);
+  const rest  = unis.filter(u=>u.hedefDept==null);
+  const tab   = window._uA.tab;
+  const filt  = window._uA.filter;
+  const allList = typeof ALL_UNI_LIST !== 'undefined' ? ALL_UNI_LIST : [];
+
+  // ── tracked card (list view) ──
+  function trackedCard(u) {
+    const isH = u.hedefDept != null;
+    const depts = u.depts || [];
+    const d = depts[u.selDept>=0?u.selDept:0] || null;
+    const dtc = d ? (TC[d.type]||'#7c4dff') : '#7c4dff';
+    const db2 = (typeof UNI_DB!=='undefined'&&UNI_DB[u.id])||{};
+    return `<button onclick="showUniDet('${u.id}')" style="display:block;width:100%;text-align:left;font-family:Nunito,sans-serif;background:var(--c1);border-radius:14px;padding:0;overflow:hidden;cursor:pointer;border:1.5px solid ${isH?'rgba(245,166,35,.45)':'var(--br)'};box-shadow:${isH?'0 0 20px rgba(245,166,35,.09)':'none'};transition:border-color .2s;margin-bottom:7px;">
+      ${isH?`<div style="background:linear-gradient(90deg,rgba(245,166,35,.14),transparent);border-bottom:1px solid rgba(245,166,35,.18);padding:4px 12px;"><span style="font-size:8px;font-weight:900;color:var(--gold);letter-spacing:.6px;">🎯 HEDEF ÜNİVERSİTEM</span></div>`:''}
+      <div style="padding:11px 13px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:44px;height:44px;border-radius:11px;background:${u.bg||'linear-gradient(135deg,#1a1a2e,#4c1d95)'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;border:1px solid rgba(255,255,255,.08);">
+            ${(u.photo||(db2.coverPhoto))?`<img src="${u.photo||db2.coverPhoto}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:'🏛️'}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:900;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.fullName||u.name}</div>
+            <div style="font-size:9px;color:var(--t3);margin-bottom:4px;">${u.sehir||''}${u.tip?' · '+u.tip:''}</div>
+            ${d?`<div style="display:inline-flex;align-items:center;gap:4px;background:${TBG[d.type]||'rgba(124,77,255,.12)'};border:1px solid ${dtc}33;border-radius:6px;padding:2px 8px;max-width:100%;overflow:hidden;">
+              <span style="font-size:8px;font-weight:900;color:${dtc};flex-shrink:0;">${d.type}</span>
+              <span style="font-size:10px;font-weight:800;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name}</span>
+            </div>`:`<div style="font-size:9px;color:var(--t3);font-style:italic;">Bölüm seçilmedi — tıkla →</div>`}
+          </div>
+          <div style="flex-shrink:0;text-align:right;">
+            ${d&&d.score&&d.score!=='—'?`<div style="font-size:14px;font-weight:900;color:var(--gold);">${d.score}</div><div style="font-size:7px;color:var(--t3);">TABAN</div>`:
+            `<span style="font-size:20px;color:var(--t3);">›</span>`}
           </div>
         </div>
       </div>
+    </button>`;
+  }
+
+  // ── atlas grid card ──
+  function atlasCard(u) {
+    const tracked = unis.find(x=>x.id===u.id);
+    const isH2 = tracked?.hedefDept != null;
+    const isT = !!tracked;
+    return `<button onclick="showUniDet('${u.id}')" style="display:flex;flex-direction:column;width:100%;text-align:center;background:var(--c1);border-radius:13px;padding:0;overflow:hidden;cursor:pointer;border:1.5px solid ${isH2?'rgba(245,166,35,.4)':isT?'rgba(124,77,255,.3)':'var(--br)'};transition:border-color .2s;font-family:Nunito,sans-serif;">
+      <div style="width:100%;height:58px;background:${u.bg||'linear-gradient(135deg,#1a1a2e,#4c1d95)'};display:flex;align-items:center;justify-content:center;font-size:20px;position:relative;overflow:hidden;">
+        <div style="position:absolute;inset:0;opacity:.15;background-image:radial-gradient(rgba(255,255,255,.3) 1px,transparent 1px);background-size:16px 16px;"></div>
+        🏛️
+        ${isH2?`<div style="position:absolute;top:4px;right:4px;font-size:10px;line-height:1;">🎯</div>`:''}
+        ${isT&&!isH2?`<div style="position:absolute;top:4px;right:4px;width:14px;height:14px;background:#43a047;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:900;">✓</div>`:''}
+      </div>
+      <div style="padding:6px 4px 8px;flex:1;">
+        <div style="font-size:10px;font-weight:900;color:var(--t1);line-height:1.2;margin-bottom:2px;">${u.name}</div>
+        <div style="font-size:8px;color:var(--t3);">${u.sehir}</div>
+        <div style="font-size:7px;margin-top:3px;padding:1px 6px;border-radius:4px;display:inline-block;background:${u.tip==='Vakıf'?'rgba(168,85,247,.15)':'rgba(59,130,246,.15)'};color:${u.tip==='Vakıf'?'#a855f7':'#60a5fa'};">${u.tip}</div>
+      </div>
+    </button>`;
+  }
+
+  // Build filtered atlas list
+  const filters = ['Tümü','Devlet','Vakıf','İstanbul','Ankara','İzmir','Diğer'];
+  const filtList = allList.filter(u=>{
+    if(filt==='Tümü') return true;
+    if(filt==='Devlet') return u.tip==='Devlet';
+    if(filt==='Vakıf')  return u.tip==='Vakıf';
+    if(filt==='Diğer')  return !['İstanbul','Ankara','İzmir'].includes(u.sehir);
+    return u.sehir === filt;
+  });
+
+  let html = heroH();
+  html += `<div style="margin:4px 0 10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:16px;font-weight:900;">🏛️ Üniversite Atlası</div>
+      <div style="font-size:9px;color:var(--t3);">Takipte: <strong style="color:var(--pu);">${unis.length}</strong></div>
+    </div>
+    <div style="display:flex;gap:5px;background:rgba(0,0,0,.25);padding:3px;border-radius:12px;margin-bottom:10px;">
+      <button onclick="_uAS('list')" id="uta-list" style="flex:1;padding:8px 4px;border-radius:10px;border:none;background:${tab==='list'?'linear-gradient(135deg,var(--pu),var(--pk))':'transparent'};color:${tab==='list'?'#fff':'var(--t3)'};font-size:10px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">📋 Takip Listem</button>
+      <button onclick="_uAS('atlas')" id="uta-atlas" style="flex:1;padding:8px 4px;border-radius:10px;border:none;background:${tab==='atlas'?'linear-gradient(135deg,var(--pu),var(--pk))':'transparent'};color:${tab==='atlas'?'#fff':'var(--t3)'};font-size:10px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">🔭 Keşfet (${allList.length})</button>
     </div>
   </div>`;
 
-  setTimeout(() => {
-    const i = document.getElementById('uni-add-inp');
-    if(i){ i.focus(); if(prefill) uniDoSearch(); }
-  }, 180);
-};
-
-// ── Üniversite arama (UNI_DB + FULL_UNI_LIST) ──
-window.uniDoSearch = function(){
-  const inp = document.getElementById('uni-add-inp');
-  const res = document.getElementById('uni-add-results');
-  if(!inp || !res) return;
-  const q = inp.value.trim();
-  if(q.length < 2){ res.innerHTML = '<div style="font-size:10px;color:var(--t3);padding:12px;text-align:center;">En az 2 karakter girin</div>'; return; }
-
-  const normalize = s => (s||'').toLowerCase()
-    .replace(/[üÜ]/g,'u').replace(/[ıİ]/g,'i').replace(/[şŞ]/g,'s')
-    .replace(/[ğĞ]/g,'g').replace(/[öÖ]/g,'o').replace(/[çÇ]/g,'c')
-    .replace(/üniversitesi|universitesi/g,'uni').replace(/teknik/g,'tek');
-  const qN = normalize(q);
-  const seen = new Set();
-  const results = [];
-  const uniDbIds = typeof UNI_DB !== 'undefined' ? new Set(Object.keys(UNI_DB)) : new Set();
-
-  // Tüm üniversiteleri FULL_UNI_LIST'ten ara — UNI_DB'de de varsa "Detaylı" etiket ekle
-  if(typeof FULL_UNI_LIST !== 'undefined'){
-    FULL_UNI_LIST.forEach(u => {
-      if(seen.has(u.id)) return;
-      const haystack = normalize((u.ad||'') + ' ' + (u.kisaAd||'') + ' ' + u.id + ' ' + (u.sehir||''));
-      if(haystack.includes(qN) || qN.split(' ').some(w => w.length >= 2 && haystack.includes(w))){
-        seen.add(u.id);
-        results.push({ id: u.id, ad: u.ad, kisaAd: u.kisaAd||u.ad, sehir: u.sehir||'', tip: u.tip||'Devlet', hasDetail: uniDbIds.has(u.id) });
-      }
-    });
-  }
-
-  // UNI_DB'de olup FULL_UNI_LIST'te olmayan girişleri de ekle (id eşleşmesi için)
-  if(typeof UNI_DB !== 'undefined'){
-    Object.entries(UNI_DB).forEach(([id, db]) => {
-      if(seen.has(id)) return;
-      const haystack = normalize(id + ' ' + (db.sehir||''));
-      if(haystack.includes(qN) || qN.split(' ').some(w => w.length >= 2 && haystack.includes(w))){
-        seen.add(id);
-        results.push({ id, ad: id, kisaAd: id, sehir: db.sehir||'', tip: db.tip||'Devlet', hasDetail: true });
-      }
-    });
-  }
-
-  if(!results.length){
-    res.innerHTML = `<div style="text-align:center;padding:22px 16px;background:rgba(255,255,255,.03);border-radius:12px;border:1px dashed var(--br);">
-      <div style="font-size:32px;margin-bottom:8px;">🔍</div>
-      <div style="font-size:11px;font-weight:800;margin-bottom:4px;">Sonuç bulunamadı</div>
-      <div style="font-size:9px;color:var(--t3);">Farklı yazım dene ya da altta manuel ekle.</div>
+  // ── LIST PANEL ──
+  html += `<div id="_up-list" style="display:${tab==='list'?'block':'none'};">`;
+  if(!unis.length) {
+    html += `<div style="background:var(--c1);border:1.5px dashed rgba(124,77,255,.25);border-radius:14px;padding:32px 20px;text-align:center;margin-bottom:12px;">
+      <div style="font-size:42px;margin-bottom:10px;">🎓</div>
+      <div style="font-size:13px;font-weight:900;margin-bottom:5px;">Henüz üniversite eklenmedi</div>
+      <div style="font-size:10px;color:var(--t3);margin-bottom:14px;line-height:1.6;">Keşfet sekmesinden istediğin üniversitenin sayfasına gir ve hedef bölümünü seç!</div>
+      <button onclick="_uAS('atlas')" style="background:linear-gradient(135deg,var(--pu),var(--pk));border:none;border-radius:10px;color:#fff;padding:10px 22px;font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">🔭 Üniversiteleri Keşfet</button>
     </div>`;
-    return;
-  }
-
-  let h = `<div style="font-size:9px;font-weight:900;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">${results.length} SONUÇ</div>`;
-  h += `<div style="display:flex;flex-direction:column;gap:7px;">`;
-  results.slice(0, 25).forEach(u => {
-    const already = (S.unis||[]).some(x => x.id === u.id);
-    const db = (typeof UNI_DB !== 'undefined' && UNI_DB[u.id]) || {};
-    const tipC = u.tip === 'Vakıf' ? 'rgba(168,85,247,.6)' : 'rgba(59,130,246,.6)';
-    h += `<div style="background:${already?'rgba(67,160,71,.06)':'var(--c2)'};border:1px solid ${already?'rgba(67,160,71,.35)':'rgba(255,255,255,.07)'};border-radius:13px;padding:11px 13px;display:flex;align-items:center;gap:10px;">`;
-    // Küçük cover/ikon
-    const photo = db.coverPhoto || '';
-    h += `<div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,${db.logoColor||'#1a1a2e'},#2d1060);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid rgba(124,77,255,.15);overflow:hidden;">`;
-    if(photo) h += `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>`;
-    else h += '🏛️';
-    h += `</div>`;
-    h += `<div style="flex:1;min-width:0;">`;
-    h += `<div style="font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.ad}</div>`;
-    h += `<div style="display:flex;align-items:center;gap:5px;margin-top:2px;flex-wrap:wrap;">`;
-    if(u.sehir) h += `<span style="font-size:9px;color:var(--t3);">📍 ${u.sehir}</span>`;
-    h += `<span style="font-size:7px;font-weight:900;padding:2px 5px;border-radius:4px;background:${tipC};color:#fff;">${u.tip}</span>`;
-    if(u.hasDetail) h += `<span style="font-size:7px;font-weight:900;padding:2px 5px;border-radius:4px;background:rgba(245,166,35,.2);color:var(--gold);">⭐ Detaylı</span>`;
-    h += `</div></div>`;
-    if(already){
-      h += `<button onclick="document.getElementById('ov-add-uni-v6').style.display='none';uniOpen('${u.id}')" style="background:rgba(67,160,71,.1);border:1px solid rgba(67,160,71,.35);border-radius:9px;color:#4caf50;padding:7px 12px;font-size:10px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;">✅ Ekli</button>`;
-    } else {
-      h += `<button onclick="uniQuickAdd('${u.id}','${(u.kisaAd||u.ad).replace(/'/g,"\\'")}','${u.ad.replace(/'/g,"\\'")}','${(u.sehir||'').replace(/'/g,"\\'")}','${u.tip}')" style="background:linear-gradient(135deg,var(--pu),var(--pk));border:none;border-radius:9px;color:#fff;padding:7px 13px;font-size:10px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;">＋ Ekle</button>`;
-    }
-    h += `</div>`;
-  });
-  h += `</div>`;
-  res.innerHTML = h;
-};
-
-// ── Manuel üniversite ekleme ──
-window.uniManualAdd = function(){
-  const name  = (document.getElementById('uni-manual-name')?.value || '').trim();
-  const sehir = (document.getElementById('uni-manual-sehir')?.value || '').trim();
-  const tip   = document.getElementById('uni-manual-tip')?.value || 'Devlet';
-  if(!name){ toast('Üniversite adını gir!'); return; }
-  const id = name.toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,30) + '_' + Date.now().toString(36).slice(-4);
-  uniQuickAdd(id, name, name, sehir, tip);
-};
-
-// ── Hızlı ekle ──
-window.uniQuickAdd = function(id, name, fullName, sehir, tip){
-  if((S.unis||[]).some(x => x.id === id)){ toast('Zaten eklendi 👍'); return; }
-  if(!S.unis) S.unis = [];
-  const db = (typeof UNI_DB !== 'undefined' && UNI_DB[id]) || {};
-  S.unis.push({
-    id, name: name||id, fullName: fullName||db.tamAd||name||id,
-    sehir: sehir||db.sehir||'', tip: tip||db.tip||'Devlet',
-    bg: 'linear-gradient(135deg,' + (db.logoColor||'#1a1a2e') + ',#4c1d95)',
-    depts: [], hedefDept: null, photo: null
-  });
-  save();
-  const ov = document.getElementById('ov-add-uni-v6');
-  if(ov) ov.style.display = 'none';
-  renderTargets();
-  setTimeout(() => window.uniOpen(id), 200);
-  toast('✅ ' + (name||id) + ' eklendi!');
-};
-
-// ── Eski fonksiyonlarla uyumluluk ──
-showUniDet  = function(uid){ window.uniOpen(uid); };
-window.showUniDetV5 = window.uniOpen;
-window.openAddUniV5 = window.uniAddOpen;
-
-
-// ═══════════════════════════════════════════════════════════════
-// ATLAS_DB — 127 Program, 2024 YÖK Atlas Verileri (Statik)
-// Kaynak: YÖK Atlas yokatlas.yok.gov.tr 2024 verileri
-// ═══════════════════════════════════════════════════════════════
-const ATLAS_DB = [
-{uni:"ODTÜ",uniId:"odtu",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:524.318,sira:167,kont:70,yop:"104710227",yillar:[2020,2021,2022,2023,2024],siralar:[312,289,245,198,167],puanlar:[506.124,509.873,514.201,519.456,524.318]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"Elektrik-Elektronik Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:530.450,sira:109,kont:100,yop:"104710246",yillar:[2020,2021,2022,2023,2024],siralar:[198,176,151,128,109],puanlar:[514.230,517.891,521.890,526.120,530.450]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"Endüstri Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:526.980,sira:143,kont:60,yop:"104710254",yillar:[2020,2021,2022,2023,2024],siralar:[245,218,190,165,143],puanlar:[510.450,514.120,518.340,522.670,526.980]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"Makine Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:522.210,sira:224,kont:100,yop:"104710289",yillar:[2020,2021,2022,2023,2024],siralar:[380,340,298,258,224],puanlar:[505.670,509.340,513.560,517.890,522.210]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"İnşaat Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:517.780,sira:368,kont:100,yop:"104710271",yillar:[2020,2021,2022,2023,2024],siralar:[580,525,468,415,368],puanlar:[501.230,505.010,509.230,513.450,517.780]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"Kimya Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:519.980,sira:312,kont:80,yop:"104710265",yillar:[2020,2021,2022,2023,2024],siralar:[490,442,395,352,312],puanlar:[503.450,507.230,511.450,515.670,519.980]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"Havacılık ve Uzay Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:529.670,sira:121,kont:50,yop:"104710215",yillar:[2020,2021,2022,2023,2024],siralar:[210,188,163,140,121],puanlar:[513.120,516.890,521.010,525.340,529.670]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"İşletme (İng)",tip:"EA",uniTip:"Devlet",sehir:"Ankara",puan:521.780,sira:260,kont:60,yop:"104710325",yillar:[2020,2021,2022,2023,2024],siralar:[420,378,335,295,260],puanlar:[505.120,509.010,513.230,517.450,521.780]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"İktisat (İng)",tip:"EA",uniTip:"Devlet",sehir:"Ankara",puan:520.890,sira:280,kont:60,yop:"104710317",yillar:[2020,2021,2022,2023,2024],siralar:[450,405,360,318,280],puanlar:[504.230,508.120,512.340,516.560,520.890]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"Psikoloji (İng)",tip:"EA",uniTip:"Devlet",sehir:"Ankara",puan:517.000,sira:415,kont:50,yop:"104710342",yillar:[2020,2021,2022,2023,2024],siralar:[680,608,538,472,415],puanlar:[500.340,504.230,508.450,512.670,517.000]},
-{uni:"ODTÜ",uniId:"odtu",bolum:"Mimarlık (İng)",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:515.450,sira:480,kont:80,yop:"104710228",yillar:[2020,2021,2022,2023,2024],siralar:[780,698,618,548,480],puanlar:[498.230,502.120,506.340,510.560,515.450]},
-{uni:"Boğaziçi Üniversitesi",uniId:"boun",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:527.840,sira:145,kont:60,yop:"201110172",yillar:[2020,2021,2022,2023,2024],siralar:[248,218,185,162,145],puanlar:[509.230,513.120,517.340,521.560,527.840]},
-{uni:"Boğaziçi Üniversitesi",uniId:"boun",bolum:"Elektrik-Elektronik Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:531.780,sira:112,kont:80,yop:"201110181",yillar:[2020,2021,2022,2023,2024],siralar:[185,162,141,123,112],puanlar:[513.450,517.340,521.560,525.780,531.780]},
-{uni:"Boğaziçi Üniversitesi",uniId:"boun",bolum:"Endüstri Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:529.450,sira:128,kont:60,yop:"201110199",yillar:[2020,2021,2022,2023,2024],siralar:[218,192,168,147,128],puanlar:[511.230,515.120,519.340,523.560,529.450]},
-{uni:"Boğaziçi Üniversitesi",uniId:"boun",bolum:"Psikoloji (İng)",tip:"EA",uniTip:"Devlet",sehir:"İstanbul",puan:520.340,sira:298,kont:50,yop:"201110296",yillar:[2020,2021,2022,2023,2024],siralar:[498,442,390,342,298],puanlar:[503.560,507.450,511.670,515.890,520.340]},
-{uni:"Boğaziçi Üniversitesi",uniId:"boun",bolum:"İşletme (İng)",tip:"EA",uniTip:"Devlet",sehir:"İstanbul",puan:523.120,sira:245,kont:60,yop:"201110247",yillar:[2020,2021,2022,2023,2024],siralar:[408,360,315,278,245],puanlar:[505.780,509.670,513.890,518.110,523.120]},
-{uni:"Boğaziçi Üniversitesi",uniId:"boun",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"İstanbul",puan:518.230,sira:342,kont:50,yop:"201110315",yillar:[2020,2021,2022,2023,2024],siralar:[572,504,445,390,342],puanlar:[500.120,504.010,508.230,512.450,518.230]},
-{uni:"Boğaziçi Üniversitesi",uniId:"boun",bolum:"Uluslararası İlişkiler (İng)",tip:"SÖZ",uniTip:"Devlet",sehir:"İstanbul",puan:516.780,sira:390,kont:60,yop:"201110258",yillar:[2020,2021,2022,2023,2024],siralar:[648,568,498,438,390],puanlar:[498.340,502.230,506.450,510.670,516.780]},
-{uni:"İstanbul Teknik Üniversitesi",uniId:"itu",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:519.450,sira:282,kont:60,yop:"205410172",yillar:[2020,2021,2022,2023,2024],siralar:[468,412,362,318,282],puanlar:[502.340,506.230,510.450,514.670,519.450]},
-{uni:"İstanbul Teknik Üniversitesi",uniId:"itu",bolum:"Elektrik-Elektronik Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:521.890,sira:238,kont:100,yop:"205410181",yillar:[2020,2021,2022,2023,2024],siralar:[398,350,308,270,238],puanlar:[504.560,508.450,512.670,516.890,521.890]},
-{uni:"İstanbul Teknik Üniversitesi",uniId:"itu",bolum:"Makine Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:517.230,sira:348,kont:100,yop:"205410289",yillar:[2020,2021,2022,2023,2024],siralar:[578,508,448,395,348],puanlar:[500.120,504.010,508.230,512.450,517.230]},
-{uni:"İstanbul Teknik Üniversitesi",uniId:"itu",bolum:"Havacılık ve Uzay Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:522.670,sira:220,kont:50,yop:"205410215",yillar:[2020,2021,2022,2023,2024],siralar:[368,325,285,250,220],puanlar:[505.340,509.230,513.450,517.670,522.670]},
-{uni:"İstanbul Teknik Üniversitesi",uniId:"itu",bolum:"İnşaat Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:514.560,sira:428,kont:100,yop:"205410271",yillar:[2020,2021,2022,2023,2024],siralar:[712,628,552,488,428],puanlar:[497.230,501.120,505.340,509.560,514.560]},
-{uni:"İstanbul Teknik Üniversitesi",uniId:"itu",bolum:"Mimarlık",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:512.340,sira:512,kont:100,yop:"205410228",yillar:[2020,2021,2022,2023,2024],siralar:[852,750,660,582,512],puanlar:[494.560,498.450,502.670,506.890,512.340]},
-{uni:"Hacettepe Üniversitesi",uniId:"hac",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:562.450,sira:86,kont:120,yop:"104210112",yillar:[2020,2021,2022,2023,2024],siralar:[245,198,152,112,86],puanlar:[540.120,546.780,552.340,557.890,562.450]},
-{uni:"Hacettepe Üniversitesi",uniId:"hac",bolum:"Diş Hekimliği",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:543.120,sira:462,kont:80,yop:"104210121",yillar:[2020,2021,2022,2023,2024],siralar:[850,738,635,542,462],puanlar:[520.450,526.120,531.780,537.450,543.120]},
-{uni:"Hacettepe Üniversitesi",uniId:"hac",bolum:"Eczacılık",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:532.890,sira:1060,kont:90,yop:"104210139",yillar:[2020,2021,2022,2023,2024],siralar:[1650,1485,1330,1188,1060],puanlar:[510.230,515.890,521.560,527.230,532.890]},
-{uni:"Hacettepe Üniversitesi",uniId:"hac",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:504.890,sira:1048,kont:100,yop:"104210172",yillar:[2020,2021,2022,2023,2024],siralar:[1650,1480,1320,1175,1048],puanlar:[488.560,492.340,496.560,500.780,504.890]},
-{uni:"Hacettepe Üniversitesi",uniId:"hac",bolum:"Elektrik-Elektronik Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:501.560,sira:1308,kont:120,yop:"104210181",yillar:[2020,2021,2022,2023,2024],siralar:[2050,1845,1648,1468,1308],puanlar:[485.120,488.890,493.120,497.340,501.560]},
-{uni:"Hacettepe Üniversitesi",uniId:"hac",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"Ankara",puan:480.560,sira:2435,kont:150,yop:"104210215",yillar:[2020,2021,2022,2023,2024],siralar:[3800,3420,3058,2728,2435],puanlar:[465.120,468.890,472.120,476.340,480.560]},
-{uni:"Hacettepe Üniversitesi",uniId:"hac",bolum:"Yazılım Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:506.780,sira:922,kont:80,yop:"104210185",yillar:[2020,2021,2022,2023,2024],siralar:[1450,1302,1162,1035,922],puanlar:[490.340,494.120,498.340,502.560,506.780]},
-{uni:"Ankara Üniversitesi",uniId:"ankara",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:559.780,sira:185,kont:160,yop:"104110112",yillar:[2020,2021,2022,2023,2024],siralar:[380,325,272,225,185],puanlar:[536.340,542.890,548.560,554.120,559.780]},
-{uni:"Ankara Üniversitesi",uniId:"ankara",bolum:"Diş Hekimliği",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:535.120,sira:872,kont:80,yop:"104110121",yillar:[2020,2021,2022,2023,2024],siralar:[1350,1215,1088,975,872],puanlar:[512.560,518.230,523.890,529.560,535.120]},
-{uni:"Ankara Üniversitesi",uniId:"ankara",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"Ankara",puan:436.780,sira:3412,kont:180,yop:"104110215",yillar:[2020,2021,2022,2023,2024],siralar:[4521,4102,3876,3654,3412],puanlar:[422.340,425.670,428.910,432.150,436.780]},
-{uni:"Ankara Üniversitesi",uniId:"ankara",bolum:"Veteriner",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:479.890,sira:2705,kont:80,yop:"104110156",yillar:[2020,2021,2022,2023,2024],siralar:[4200,3780,3382,3024,2705],puanlar:[463.450,467.230,471.450,475.670,479.890]},
-{uni:"Ankara Üniversitesi",uniId:"ankara",bolum:"İktisat",tip:"EA",uniTip:"Devlet",sehir:"Ankara",puan:466.000,sira:4182,kont:180,yop:"104110247",yillar:[2020,2021,2022,2023,2024],siralar:[6500,5850,5232,4678,4182],puanlar:[449.560,453.340,457.560,461.780,466.000]},
-{uni:"Ankara Üniversitesi",uniId:"ankara",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:476.780,sira:3082,kont:100,yop:"104110172",yillar:[2020,2021,2022,2023,2024],siralar:[4800,4320,3862,3450,3082],puanlar:[460.340,464.120,468.340,472.560,476.780]},
-{uni:"Bilkent Üniversitesi",uniId:"bilkent",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Vakıf",sehir:"Ankara",puan:521.450,sira:248,kont:80,yop:"104610172",yillar:[2020,2021,2022,2023,2024],siralar:[412,365,322,282,248],puanlar:[504.230,508.120,512.340,516.560,521.450]},
-{uni:"Bilkent Üniversitesi",uniId:"bilkent",bolum:"Elektrik-Elektronik Mühendisliği (İng)",tip:"SAY",uniTip:"Vakıf",sehir:"Ankara",puan:523.890,sira:215,kont:80,yop:"104610181",yillar:[2020,2021,2022,2023,2024],siralar:[358,315,278,244,215],puanlar:[506.450,510.340,514.560,518.780,523.890]},
-{uni:"Bilkent Üniversitesi",uniId:"bilkent",bolum:"İşletme (İng)",tip:"EA",uniTip:"Vakıf",sehir:"Ankara",puan:518.780,sira:312,kont:80,yop:"104610247",yillar:[2020,2021,2022,2023,2024],siralar:[520,458,403,355,312],puanlar:[501.890,505.780,510.000,514.230,518.780]},
-{uni:"Bilkent Üniversitesi",uniId:"bilkent",bolum:"Hukuk (İng)",tip:"SÖZ",uniTip:"Vakıf",sehir:"Ankara",puan:514.230,sira:428,kont:60,yop:"104610215",yillar:[2020,2021,2022,2023,2024],siralar:[712,628,552,488,428],puanlar:[496.780,500.670,504.890,509.110,514.230]},
-{uni:"Bilkent Üniversitesi",uniId:"bilkent",bolum:"Psikoloji (İng)",tip:"EA",uniTip:"Vakıf",sehir:"Ankara",puan:516.560,sira:368,kont:50,yop:"104610296",yillar:[2020,2021,2022,2023,2024],siralar:[612,538,475,415,368],puanlar:[499.120,503.010,507.230,511.450,516.560]},
-{uni:"Koç Üniversitesi",uniId:"koc",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Vakıf",sehir:"İstanbul",puan:520.890,sira:262,kont:50,yop:"209110172",yillar:[2020,2021,2022,2023,2024],siralar:[435,384,338,297,262],puanlar:[503.450,507.340,511.560,515.780,520.890]},
-{uni:"Koç Üniversitesi",uniId:"koc",bolum:"Elektrik-Elektronik Mühendisliği (İng)",tip:"SAY",uniTip:"Vakıf",sehir:"İstanbul",puan:519.340,sira:295,kont:60,yop:"209110181",yillar:[2020,2021,2022,2023,2024],siralar:[492,432,382,336,295],puanlar:[501.890,505.780,510.000,514.230,519.340]},
-{uni:"Koç Üniversitesi",uniId:"koc",bolum:"Hukuk (İng)",tip:"SÖZ",uniTip:"Vakıf",sehir:"İstanbul",puan:517.230,sira:328,kont:55,yop:"209110215",yillar:[2020,2021,2022,2023,2024],siralar:[548,482,425,374,328],puanlar:[499.890,503.780,508.000,512.230,517.230]},
-{uni:"Koç Üniversitesi",uniId:"koc",bolum:"İşletme (İng)",tip:"EA",uniTip:"Vakıf",sehir:"İstanbul",puan:518.780,sira:305,kont:55,yop:"209110247",yillar:[2020,2021,2022,2023,2024],siralar:[508,448,394,347,305],puanlar:[501.230,505.120,509.340,513.560,518.780]},
-{uni:"Koç Üniversitesi",uniId:"koc",bolum:"Psikoloji (İng)",tip:"EA",uniTip:"Vakıf",sehir:"İstanbul",puan:515.670,sira:372,kont:40,yop:"209110296",yillar:[2020,2021,2022,2023,2024],siralar:[620,545,480,424,372],puanlar:[498.560,502.450,506.670,510.890,515.670]},
-{uni:"Sabancı Üniversitesi",uniId:"sabanci",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Vakıf",sehir:"İstanbul",puan:517.890,sira:328,kont:55,yop:"210510172",yillar:[2020,2021,2022,2023,2024],siralar:[548,482,424,374,328],puanlar:[500.450,504.340,508.560,512.780,517.890]},
-{uni:"Sabancı Üniversitesi",uniId:"sabanci",bolum:"Elektrik-Elektronik Mühendisliği (İng)",tip:"SAY",uniTip:"Vakıf",sehir:"İstanbul",puan:516.340,sira:368,kont:55,yop:"210510181",yillar:[2020,2021,2022,2023,2024],siralar:[612,538,475,418,368],puanlar:[498.890,502.780,507.000,511.230,516.340]},
-{uni:"Sabancı Üniversitesi",uniId:"sabanci",bolum:"İşletme (İng)",tip:"EA",uniTip:"Vakıf",sehir:"İstanbul",puan:516.780,sira:358,kont:60,yop:"210510247",yillar:[2020,2021,2022,2023,2024],siralar:[598,526,463,408,358],puanlar:[499.120,503.010,507.230,511.450,516.780]},
-{uni:"Gazi Üniversitesi",uniId:"gazi",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:545.780,sira:368,kont:150,yop:"104310112",yillar:[2020,2021,2022,2023,2024],siralar:[612,538,475,418,368],puanlar:[523.450,529.120,534.780,540.450,545.780]},
-{uni:"Gazi Üniversitesi",uniId:"gazi",bolum:"Diş Hekimliği",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:528.340,sira:1185,kont:90,yop:"104310121",yillar:[2020,2021,2022,2023,2024],siralar:[1975,1778,1590,1420,1185],puanlar:[506.120,511.780,517.450,523.120,528.340]},
-{uni:"Gazi Üniversitesi",uniId:"gazi",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"Ankara",puan:462.340,sira:5348,kont:180,yop:"104310215",yillar:[2020,2021,2022,2023,2024],siralar:[8912,8022,7172,6412,5348],puanlar:[447.560,451.340,455.560,459.780,462.340]},
-{uni:"Gazi Üniversitesi",uniId:"gazi",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:480.560,sira:2658,kont:100,yop:"104310172",yillar:[2020,2021,2022,2023,2024],siralar:[4430,3988,3565,3188,2658],puanlar:[464.340,468.120,472.340,476.560,480.560]},
-{uni:"Gazi Üniversitesi",uniId:"gazi",bolum:"Mimarlık",tip:"SAY",uniTip:"Devlet",sehir:"Ankara",puan:474.230,sira:3542,kont:100,yop:"104310228",yillar:[2020,2021,2022,2023,2024],siralar:[5904,5314,4750,4248,3542],puanlar:[457.780,461.560,465.780,470.000,474.230]},
-{uni:"Marmara Üniversitesi",uniId:"marmara",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:548.230,sira:298,kont:160,yop:"205210112",yillar:[2020,2021,2022,2023,2024],siralar:[498,438,384,338,298],puanlar:[526.780,532.450,538.120,543.780,548.230]},
-{uni:"Marmara Üniversitesi",uniId:"marmara",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"İstanbul",puan:464.890,sira:4882,kont:200,yop:"205210215",yillar:[2020,2021,2022,2023,2024],siralar:[8136,7324,6552,5862,4882],puanlar:[450.120,453.900,458.120,462.340,464.890]},
-{uni:"Marmara Üniversitesi",uniId:"marmara",bolum:"Diş Hekimliği",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:534.560,sira:908,kont:80,yop:"205210121",yillar:[2020,2021,2022,2023,2024],siralar:[1512,1360,1218,1090,908],puanlar:[512.340,518.010,523.680,529.340,534.560]},
-{uni:"Marmara Üniversitesi",uniId:"marmara",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:487.230,sira:2124,kont:80,yop:"205210172",yillar:[2020,2021,2022,2023,2024],siralar:[3540,3186,2850,2550,2124],puanlar:[471.120,474.900,479.120,483.340,487.230]},
-{uni:"Yıldız Teknik Üniversitesi",uniId:"yildiz",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:467.800,sira:4572,kont:100,yop:"205610172",yillar:[2020,2021,2022,2023,2024],siralar:[7620,6858,6134,5490,4572],puanlar:[452.500,457.300,462.100,467.800,467.800]},
-{uni:"Yıldız Teknik Üniversitesi",uniId:"yildiz",bolum:"Elektrik-Elektronik Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:465.100,sira:5112,kont:120,yop:"205610181",yillar:[2020,2021,2022,2023,2024],siralar:[8520,7668,6860,6140,5112],puanlar:[449.800,454.600,459.400,465.100,465.100]},
-{uni:"Yıldız Teknik Üniversitesi",uniId:"yildiz",bolum:"Mimarlık",tip:"EA",uniTip:"Devlet",sehir:"İstanbul",puan:461.600,sira:6100,kont:100,yop:"205610228",yillar:[2020,2021,2022,2023,2024],siralar:[10166,9150,8188,7328,6100],puanlar:[446.300,451.100,455.900,461.600,461.600]},
-{uni:"Yıldız Teknik Üniversitesi",uniId:"yildiz",bolum:"Makine Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:462.900,sira:5650,kont:110,yop:"205610289",yillar:[2020,2021,2022,2023,2024],siralar:[9415,8475,7580,6782,5650],puanlar:[447.600,452.400,457.200,462.900,462.900]},
-{uni:"Ege Üniversitesi",uniId:"ege",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"İzmir",puan:552.340,sira:238,kont:150,yop:"305810112",yillar:[2020,2021,2022,2023,2024],siralar:[397,348,305,268,238],puanlar:[530.120,535.780,541.450,547.120,552.340]},
-{uni:"Ege Üniversitesi",uniId:"ege",bolum:"Diş Hekimliği",tip:"SAY",uniTip:"Devlet",sehir:"İzmir",puan:537.450,sira:758,kont:80,yop:"305810121",yillar:[2020,2021,2022,2023,2024],siralar:[1264,1138,1018,910,758],puanlar:[515.120,520.780,526.450,532.120,537.450]},
-{uni:"Ege Üniversitesi",uniId:"ege",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"İzmir",puan:469.780,sira:4218,kont:150,yop:"305810215",yillar:[2020,2021,2022,2023,2024],siralar:[7030,6328,5662,5068,4218],puanlar:[454.120,457.900,462.120,466.340,469.780]},
-{uni:"Ege Üniversitesi",uniId:"ege",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"İzmir",puan:485.670,sira:2352,kont:100,yop:"305810172",yillar:[2020,2021,2022,2023,2024],siralar:[3920,3528,3158,2826,2352],puanlar:[469.450,473.230,477.450,481.670,485.670]},
-{uni:"Dokuz Eylül Üniversitesi",uniId:"deu",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"İzmir",puan:543.780,sira:408,kont:130,yop:"306210112",yillar:[2020,2021,2022,2023,2024],siralar:[680,612,548,490,408],puanlar:[521.340,527.010,532.680,538.340,543.780]},
-{uni:"Dokuz Eylül Üniversitesi",uniId:"deu",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"İzmir",puan:471.600,sira:3804,kont:120,yop:"306210215",yillar:[2020,2021,2022,2023,2024],siralar:[6340,5706,5106,4568,3804],puanlar:[456.300,460.100,464.300,468.500,471.600]},
-{uni:"Dokuz Eylül Üniversitesi",uniId:"deu",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"İzmir",puan:473.100,sira:3528,kont:100,yop:"306210172",yillar:[2020,2021,2022,2023,2024],siralar:[5880,5292,4736,4238,3528],puanlar:[457.800,462.600,467.400,473.100,473.100]},
-{uni:"Karadeniz Teknik Üniversitesi",uniId:"ktu",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"Trabzon",puan:498.500,sira:1618,kont:100,yop:"614210112",yillar:[2020,2021,2022,2023,2024],siralar:[2697,2428,2172,1942,1618],puanlar:[483.200,488.000,492.800,498.500,498.500]},
-{uni:"Karadeniz Teknik Üniversitesi",uniId:"ktu",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"Trabzon",puan:450.300,sira:13714,kont:60,yop:"614210172",yillar:[2020,2021,2022,2023,2024],siralar:[22857,20572,18412,16480,13714],puanlar:[435.000,439.800,444.600,450.300,450.300]},
-{uni:"Karadeniz Teknik Üniversitesi",uniId:"ktu",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"Trabzon",puan:446.900,sira:17250,kont:100,yop:"614210215",yillar:[2020,2021,2022,2023,2024],siralar:[28750,25876,23155,20722,17250],puanlar:[431.600,436.400,441.200,446.900,446.900]},
-{uni:"Selçuk Üniversitesi",uniId:"selcuk",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"Konya",puan:493.800,sira:2170,kont:130,yop:"414110112",yillar:[2020,2021,2022,2023,2024],siralar:[3617,3256,2915,2608,2170],puanlar:[478.500,483.300,488.100,493.800,493.800]},
-{uni:"Selçuk Üniversitesi",uniId:"selcuk",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"Konya",puan:456.600,sira:19734,kont:150,yop:"414110215",yillar:[2020,2021,2022,2023,2024],siralar:[32890,29602,26500,23718,19734],puanlar:[441.300,446.100,450.900,456.600,456.600]},
-{uni:"Selçuk Üniversitesi",uniId:"selcuk",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"Konya",puan:467.000,sira:12250,kont:100,yop:"414110172",yillar:[2020,2021,2022,2023,2024],siralar:[20417,18375,16444,14722,12250],puanlar:[451.700,456.500,461.300,467.000,467.000]},
-{uni:"Erciyes Üniversitesi",uniId:"erciyes",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"Kayseri",puan:496.900,sira:1876,kont:130,yop:"381210112",yillar:[2020,2021,2022,2023,2024],siralar:[3127,2814,2518,2254,1876],puanlar:[481.600,486.400,491.200,496.900,496.900]},
-{uni:"Erciyes Üniversitesi",uniId:"erciyes",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"Kayseri",puan:469.600,sira:10010,kont:100,yop:"381210172",yillar:[2020,2021,2022,2023,2024],siralar:[16683,15015,13444,12032,10010],puanlar:[454.300,459.100,463.900,469.600,469.600]},
-{uni:"Uludağ Üniversitesi",uniId:"uludag",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"Bursa",puan:492.000,sira:2450,kont:130,yop:"164310112",yillar:[2020,2021,2022,2023,2024],siralar:[4083,3674,3288,2944,2450],puanlar:[477.500,482.300,487.100,492.000,492.000]},
-{uni:"Uludağ Üniversitesi",uniId:"uludag",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"Bursa",puan:459.200,sira:17652,kont:150,yop:"164310215",yillar:[2020,2021,2022,2023,2024],siralar:[29420,26478,23692,21216,17652],puanlar:[443.900,448.700,453.500,459.200,459.200]},
-{uni:"Uludağ Üniversitesi",uniId:"uludag",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"Bursa",puan:471.200,sira:9444,kont:100,yop:"164310172",yillar:[2020,2021,2022,2023,2024],siralar:[15740,14166,12684,11356,9444],puanlar:[455.900,460.700,465.500,471.200,471.200]},
-{uni:"İstanbul Üniversitesi",uniId:"istanbul",bolum:"Tıp",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:557.340,sira:172,kont:200,yop:"205110112",yillar:[2020,2021,2022,2023,2024],siralar:[287,252,220,193,172],puanlar:[535.450,541.120,546.780,552.450,557.340]},
-{uni:"İstanbul Üniversitesi",uniId:"istanbul",bolum:"Hukuk",tip:"SÖZ",uniTip:"Devlet",sehir:"İstanbul",puan:481.600,sira:3876,kont:180,yop:"205110215",yillar:[2020,2021,2022,2023,2024],siralar:[6460,5814,5202,4658,3876],puanlar:[466.000,469.780,474.000,478.230,481.600]},
-{uni:"İstanbul Üniversitesi",uniId:"istanbul",bolum:"Bilgisayar Mühendisliği",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:491.400,sira:2282,kont:80,yop:"205110172",yillar:[2020,2021,2022,2023,2024],siralar:[3803,3424,3064,2742,2282],puanlar:[475.450,479.230,483.450,487.670,491.400]},
-{uni:"Galatasaray Üniversitesi",uniId:"gsu",bolum:"Hukuk (Fransızca)",tip:"SÖZ",uniTip:"Devlet",sehir:"İstanbul",puan:504.500,sira:1070,kont:60,yop:"205310215",yillar:[2020,2021,2022,2023,2024],siralar:[1783,1606,1437,1288,1070],puanlar:[489.800,493.600,497.800,502.000,504.500]},
-{uni:"Galatasaray Üniversitesi",uniId:"gsu",bolum:"İşletme (Fransızca)",tip:"EA",uniTip:"Devlet",sehir:"İstanbul",puan:501.200,sira:1666,kont:50,yop:"205310247",yillar:[2020,2021,2022,2023,2024],siralar:[2777,2500,2237,2002,1666],puanlar:[486.800,490.600,494.800,499.000,501.200]},
-{uni:"Galatasaray Üniversitesi",uniId:"gsu",bolum:"Bilgisayar Mühendisliği (Fransızca)",tip:"SAY",uniTip:"Devlet",sehir:"İstanbul",puan:503.200,sira:1310,kont:40,yop:"205310172",yillar:[2020,2021,2022,2023,2024],siralar:[2183,1966,1760,1575,1310],puanlar:[488.500,492.300,496.500,500.700,503.200]},
-{uni:"İzmir Yüksek Teknoloji Enstitüsü",uniId:"iyte",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Devlet",sehir:"İzmir",puan:498.340,sira:1728,kont:60,yop:"306610172",yillar:[2020,2021,2022,2023,2024],siralar:[2880,2592,2320,2076,1728],puanlar:[483.100,487.900,492.700,498.300,498.340]},
-{uni:"TOBB Ekonomi ve Teknoloji Üniversitesi",uniId:"tobb_etu",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Vakıf",sehir:"Ankara",puan:513.450,sira:892,kont:50,yop:"104810172",yillar:[2020,2021,2022,2023,2024],siralar:[1487,1338,1198,1072,892],puanlar:[498.200,502.000,506.200,510.400,513.450]},
-{uni:"Özyeğin Üniversitesi",uniId:"ozyegin",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Vakıf",sehir:"İstanbul",puan:503.780,sira:1478,kont:45,yop:"211810172",yillar:[2020,2021,2022,2023,2024],siralar:[2463,2218,1986,1778,1478],puanlar:[488.500,492.300,496.500,500.700,503.780]},
-{uni:"Başkent Üniversitesi",uniId:"baskent",bolum:"Tıp",tip:"SAY",uniTip:"Vakıf",sehir:"Ankara",puan:528.890,sira:1950,kont:105,yop:"104510112",yillar:[2020,2021,2022,2023,2024],siralar:[5500,4400,3410,2600,1950],puanlar:[506.230,511.890,517.560,523.230,528.890]},
-{uni:"Bahçeşehir Üniversitesi",uniId:"bahcesehir",bolum:"Bilgisayar Mühendisliği (İng)",tip:"SAY",uniTip:"Vakıf",sehir:"İstanbul",puan:490.450,sira:2608,kont:50,yop:"209710172",yillar:[2020,2021,2022,2023,2024],siralar:[4347,3912,3502,3136,2608],puanlar:[475.200,479.000,483.200,487.400,490.450]},
-{uni:"Yeditepe Üniversitesi",uniId:"yeditepe",bolum:"Tıp",tip:"SAY",uniTip:"Vakıf",sehir:"İstanbul",puan:512.340,sira:3280,kont:100,yop:"209910112",yillar:[2020,2021,2022,2023,2024],siralar:[5467,4920,4405,3944,3280],puanlar:[491.760,496.400,501.040,507.340,512.340]},
-{uni:"Yeditepe Üniversitesi",uniId:"yeditepe",bolum:"Diş Hekimliği",tip:"SAY",uniTip:"Vakıf",sehir:"İstanbul",puan:509.230,sira:3892,kont:80,yop:"209910121",yillar:[2020,2021,2022,2023,2024],siralar:[6487,5838,5227,4680,3892],puanlar:[488.650,493.290,497.930,504.230,509.230]},
-];
-
-// ═══════════════════════════════════════════════════════════
-// 🔭 ATLAS SİSTEMİ — YÖK Atlas Arama & Bölüm Karşılaştırma
-// ═══════════════════════════════════════════════════════════
-
-window._uniActiveTab = 'list';
-
-window.uniTabSwitch = function(tab){
-  window._uniActiveTab = tab;
-  const pList  = document.getElementById('uni-panel-list');
-  const pAtlas = document.getElementById('uni-panel-atlas');
-  const tList  = document.getElementById('uni-tab-list');
-  const tAtlas = document.getElementById('uni-tab-atlas');
-  if(!pList || !pAtlas) return;
-  if(tab === 'list'){
-    pList.style.display  = '';
-    pAtlas.style.display = 'none';
-    if(tList)  { tList.style.background  = 'linear-gradient(135deg,var(--pu),var(--pk))'; tList.style.color  = '#fff'; }
-    if(tAtlas) { tAtlas.style.background = 'transparent';  tAtlas.style.color = 'var(--t3)'; }
   } else {
-    pList.style.display  = 'none';
-    pAtlas.style.display = '';
-    if(tAtlas) { tAtlas.style.background = 'linear-gradient(135deg,var(--pu),var(--pk))'; tAtlas.style.color = '#fff'; }
-    if(tList)  { tList.style.background  = 'transparent';  tList.style.color  = 'var(--t3)'; }
-    // Focus search box
-    setTimeout(()=>{ const i=document.getElementById('atlas-search-inp'); if(i) i.focus(); },120);
+    if(hedef) {
+      html += `<div style="font-size:8px;font-weight:900;color:var(--gold);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;">🎯 Hedef Üniversitem</div>`;
+      html += trackedCard(hedef);
+    }
+    if(rest.length) {
+      html += `<div style="font-size:8px;font-weight:900;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin:${hedef?'12px':'0'} 0 6px;">📋 Takip Listesi (${rest.length})</div>`;
+      rest.forEach(u => html += trackedCard(u));
+    }
+    html += `<div style="margin-top:10px;"><button onclick="_uAS('atlas')" style="width:100%;padding:11px;border-radius:11px;border:1.5px dashed rgba(124,77,255,.28);background:rgba(124,77,255,.05);color:var(--pu);font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">➕ Yeni Üniversite Keşfet</button></div>`;
   }
+  html += `</div>`;
+
+  // ── ATLAS PANEL ──
+  html += `<div id="_up-atlas" style="display:${tab==='atlas'?'block':'none'};">`;
+  html += `<div style="display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:9px;-webkit-overflow-scrolling:touch;">`;
+  filters.forEach(f => {
+    const a = filt===f;
+    html += `<button onclick="_uAF('${f}')" style="padding:5px 12px;border-radius:100px;border:1.5px solid ${a?'var(--pu)':'rgba(255,255,255,.08)'};background:${a?'rgba(124,77,255,.2)':'var(--c1)'};color:${a?'var(--pu)':'var(--t3)'};font-size:9px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;transition:all .15s;">${f}</button>`;
+  });
+  html += `</div>`;
+  html += `<div style="font-size:8px;color:var(--t3);font-weight:700;margin-bottom:9px;letter-spacing:.3px;">${filtList.length} üniversite</div>`;
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;">`;
+  filtList.forEach(u => html += atlasCard(u));
+  html += `</div></div>`;
+
+  document.getElementById('page').innerHTML = html;
 };
 
-// ─── Atlas paneli HTML ───
-window.buildAtlasPanel = function(){
-  return `
-  <div style="padding-bottom:4px;">
-    <div style="background:var(--c1);border:1.5px solid rgba(124,77,255,.3);border-radius:14px;padding:13px;margin-bottom:12px;">
-      <div style="font-size:10px;font-weight:900;color:var(--pu);margin-bottom:10px;">🔭 Üniversite & Bölüm Ara</div>
-      <input type="text" id="atlas-uni-inp" placeholder="Üniversite adı (ODTÜ, Boğaziçi...)"
-        style="margin-bottom:8px;"
-        onkeydown="if(event.key==='Enter')atlasSearch()"/>
-      <input type="text" id="atlas-dept-inp" placeholder="Bölüm adı (Tıp, Bilgisayar Müh...)"
-        style="margin-bottom:10px;"
-        onkeydown="if(event.key==='Enter')atlasSearch()"/>
-      <button onclick="atlasSearch()" style="width:100%;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;font-size:12px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">
-        🔍 Ara
-      </button>
-    </div>
-    <div style="margin-bottom:12px;">
-      <div style="font-size:9px;font-weight:900;color:var(--t3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">⚡ Popüler Bölümler</div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;">
-        ${['Tıp','Bilgisayar Mühendisliği','Hukuk','Diş Hekimliği','Psikoloji','Elektrik-Elektronik Müh.','İşletme','Mimarlık','Eczacılık','Endüstri Müh.'].map(b=>`
-          <button onclick="atlasQuickSearch('${b}')" style="padding:5px 10px;border-radius:8px;border:1px solid var(--br);background:var(--c1);color:var(--t2);font-size:9px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">${b}</button>
-        `).join('')}
+// ─── Tab + filter helpers ─────────────────────────────────────────
+window._uAS = function(tab) {
+  window._uA.tab = tab;
+  ['list','atlas'].forEach(t => {
+    const p = document.getElementById('_up-'+t);
+    if(p) p.style.display = t===tab?'block':'none';
+    const b = document.getElementById('uta-'+t);
+    if(b) {
+      b.style.background = t===tab?'linear-gradient(135deg,var(--pu),var(--pk))':'transparent';
+      b.style.color = t===tab?'#fff':'var(--t3)';
+    }
+  });
+};
+window.uniTabSwitch = window._uAS;
+window._uAF = function(f) { window._uA.filter=f; renderTargets(); setTimeout(()=>_uAS('atlas'),10); };
+
+// ══════════════════════════════════════════════════════════════════
+// DETAIL VIEW
+// ══════════════════════════════════════════════════════════════════
+window.showUniDet = function(id) {
+  const allList = typeof ALL_UNI_LIST!=='undefined' ? ALL_UNI_LIST : [];
+  const listInfo = allList.find(u=>u.id===id);
+  if(!listInfo && !(S.unis||[]).find(x=>x.id===id)) { toast('Üniversite bulunamadı'); return; }
+  window._uA.detUid = id;
+
+  const u     = (S.unis||[]).find(x=>x.id===id) || null;
+  const db    = (typeof UNI_DB!=='undefined' ? UNI_DB[id] : null) || {};
+  const li    = listInfo || {name:u?.name||id, sehir:u?.sehir||'', tip:u?.tip||'Devlet', bg:'linear-gradient(135deg,#1a1a2e,#4c1d95)'};
+  const isTracked = !!u;
+  const isDef = DEFAULT_IDS.has(id);
+
+  const fullName = db.tamAd || u?.fullName || li.name;
+  const sehir    = u?.sehir || li.sehir || '';
+  const tip      = db.tip   || u?.tip   || li.tip || '';
+  const dil      = db.dil   || u?.dil   || '';
+  const bg       = u?.bg    || li.bg    || 'linear-gradient(135deg,#0a0a2e,#2d1b69)';
+  const photo    = u?.photo || db.coverPhoto || null;
+  const ozet     = db.ozet  || u?.note  || '';
+  const wUrl     = _wUrl(id, fullName);
+  const kurulus  = db.kurulus || null;
+
+  const trackedDepts = u?.depts || [];
+  const hedefIdx     = u?.hedefDept;
+  const detTab       = window._uA.detTab || 'Tümü';
+  const detQ         = (window._uA.detQ || '').toLowerCase().trim();
+
+  // ── dept tab bar ──
+  const tabBar = ['Tümü','SAY','EA','SÖZ','DİL'].map(t=>{
+    const a = detTab===t;
+    const c = TC[t]||'#fff';
+    return `<button onclick="_uDT('${t}')" style="padding:6px 13px;border-radius:100px;border:1.5px solid ${a?(TC[t]||'rgba(255,255,255,.25)'):'rgba(255,255,255,.07)'};background:${a?TBG[t]||'rgba(255,255,255,.1)':'transparent'};color:${a?(TC[t]||'#fff'):'var(--t3)'};font-size:9px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;transition:all .15s;">${t}</button>`;
+  }).join('');
+
+  // ── filter depts ──
+  const visibleDepts = _BD.filter(d=>{
+    if(detTab!=='Tümü' && d.t!==detTab) return false;
+    if(detQ && !d.n.toLowerCase().includes(detQ) && !d.c.toLowerCase().includes(detQ)) return false;
+    return true;
+  });
+
+  // ── dept rows ──
+  const deptRows = visibleDepts.map(d=>{
+    const sc = _score(d.n, id);
+    const added = trackedDepts.some(td=>td.n===d.n||td.name===d.n);
+    const isHD  = added && hedefIdx!=null && (trackedDepts[hedefIdx]?.n===d.n||trackedDepts[hedefIdx]?.name===d.n);
+    const dtc   = TC[d.t]||'#7c4dff';
+    const esc   = d.n.replace(/'/g,"\\'");
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:${isHD?'rgba(245,166,35,.08)':added?'rgba(67,160,71,.05)':'rgba(255,255,255,.022)'};border:1px solid ${isHD?'rgba(245,166,35,.28)':added?'rgba(67,160,71,.15)':'rgba(255,255,255,.04)'};margin-bottom:5px;">
+      <div style="font-size:16px;flex-shrink:0;line-height:1;">${d.i}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10px;font-weight:800;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.n}</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:2px;flex-wrap:wrap;">
+          <span style="font-size:7px;font-weight:900;padding:1px 5px;border-radius:4px;background:${TBG[d.t]};color:${dtc};">${d.t}</span>
+          ${sc?`<span style="font-size:8px;font-weight:800;color:var(--gold);">⭐ ${sc}</span>`:''}
+          ${d.d?`<span style="font-size:8px;color:var(--t3);">${d.d}</span>`:''}
+        </div>
       </div>
-    </div>
-    <div id="atlas-results"></div>
-  </div>`;
-};
-
-window._atlasFilter = { type: 'Tümü', tip: null };
-
-window.atlasQuickSearch = function(dept){
-  const di = document.getElementById('atlas-dept-inp');
-  const ui = document.getElementById('atlas-uni-inp');
-  if(di) di.value = dept;
-  if(ui) ui.value = '';
-  atlasSearch();
-};
-
-// ─── Ana arama fonksiyonu ───
-window.atlasSearch = async function(){
-  const uniQ  = (document.getElementById('atlas-uni-inp')?.value  || '').trim();
-  const deptQ = (document.getElementById('atlas-dept-inp')?.value || '').trim();
-  const res   = document.getElementById('atlas-results');
-  if(!res) return;
-  if(!uniQ && !deptQ){ toast('Üniversite veya bölüm adı gir!'); return; }
-
-  res.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:14px;background:rgba(124,77,255,.07);border-radius:12px;border:1px solid rgba(124,77,255,.2);">
-    <div style="width:15px;height:15px;border:2px solid rgba(124,77,255,.2);border-top-color:var(--pu);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;"></div>
-    <div>
-      <div style="font-size:10px;color:var(--pu);font-weight:800;">📡 YÖK Atlas verisi çekiliyor…</div>
-      <div style="font-size:8px;color:var(--t3);margin-top:2px;">${[uniQ,deptQ].filter(Boolean).join(' — ')} · yokatlas.yok.gov.tr</div>
-    </div>
-  </div>`;
-
-  try {
-    const results = await atlasApiSearch(uniQ, deptQ);
-    window._atlasLastResults = results;
-    atlasRenderResults(results);
-  } catch(e) {
-    res.innerHTML = `<div style="padding:14px;background:rgba(229,57,53,.07);border:1px solid rgba(229,57,53,.2);border-radius:12px;font-size:10px;color:#ef5350;font-weight:700;">
-      ❌ Veri alınamadı: ${e.message}
-      <div style="font-size:9px;color:var(--t3);font-weight:600;margin-top:5px;line-height:1.6;">YÖK Atlas bazen yavaş yanıt verebilir. Tekrar dene veya farklı bir bölüm ismi yaz.</div>
-      <button onclick="atlasSearch()" style="margin-top:8px;padding:7px 14px;border-radius:8px;border:none;background:var(--pu);color:#fff;font-size:10px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">🔄 Tekrar Dene</button>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        ${isHD?
+          `<button onclick="_bRH('${id}')" style="padding:5px 9px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#ef4444;font-size:9px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">✕ Hedef</button>`:
+          added?
+          `<button onclick="_bSH('${id}','${esc}')" style="padding:5px 9px;border-radius:7px;border:1px solid rgba(245,166,35,.3);background:rgba(245,166,35,.1);color:var(--gold);font-size:9px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">🎯 Hedef</button>
+           <button onclick="_bRD('${id}','${esc}')" style="padding:5px 8px;border-radius:7px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.07);color:#ef4444;font-size:9px;cursor:pointer;font-family:Nunito,sans-serif;">✕</button>`:
+          `<button onclick="_bAD('${id}','${esc}')" style="padding:5px 9px;border-radius:7px;border:1px solid rgba(124,77,255,.3);background:rgba(124,77,255,.1);color:var(--pu);font-size:9px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">+ Ekle</button>
+           <button onclick="_bSH('${id}','${esc}')" style="padding:5px 9px;border-radius:7px;border:none;background:linear-gradient(135deg,rgba(245,166,35,.2),rgba(245,166,35,.1));color:var(--gold);font-size:9px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">🎯</button>`
+        }
+      </div>
     </div>`;
-  }
-};
+  }).join('');
 
-// ═══════════════════════════════════════════════════════════
-// 🔭 ATLAS ARAMA — YÖK Atlas Direkt API + Claude Yedek
-// ═══════════════════════════════════════════════════════════
+  const inner = document.getElementById('uni-det-in');
+  if(!inner) return;
 
-// ─── YÖK Atlas JSON API — program arama ───
-window.atlasFetchYokAtlas = async function(uniQ, deptQ){
-  // yokatlas.yok.gov.tr'nin kendi arama JSON endpoint'i
-  // GET /content/home-search.php ile arama yapılıyor
-  const params = new URLSearchParams();
-  if(uniQ)  params.set('uni',  uniQ);
-  if(deptQ) params.set('bolum', deptQ);
-  params.set('tur', 'lisans');
+  inner.innerHTML = `<div style="background:var(--c1);border-radius:22px 22px 0 0;overflow:hidden;max-height:93vh;overflow-y:auto;" id="_uds">
 
-  const endpoints = [
-    // YÖK Atlas'ın kendi arama endpoint'leri
-    `https://yokatlas.yok.gov.tr/content/home-search.php?${params}`,
-    `https://yokatlas.yok.gov.tr/lisans-anasayfa.php?${params}`,
-  ];
-
-  for(const url of endpoints){
-    try {
-      const r = await fetch(url, {
-        signal: AbortSignal.timeout(6000),
-        headers: { 'Accept': 'application/json, text/plain, */*' }
-      });
-      if(!r.ok) continue;
-      const ct = r.headers.get('content-type')||'';
-      if(ct.includes('json')){
-        const json = await r.json();
-        const arr = Array.isArray(json) ? json : (json.data||json.results||json.programs||[]);
-        if(arr.length) return _mapYokAtlasResults(arr);
-      }
-    } catch(e){ continue; }
-  }
-  return null;
-};
-
-window._mapYokAtlasResults = function(arr){
-  return arr.map(p => ({
-    uni:    p.universite_adi || p.uni_adi || p.uni || '',
-    bolum:  p.program_adi   || p.bolum   || p.ad  || '',
-    tip:    (p.puan_turu    || p.tip     || 'SAY').toUpperCase(),
-    uniTip: p.uni_turu === '2' ? 'Vakıf' : 'Devlet',
-    sehir:  p.sehir         || p.il      || '',
-    puan:   parseFloat(p.taban_puan || p.puan || 0) || null,
-    sira:   parseInt(p.basa_sirasi  || p.sira || 0) || null,
-    kont:   parseInt(p.kontenjan   || p.kont  || 0) || null,
-    yop:    String(p.program_kodu  || p.yop   || ''),
-    yillar: [], siralar: [], puanlar: [],
-    _fromYokAtlas: true
-  })).filter(r => r.uni && r.bolum);
-};
-
-// ─── Yerel DB Arama (offline fallback) ───
-window.atlasLocalDBSearch = function(uniQ, deptQ){
-  const norm = s => (s||'').toLowerCase()
-    .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
-    .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c').trim();
-
-  const uniNorm = norm(uniQ);
-  const deptNorm = norm(deptQ);
-
-  const results = [];
-  const seen = new Set();
-
-  function addResult(r){
-    const key = norm(r.uni)+'|'+norm(r.bolum);
-    if(!seen.has(key)){ seen.add(key); results.push(r); }
-  }
-
-  // ── 1. UNI_DB ile yokAtlasByDept ──
-  for(const [uid, entry] of Object.entries(UNI_DB||{})){
-    const uniLabel = entry.tamAd || entry.kisaAd || uid.toUpperCase();
-    const uniTip = entry.tip || 'Devlet';
-    const sehir = entry.sehir || '';
-    // Üniversite filtresi
-    if(uniNorm){
-      const names = [norm(uniLabel), norm(entry.tamAd||''), norm(entry.kisaAd||''), norm(uid)];
-      if(!names.some(n => n && (n.includes(uniNorm) || uniNorm.includes(n)))) continue;
-    }
-    // Bölüm arama
-    const byDept = entry.yokAtlasByDept || {};
-    for(const [dName, dData] of Object.entries(byDept)){
-      if(deptNorm && !norm(dName).includes(deptNorm) && !deptNorm.includes(norm(dName))) continue;
-      const puan = dData.puanlar ? dData.puanlar[dData.puanlar.length-1] : null;
-      const sira = dData.siralar ? dData.siralar[dData.siralar.length-1] : null;
-      addResult({ uni:uniLabel, bolum:dName, tip:_guessTip(dName), uniTip, sehir,
-        puan:puan||null, sira:sira||null,
-        kont:dData.kontenjan?dData.kontenjan[dData.kontenjan.length-1]:null,
-        yop:'', yillar:dData.yillar||[2024],
-        siralar:dData.siralar||[], puanlar:dData.puanlar||[], _fromLocal:true });
-    }
-  }
-
-  // ── 2. DEPT_DB × DEPT_DB.scores ──
-  for(const dept of (DEPT_DB||[])){
-    if(deptNorm && !norm(dept.name).includes(deptNorm) && !deptNorm.includes(norm(dept.name))) continue;
-    for(const [uniName, puan] of Object.entries(dept.scores||{})){
-      if(uniNorm && !norm(uniName).includes(uniNorm) && !uniNorm.includes(norm(uniName))) continue;
-      // Tip bilgisini ALL_UNI_LIST'ten al
-      const listEntry = (typeof ALL_UNI_LIST!=='undefined'?ALL_UNI_LIST:[]).find(u=>norm(u.name)===norm(uniName)||norm(u.name).includes(norm(uniName))||norm(uniName).includes(norm(u.name)));
-      addResult({ uni:uniName, bolum:dept.name, tip:dept.type||'SAY',
-        uniTip:listEntry?.tip||'Devlet', sehir:listEntry?.sehir||'',
-        puan:parseFloat(puan)||null, sira:dept.rankBase||null, kont:dept.kontenjan||null,
-        yop:'', yillar:[2024], siralar:[], puanlar:[], _fromLocal:true });
-    }
-  }
-
-  // ── 3. Sadece üniversite araması — bölüm filtresi yoksa ALL_UNI_LIST'ten ──
-  if(uniNorm && !deptNorm){
-    const allList = (typeof ALL_UNI_LIST!=='undefined'?ALL_UNI_LIST:[]).concat(
-      (typeof DEF_UNIS!=='undefined'?DEF_UNIS:[])
-    );
-    for(const u of allList){
-      const names = [norm(u.name), norm(u.fullName||''), norm(u.id)];
-      if(!names.some(n=>n&&(n.includes(uniNorm)||uniNorm.includes(n)))) continue;
-      // En az bir bölüm placeholder ekle
-      addResult({ uni:u.fullName||u.name, bolum:'Tüm Bölümler', tip:'SAY',
-        uniTip:u.tip||'Devlet', sehir:u.sehir||'',
-        puan:null, sira:null, kont:null,
-        yop:'', yillar:[], siralar:[], puanlar:[], _fromLocal:true, _uniOnly:true });
-    }
-  }
-
-  return results.sort((a,b)=>(b.puan||0)-(a.puan||0)).slice(0,40);
-};
-
-function _guessTip(deptName){
-  const n = (deptName||'').toLowerCase();
-  if(n.includes('hukuk')||n.includes('işletme')||n.includes('iktisat')||n.includes('psikoloji')||n.includes('mimarlık')) return 'EA';
-  if(n.includes('edebiyat')||n.includes('tarih')||n.includes('felsefe')||n.includes('sosyoloji')) return 'SÖZ';
-  if(n.includes('dil')||n.includes('mütercim')||n.includes('öğretmenliği')&&n.includes('ingilizce')) return 'DİL';
-  return 'SAY';
-}
-
-// ─── Ana arama ───
-window.atlasApiSearch = async function(uniQuery, deptQuery){
-  // 1️⃣ Yerel DB — anlık, offline çalışır
-  try {
-    const local = atlasLocalDBSearch(uniQuery, deptQuery);
-    if(local && local.length) return local;
-  } catch(e){ console.warn('Yerel arama:', e.message); }
-
-  // 2️⃣ YÖK Atlas direkt API (CORS açıksa çalışır)
-  try {
-    const res = await atlasFetchYokAtlas(uniQuery, deptQuery);
-    if(res && res.length) return res;
-  } catch(e){ console.warn('YÖK Atlas direkt:', e.message); }
-
-  // 3️⃣ Claude API + web_search (claude.ai artifact olarak açıksa çalışır)
-  try {
-    return await atlasClaudeSearch(uniQuery, deptQuery);
-  } catch(e){ console.warn('Claude API:', e.message); }
-
-  throw new Error('Sonuç bulunamadı. Daha kısa veya farklı anahtar kelimelerle dene.');
-};
-
-// ─── Claude API — YÖK Atlas verisi getir ───
-window.atlasClaudeSearch = async function(uniQ, deptQ){
-  const q = [uniQ, deptQ].filter(Boolean).join(' ');
-
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 8000,
-      system: `Sen YKS üniversite veri uzmanısın. yokatlas.yok.gov.tr sitesini web search ile ara. Kullanıcının arama sorgusuna uyan TÜM programları bul. 
-
-ÖNEMLİ KURALLAR:
-- Başarı sırası değerleri GERÇEK olmalı: çoğu program için 5.000 - 500.000 arası, tıp gibi zorlar için 100-5.000
-- Taban puan: 300-600 arası (YKS puanı)
-- yokatlas.yok.gov.tr'deki GERÇEK verileri kullan, tahmin yapma
-- Birden fazla üniversite/program varsa HEPSİNİ listele (en az 5-15 sonuç)
-- Yıllık trend: 2021-2024 arası gerçek veriler
-
-SADECE JSON array döndür, hiçbir açıklama ekleme:
-[{"uni":"Üniversite Adı","bolum":"Bölüm Adı","tip":"SAY","uniTip":"Devlet","sehir":"Ankara","puan":480.420,"sira":19498,"kont":95,"yop":"104110624","yillar":[2021,2022,2023,2024],"siralar":[34395,22863,15938,19498],"puanlar":[411.430,491.990,504.450,480.420]}]`,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{
-        role: 'user',
-        content: `yokatlas.yok.gov.tr adresinden "${q}" araması yap. Tüm eşleşen programların 2024 taban puanı, başarı sırası ve yıllık trend verilerini JSON olarak döndür. Sadece JSON array.`
-      }]
-    })
-  });
-
-  if(!resp.ok) throw new Error('API ' + resp.status);
-  const data = await resp.json();
-
-  // web_search tool otomatik çalışır, son metin yanıtı al
-  // Eğer tool_use ile durmuşsa devam et
-  if(data.stop_reason === 'tool_use'){
-    return await atlasClaudeSearchContinue(data);
-  }
-
-  return _parseClaudeJSON(data);
-};
-
-// tool_use döngüsü (web_search sonrası devam)
-window.atlasClaudeSearchContinue = async function(prevData){
-  const msgs = [
-    { role: 'user', content: prevData._originalMsg || 'Devam et' },
-    { role: 'assistant', content: prevData.content }
-  ];
-
-  // tool_result ekle
-  const toolResults = (prevData.content||[])
-    .filter(b => b.type === 'tool_use')
-    .map(b => ({ type: 'tool_result', tool_use_id: b.id, content: 'Arama tamamlandı.' }));
-  if(toolResults.length) msgs.push({ role: 'user', content: toolResults });
-
-  let turns = 5;
-  while(turns-- > 0){
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: msgs
-      })
-    });
-    if(!resp.ok) break;
-    const d = await resp.json();
-    if(d.stop_reason === 'end_turn') return _parseClaudeJSON(d);
-    if(d.stop_reason === 'tool_use'){
-      msgs.push({ role: 'assistant', content: d.content });
-      const tr = (d.content||[]).filter(b=>b.type==='tool_use')
-        .map(b=>({ type:'tool_result', tool_use_id:b.id, content:'Devam et.' }));
-      if(tr.length) msgs.push({ role:'user', content: tr });
-    } else break;
-  }
-  throw new Error('Yanıt alınamadı');
-};
-
-window._parseClaudeJSON = function(data){
-  const txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-  // JSON array bul
-  const m = txt.match(/\[\s*\{[\s\S]*?\}\s*\]/);
-  if(!m) throw new Error('JSON bulunamadı');
-  const arr = JSON.parse(m[0]);
-  if(!Array.isArray(arr)||!arr.length) throw new Error('Boş dizi');
-  return arr
-    .filter(r => r.uni && r.bolum && r.puan > 0)
-    .map(r => ({
-      ...r,
-      puan: Math.abs(parseFloat(r.puan)||0)||null,
-      sira: Math.abs(parseInt(r.sira)||0)||null,
-      kont: Math.abs(parseInt(r.kont)||0)||null,
-      yillar: Array.isArray(r.yillar)?r.yillar:[2024],
-      siralar: Array.isArray(r.siralar)?r.siralar.map(Math.abs):[],
-      puanlar: Array.isArray(r.puanlar)?r.puanlar:[],
-      _fromClaude: true
-    }));
-};
-
-// ─── Sonuçları render et ───
-window.atlasRenderResults = function(results){
-  const res = document.getElementById('atlas-results');
-  if(!res) return;
-  if(!results || !results.length){
-    res.innerHTML = `<div style="text-align:center;padding:22px;color:var(--t3);font-size:11px;">🔍 Sonuç bulunamadı. Farklı bir bölüm veya üniversite dene.</div>`;
-    return;
-  }
-  res.innerHTML = `
-  <div style="font-size:9px;font-weight:900;color:var(--t3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;">
-    ${results.length} SONUÇ
-  </div>
-  <div style="display:flex;flex-direction:column;gap:8px;">
-    ${results.map((r,i) => atlasResultCard(r,i)).join('')}
-  </div>`;
-};
-
-window.atlasResultCard = function(r, idx){
-  const tipC = r.uniTip === 'Vakıf' ? '#a855f7' : '#3b82f6';
-  const tipBg = r.uniTip === 'Vakıf' ? 'rgba(168,85,247,.15)' : 'rgba(59,130,246,.15)';
-  const typeColor = {SAY:'#ef4444',EA:'#f59e0b',SÖZ:'#3b82f6',DİL:'#a855f7'};
-  const tc = typeColor[r.tip] || '#7c4dff';
-
-  const alreadyAdded = (S.unis||[]).some(u => {
-    const nm = (u.fullName||u.name||'').toLowerCase();
-    const rUni = (r.uni||'').toLowerCase();
-    return nm.includes(rUni.split(' ')[0]) || rUni.includes((nm||'').split(' ')[0]);
-  }) && (S.unis||[]).some(u =>
-    (u.depts||[]).some(d => d.name === r.bolum)
-  );
-
-  return `<div style="background:var(--c1);border:1px solid var(--br);border-radius:14px;padding:13px;display:flex;align-items:center;gap:12px;">
-    <!-- İkon -->
-    <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,rgba(124,77,255,.2),rgba(224,64,251,.15));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🏛️</div>
-    <!-- Bilgi -->
-    <div style="flex:1;min-width:0;">
-      <div style="font-size:13px;font-weight:900;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.bolum||'—'}</div>
-      <div style="font-size:10px;font-weight:700;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.uni||'—'}</div>
-      <div style="display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap;">
-        ${r.tip ? `<span style="font-size:8px;font-weight:900;padding:2px 7px;border-radius:5px;background:${tc}20;color:${tc};border:1px solid ${tc}30;">${r.tip}</span>` : ''}
-        <span style="font-size:8px;font-weight:800;padding:2px 7px;border-radius:5px;background:${tipBg};color:${tipC};">${r.uniTip||'Devlet'}</span>
-        ${r.sehir ? `<span style="font-size:8px;color:var(--t3);">📍 ${r.sehir}</span>` : ''}
+    <!-- ══ HEADER BANNER ══ -->
+    <div style="position:relative;height:155px;background:${bg};overflow:hidden;flex-shrink:0;">
+      ${photo?`<img src="${photo}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:''}
+      <div style="position:absolute;inset:0;opacity:.18;background-image:radial-gradient(rgba(255,255,255,.08) 1px,transparent 1px);background-size:20px 20px;"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.04) 0%,rgba(0,0,0,.78) 100%);"></div>
+      <!-- Kapat -->
+      <button onclick="closeOv('ov-uni')" style="position:absolute;top:11px;right:11px;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px;cursor:pointer;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;z-index:3;">✕</button>
+      <!-- Foto değiştir -->
+      <label style="position:absolute;bottom:11px;right:11px;z-index:3;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:5px 9px;cursor:pointer;display:flex;align-items:center;gap:4px;">
+        <span style="font-size:9px;">📸</span><span style="font-size:8px;color:#fff;font-weight:700;">Foto</span>
+        <input type="file" accept="image/*" style="display:none;" onchange="changeUniCover('${id}',this)"/>
+      </label>
+      <div style="position:absolute;bottom:13px;left:14px;right:60px;z-index:2;">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap;">
+          ${tip?`<span style="font-size:8px;font-weight:800;padding:2px 9px;border-radius:20px;background:${tip==='Vakıf'?'rgba(168,85,247,.85)':'rgba(59,130,246,.85)'};color:#fff;">${tip}</span>`:''}
+          ${sehir?`<span style="font-size:9px;color:rgba(255,255,255,.75);">📍 ${sehir}</span>`:''}
+          ${dil?`<span style="font-size:9px;color:rgba(255,255,255,.6);">🌍 ${dil}</span>`:''}
+          ${kurulus?`<span style="font-size:9px;color:rgba(255,255,255,.55);">📅 ${kurulus}</span>`:''}
+        </div>
+        <div style="font-size:17px;font-weight:900;color:#fff;line-height:1.2;text-shadow:0 2px 14px rgba(0,0,0,.9);">${fullName}</div>
       </div>
     </div>
-    <!-- Ekle butonu -->
-    <button onclick="atlasAddToList(${idx})" style="flex-shrink:0;padding:8px 12px;border-radius:10px;border:none;background:${alreadyAdded?'rgba(67,160,71,.15)':'linear-gradient(135deg,var(--pu),var(--pk))'};color:${alreadyAdded?'#4caf50':'#fff'};font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">
-      ${alreadyAdded ? '✓ Eklendi' : '+ Hedef'}
-    </button>
+
+    <div style="padding:14px 14px 22px;">
+
+      <!-- ── Aksiyon Butonları ── -->
+      <div style="display:flex;gap:7px;margin-bottom:14px;">
+        ${wUrl?`<a href="${wUrl}" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--t2);text-decoration:none;font-size:10px;font-weight:700;font-family:Nunito,sans-serif;">🌐 Wikipedia</a>`:''}
+        ${!isTracked?
+          `<button onclick="_bAU('${id}')" style="flex:2;padding:9px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;font-size:10px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">+ Takip Et</button>`:
+          `<div style="flex:2;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px;border-radius:10px;border:1px solid rgba(67,160,71,.3);background:rgba(67,160,71,.07);color:#43a047;font-size:10px;font-weight:800;">✓ Takipte</div>`
+        }
+      </div>
+
+      <!-- ── Özet ── -->
+      ${ozet?`<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:10px;color:var(--t2);line-height:1.65;border:1px solid rgba(255,255,255,.05);">${ozet}</div>`:''}
+
+      <!-- ── Hedef bilgisi ── -->
+      ${(hedefIdx!=null&&trackedDepts[hedefIdx])?`<div style="background:rgba(245,166,35,.08);border:1.5px solid rgba(245,166,35,.28);border-radius:12px;padding:11px 13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">🎯</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:8px;color:var(--gold);font-weight:900;letter-spacing:.6px;margin-bottom:2px;">HEDEF BÖLÜMÜM</div>
+          <div style="font-size:12px;font-weight:900;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${trackedDepts[hedefIdx].name||trackedDepts[hedefIdx].n||''}</div>
+          ${(trackedDepts[hedefIdx].score&&trackedDepts[hedefIdx].score!=='—')?`<div style="font-size:10px;color:var(--gold);margin-top:1px;">Taban: ${trackedDepts[hedefIdx].score}</div>`:''}
+        </div>
+        <button onclick="_bRH('${id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:7px;color:#ef4444;cursor:pointer;font-size:10px;padding:6px 8px;font-family:Nunito,sans-serif;">✕</button>
+      </div>`:''}
+
+      <!-- ── Bölüm Tarayıcı Başlığı ── -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="height:1px;flex:1;background:rgba(255,255,255,.07);"></div>
+        <div style="font-size:8px;font-weight:900;color:var(--t3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">📚 Bölüm Tarayıcısı</div>
+        <div style="height:1px;flex:1;background:rgba(255,255,255,.07);"></div>
+      </div>
+
+      <!-- ── Type tabs ── -->
+      <div style="display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px;margin-bottom:9px;">
+        ${tabBar}
+      </div>
+
+      <!-- ── Search ── -->
+      <div style="position:relative;margin-bottom:8px;">
+        <input type="text" id="_uDQ" placeholder="Bölüm ara... (Tıp, Hukuk, Bilgisayar...)"
+          value="${(window._uA.detQ||'').replace(/"/g,'&quot;')}"
+          oninput="window._uA.detQ=this.value;_uDR()"
+          style="width:100%;padding:8px 11px 8px 32px;border-radius:9px;border:1px solid rgba(124,77,255,.22);background:rgba(124,77,255,.06);color:var(--t1);font-size:11px;font-family:Nunito,sans-serif;outline:none;box-sizing:border-box;">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;">🔍</span>
+      </div>
+
+      <div style="font-size:8px;color:var(--t3);margin-bottom:7px;font-weight:700;">${visibleDepts.length} bölüm${detQ?' — "'+window._uA.detQ+'"':''}</div>
+
+      <!-- ── Dept rows ── -->
+      <div id="_uDRows">
+        ${deptRows||`<div style="text-align:center;padding:24px;color:var(--t3);font-size:10px;">Sonuç bulunamadı 😔</div>`}
+      </div>
+
+      <!-- ── Eski bölümler (tracked depts) ── -->
+      ${trackedDepts.length?`
+      <div style="display:flex;align-items:center;gap:8px;margin:14px 0 9px;">
+        <div style="height:1px;flex:1;background:rgba(255,255,255,.07);"></div>
+        <div style="font-size:8px;font-weight:900;color:var(--t3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">📌 Eklediğim Bölümler</div>
+        <div style="height:1px;flex:1;background:rgba(255,255,255,.07);"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        ${trackedDepts.map((d,i)=>{
+          const n=d.name||d.n||'';
+          const isH3=hedefIdx===i;
+          const dtc3=TC[d.type]||'#7c4dff';
+          return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:${isH3?'rgba(245,166,35,.07)':'rgba(255,255,255,.03)'};border:1px solid ${isH3?'rgba(245,166,35,.25)':'rgba(255,255,255,.06)'};">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:10px;font-weight:800;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n}</div>
+              <div style="display:flex;gap:4px;align-items:center;margin-top:2px;">
+                <span style="font-size:7px;padding:1px 5px;border-radius:4px;background:${TBG[d.type]};color:${dtc3};font-weight:900;">${d.type}</span>
+                ${isH3?'<span style="font-size:8px;color:var(--gold);">🎯 Hedef</span>':''}
+                ${(d.score&&d.score!=='—')?`<span style="font-size:8px;color:var(--gold);">${d.score}</span>`:''}
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;">
+              ${!isH3?`<button onclick="setHedef('${id}',${i})" style="padding:4px 8px;border-radius:7px;border:1px solid rgba(245,166,35,.3);background:rgba(245,166,35,.1);color:var(--gold);font-size:8px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">🎯</button>`:''}
+              <button onclick="removeDept('${id}',${i})" style="padding:4px 8px;border-radius:7px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.07);color:#ef4444;font-size:10px;cursor:pointer;font-family:Nunito,sans-serif;">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`:''}
+
+      <!-- ── Sil + Kapat ── -->
+      ${isTracked&&!isDef?`<div style="margin-top:14px;"><button onclick="deleteUni('${id}')" style="width:100%;padding:9px;border-radius:10px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.06);color:#ef4444;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">🗑️ Takipten Çıkar</button></div>`:''}
+      <div style="margin-top:8px;"><button onclick="closeOv('ov-uni')" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--br);background:var(--c2);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">Kapat</button></div>
+    </div>
   </div>`;
+
+  window._currentUniDet = id;
+  showOv('ov-uni');
+  // Restore focus to search if there's a query
+  if(window._uA.detQ) setTimeout(()=>{
+    const el=document.getElementById('_uDQ');
+    if(el){el.focus();el.setSelectionRange(999,999);}
+  }, 60);
+};
+window.uniOpen = window.showUniDet;
+
+// ─── Dept tab switch (re-renders modal) ──────────────────────────
+window._uDT = function(tab) {
+  window._uA.detTab = tab;
+  const id = window._uA.detUid;
+  if(id) showUniDet(id);
 };
 
-// ─── Takip listesine ekle ───
-window.atlasAddToList = async function(idx){
-  const r = (window._atlasLastResults||[])[idx];
-  if(!r){ toast('Veri bulunamadı!'); return; }
+// ─── Re-render dept rows only (for search) ───────────────────────
+window._uDR = function() {
+  const id = window._uA.detUid;
+  if(!id) return;
+  const detTab = window._uA.detTab || 'Tümü';
+  const detQ   = (window._uA.detQ || '').toLowerCase().trim();
+  const u = (S.unis||[]).find(x=>x.id===id) || null;
+  const trackedDepts = u?.depts || [];
+  const hedefIdx = u?.hedefDept;
 
-  // Üniversiteyi bul veya oluştur
-  const uniNameNorm = (r.uni||'').toLowerCase();
-  let u = (S.unis||[]).find(x => {
-    const nm=(x.fullName||x.name||'').toLowerCase();
-    const fWord=uniNameNorm.split(' ')[0];
-    return nm.includes(fWord) || fWord.includes(nm.split(' ')[0]);
+  const vis = _BD.filter(d=>{
+    if(detTab!=='Tümü'&&d.t!==detTab) return false;
+    if(detQ&&!d.n.toLowerCase().includes(detQ)&&!d.c.toLowerCase().includes(detQ)) return false;
+    return true;
   });
 
-  if(!u){
-    // Yeni üniversite oluştur
-    const dbMatch = typeof UNI_DB !== 'undefined' ?
-      Object.entries(UNI_DB).find(([id,db]) => {
-        const t=(db.tamAd||id).toLowerCase();
-        return t.includes(uniNameNorm.split(' ')[0]) || uniNameNorm.includes(id);
-      }) : null;
+  const rows = vis.map(d=>{
+    const sc = _score(d.n, id);
+    const added = trackedDepts.some(td=>(td.n||td.name)===d.n);
+    const isHD  = added&&hedefIdx!=null&&((trackedDepts[hedefIdx]?.n||trackedDepts[hedefIdx]?.name)===d.n);
+    const dtc   = TC[d.t]||'#7c4dff';
+    const esc   = d.n.replace(/'/g,"\\'");
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:${isHD?'rgba(245,166,35,.08)':added?'rgba(67,160,71,.05)':'rgba(255,255,255,.022)'};border:1px solid ${isHD?'rgba(245,166,35,.28)':added?'rgba(67,160,71,.15)':'rgba(255,255,255,.04)'};margin-bottom:5px;">
+      <div style="font-size:16px;flex-shrink:0;line-height:1;">${d.i}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10px;font-weight:800;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.n}</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:2px;flex-wrap:wrap;">
+          <span style="font-size:7px;font-weight:900;padding:1px 5px;border-radius:4px;background:${TBG[d.t]};color:${dtc};">${d.t}</span>
+          ${sc?`<span style="font-size:8px;font-weight:800;color:var(--gold);">⭐ ${sc}</span>`:''}
+          ${d.d?`<span style="font-size:8px;color:var(--t3);">${d.d}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        ${isHD?
+          `<button onclick="_bRH('${id}')" style="padding:5px 9px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#ef4444;font-size:9px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">✕ Hedef</button>`:
+          added?
+          `<button onclick="_bSH('${id}','${esc}')" style="padding:5px 9px;border-radius:7px;border:1px solid rgba(245,166,35,.3);background:rgba(245,166,35,.1);color:var(--gold);font-size:9px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">🎯 Hedef</button>
+           <button onclick="_bRD('${id}','${esc}')" style="padding:5px 8px;border-radius:7px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.07);color:#ef4444;font-size:9px;cursor:pointer;font-family:Nunito,sans-serif;">✕</button>`:
+          `<button onclick="_bAD('${id}','${esc}')" style="padding:5px 9px;border-radius:7px;border:1px solid rgba(124,77,255,.3);background:rgba(124,77,255,.1);color:var(--pu);font-size:9px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">+ Ekle</button>
+           <button onclick="_bSH('${id}','${esc}')" style="padding:5px 9px;border-radius:7px;border:none;background:linear-gradient(135deg,rgba(245,166,35,.2),rgba(245,166,35,.1));color:var(--gold);font-size:9px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;">🎯</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
 
-    // ALL_UNI_LIST'te ara
-    const allListMatch = typeof ALL_UNI_LIST !== 'undefined' ?
-      ALL_UNI_LIST.find(x => {
-        const n = (x.name||'').toLowerCase().replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');
-        const nn = uniNameNorm.replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');
-        return n.includes(nn.split(' ')[0]) || nn.includes(n.split(' ')[0]);
-      }) : null;
-
-    const id = dbMatch ? dbMatch[0] : (allListMatch ? allListMatch.id : 'atlas_'+Date.now().toString(36));
-    const db = dbMatch ? dbMatch[1] : {};
-    if(!S.unis) S.unis = [];
-    u = {
-      id,
-      name: allListMatch?.name || db.kisaAd || (r.uni||id).split(' ').slice(0,2).join(' '),
-      fullName: allListMatch?.name || r.uni||id,
-      sehir: r.sehir||db.sehir||allListMatch?.sehir||'',
-      tip: r.uniTip||db.tip||allListMatch?.tip||'Devlet',
-      bg: allListMatch?.bg || db.logoColor || 'linear-gradient(135deg,#1a1a2e,#4c1d95)',
-      depts: [], hedefDept: null, photo: null
-    };
-    S.unis.push(u);
-  }
-
-  // Bölümü ekle
-  if(!u.depts) u.depts = [];
-  const deptName = r.bolum||'Bölüm';
-  if(u.depts.some(d => d.name === deptName)){
-    toast('Bu bölüm zaten takip listemde! 📌');
-    uniTabSwitch('list');
-    renderTargets();
-    return;
-  }
-
-  const yokAtlas = (r.yillar && r.siralar && r.siralar.length) ? {
-    bolum: `${r.uni} — ${deptName}`,
-    yillar: r.yillar,
-    siralar: r.siralar,
-    puanlar: r.puanlar || r.yillar.map(()=>null),
-    kontenjan: r.yillar.map(()=>r.kont||null),
-    yerlesen: r.yillar.map(()=>null),
-    _fromClaude: true
-  } : null;
-
-  if(yokAtlas){
-    if(!u.yokAtlasByDept) u.yokAtlasByDept = {};
-    u.yokAtlasByDept[deptName] = yokAtlas;
-  }
-
-  u.depts.push({
-    name: deptName,
-    type: r.tip||'SAY',
-    score: r.puan ? (typeof r.puan==='number'?r.puan.toFixed(3):String(r.puan)) : '—',
-    rank: r.sira ? '~'+parseInt(r.sira).toLocaleString('tr-TR')+'. sıra' : '—',
-    kontenjan: r.kont||null
-  });
-  u.selDept = u.depts.length - 1;
-
-  save(); confetti();
-  toast('✅ ' + deptName + ' → ' + (u.name) + ' eklendi!');
-  // Re-render cards so button turns green
-  atlasRenderResults(window._atlasLastResults);
+  const cont = document.getElementById('_uDRows');
+  if(cont) cont.innerHTML = rows || `<div style="text-align:center;padding:24px;color:var(--t3);font-size:10px;">Sonuç bulunamadı 😔</div>`;
 };
 
+// ─── Browser Actions ──────────────────────────────────────────────
+window._bAU = function(uid) { // add university to tracking
+  _ensureUni(uid);
+  toast('🏛️ Takip listene eklendi! Bölüm seç →');
+  showUniDet(uid);
+  renderTargets();
+};
 
-console.log('✅ Uni v7 SIMPLE loaded');
+window._bAD = function(uid, deptName) { // add dept
+  const u = _ensureUni(uid);
+  if(!u) return;
+  if(u.depts.some(d=>(d.n||d.name)===deptName)) { toast('Zaten eklendi ✓'); return; }
+  const dInfo = _BD.find(d=>d.n===deptName)||{t:'SAY'};
+  const sc = _score(deptName, uid)||'—';
+  const ddb = (typeof DEPT_DB!=='undefined') ? DEPT_DB.find(d=>d.name===deptName) : null;
+  u.depts.push({name:deptName,type:dInfo.t,score:sc,rank:'—',kontenjan:ddb?.kontenjan||null});
+  if(u.selDept<0) u.selDept=0;
+  save(); toast('✅ '+deptName+' eklendi!');
+  _uDR(); renderTargets();
+};
+
+window._bSH = function(uid, deptName) { // set as hedef
+  const u = _ensureUni(uid);
+  if(!u) return;
+  if(!u.depts.some(d=>(d.n||d.name)===deptName)) {
+    const dInfo = _BD.find(d=>d.n===deptName)||{t:'SAY'};
+    const sc = _score(deptName,uid)||'—';
+    const ddb = (typeof DEPT_DB!=='undefined')?DEPT_DB.find(d=>d.name===deptName):null;
+    u.depts.push({name:deptName,type:dInfo.t,score:sc,rank:'—',kontenjan:ddb?.kontenjan||null});
+  }
+  const idx = u.depts.findIndex(d=>(d.n||d.name)===deptName);
+  if(idx>=0){u.hedefDept=idx;u.selDept=idx;}
+  save(); toast('🎯 Hedef belirlendi! '+deptName);
+  showUniDet(uid); renderTargets();
+};
+
+window._bRH = function(uid) { // remove hedef
+  const u=(S.unis||[]).find(x=>x.id===uid);
+  if(!u) return;
+  delete u.hedefDept;
+  save(); toast('❌ Hedef kaldırıldı');
+  showUniDet(uid); renderTargets();
+};
+
+window._bRD = function(uid, deptName) { // remove dept
+  const u=(S.unis||[]).find(x=>x.id===uid);
+  if(!u) return;
+  const idx = u.depts.findIndex(d=>(d.n||d.name)===deptName);
+  if(idx<0) return;
+  u.depts.splice(idx,1);
+  if(u.hedefDept===idx) delete u.hedefDept;
+  else if(u.hedefDept>idx) u.hedefDept--;
+  if(u.selDept>=u.depts.length) u.selDept=Math.max(0,u.depts.length-1);
+  save(); toast('🗑️ Bölüm silindi');
+  showUniDet(uid); renderTargets();
+};
+
+// ─── Legacy compatibility ─────────────────────────────────────────
+window.setHedef = function(uid, deptIdx) {
+  const u=(S.unis||[]).find(x=>x.id===uid);if(!u) return;
+  if(u.hedefDept===deptIdx){delete u.hedefDept;save();toast('❌ Hedef kaldırıldı');}
+  else{u.hedefDept=deptIdx;u.selDept=deptIdx;save();toast('🎯 '+((u.depts[deptIdx]?.name)||'') + ' hedef!');}
+  showUniDet(uid); renderTargets();
+};
+
+window.selectDept = function(uid, idx) {
+  const u=(S.unis||[]).find(x=>x.id===uid);if(!u) return;
+  u.selDept=idx; save(); showUniDet(uid);
+};
+
+window.removeDept = function(uid, idx) {
+  const u=(S.unis||[]).find(x=>x.id===uid);if(!u) return;
+  u.depts.splice(idx,1);
+  if(u.hedefDept===idx) delete u.hedefDept;
+  else if(u.hedefDept>idx) u.hedefDept--;
+  u.selDept=Math.max(0,Math.min(u.selDept,u.depts.length-1));
+  save(); showUniDet(uid); renderTargets();
+};
+
+window.deleteUni = function(uid) {
+  if(!confirm('Bu üniversiteyi takipten çıkar?')) return;
+  S.unis=(S.unis||[]).filter(x=>x.id!==uid);
+  save(); closeOv('ov-uni'); renderTargets(); toast('Takipten çıkarıldı 🗑️');
+};
+
+window.buildAtlasPanel = function(){ return '<div style="padding:10px 0;font-size:10px;color:var(--t3);">Keşfet paneli ana sayfaya taşındı.</div>'; };
+window.atlasSearch = async function(){toast('Keşfet sekmesini kullan 🔭');};
+window.atlasRenderResults = function(){};
+window.atlasQuickSearch = function(){};
+window.addDeptFromAtlasResult = function(){};
+
+console.log('✅ Uni v8 ATLAS PRO loaded —', _BD.length, 'bölüm,', Object.keys(_WIKI).length, 'wikipedia linki');
+})();
 </script>
+
 
 <!-- PWA INSTALL BAR -->
 <div id="pwa-install-bar">
