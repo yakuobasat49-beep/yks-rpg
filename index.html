@@ -641,8 +641,8 @@ input::placeholder{color:var(--t3);}
 </div>
 
 <!-- UNI DETAIL -->
-<div class="ov" id="ov-uni" style="align-items:flex-end;padding:0;">
-  <div id="uni-det-in" style="max-width:500px;width:100%;max-height:92vh;overflow-y:auto;"></div>
+<div class="ov" id="ov-uni" style="align-items:flex-end;padding:0;background:rgba(4,4,16,.85);">
+  <div id="uni-det-in" style="max-width:500px;width:100%;max-height:92vh;overflow-y:auto;background:var(--c1);border-radius:22px 22px 0 0;"></div>
 </div>
 <!-- STREAK EDIT OVERLAY -->
 <div class="ov" id="ov-streak">
@@ -7356,7 +7356,8 @@ function renderTargets(){
         <circle cx="${60}" cy="${h-(((s[s.length-1]-mn)/rng)*h*0.75+h*0.1)}" r="2.5" fill="${tc}"/>
       </svg>`;
     }
-    const tipColor=dbInfo.tip==='Vakıf'?'rgba(168,85,247,0.7)':'rgba(59,130,246,0.7)';
+    const tipColor=(dbInfo.tip||u.tip)==='Vakıf'?'rgba(168,85,247,0.7)':'rgba(59,130,246,0.7)';
+    const uniTipLabel = dbInfo.tip || u.tip || '';
     return`<button onclick="showUniDet('${u.id}')" style="
       display:block;width:100%;text-align:left;
       background:var(--c1);border-radius:14px;padding:0;overflow:hidden;cursor:pointer;
@@ -7376,7 +7377,7 @@ function renderTargets(){
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;flex-wrap:wrap;">
               <div style="font-size:13px;font-weight:900;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${u.name}</div>
-              ${dbInfo.tip?`<span style="font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;background:${tipColor};color:#fff;flex-shrink:0;">${dbInfo.tip}</span>`:''}
+              ${uniTipLabel?`<span style="font-size:7px;font-weight:800;padding:1px 5px;border-radius:4px;background:${tipColor};color:#fff;flex-shrink:0;">${uniTipLabel}</span>`:''}
             </div>
             <div style="font-size:9px;color:var(--t3);margin-bottom:5px;">${u.sehir||''}${u.dil?' · '+u.dil:''}</div>
             ${d?`<div style="display:inline-flex;align-items:center;gap:4px;background:${tbg};border:1px solid ${tc}33;border-radius:6px;padding:2px 7px;">
@@ -9756,7 +9757,7 @@ const KONU_OZETI = {
       ]
     },
     {
-      id:'integral', name:'İntegral', icon:'∫', color:'#e53935', svgAnim:'',
+      id:'integral', name:'İntegral', icon:'∫', color:'#e53935', svgAnim:'integral',
       ozet:`<b>İntegral</b> — Türevin tersi; alan hesabı.
 
 <b>Belirsiz İntegral Kuralları:</b>
@@ -9782,7 +9783,7 @@ const KONU_OZETI = {
       ]
     },
     {
-      id:'olasilik', name:'Olasılık & Kombinasyon', icon:'🎲', color:'#e53935', svgAnim:'',
+      id:'olasilik', name:'Olasılık & Kombinasyon', icon:'🎲', color:'#e53935', svgAnim:'olasilik',
       ozet:`<b>Sayma & Kombinasyon:</b>
 • Permütasyon (sıra önemli): P(n,r) = n!/(n−r)!
 • Kombinasyon (sıra önemsiz): C(n,r) = n!/[r!(n−r)!]
@@ -9804,7 +9805,7 @@ const KONU_OZETI = {
       ]
     },
     {
-      id:'diziler', name:'Diziler (AP / GP)', icon:'🔢', color:'#e53935', svgAnim:'',
+      id:'diziler', name:'Diziler (AP / GP)', icon:'🔢', color:'#e53935', svgAnim:'diziler',
       ozet:`<b>Aritmetik Dizi (AP):</b>
 • aₙ = a₁ + (n−1)d  (d: ortak fark)
 • Sₙ = n·(a₁ + aₙ)/2 = n·(2a₁ + (n−1)d)/2
@@ -9989,7 +9990,7 @@ Her kuvvete eşit büyüklükte, zıt yönde tepki vardır.
 
   tur: [
     {
-      id:'paragraf', name:'Paragraf & Anlam', icon:'📝', color:'#1e88e5', svgAnim:'',
+      id:'paragraf', name:'Paragraf & Anlam', icon:'📝', color:'#1e88e5', svgAnim:'paragraf',
       ozet:`<b>Paragraf Soruları — Temel İpuçları</b>
 
 <b>Ana Fikir / Başlık:</b>
@@ -10014,7 +10015,7 @@ Her kuvvete eşit büyüklükte, zıt yönde tepki vardır.
       ]
     },
     {
-      id:'fiilimsi', name:'Dil Bilgisi', icon:'📖', color:'#1e88e5', svgAnim:'',
+      id:'fiilimsi', name:'Dil Bilgisi', icon:'📖', color:'#1e88e5', svgAnim:'fiilimsi',
       ozet:`<b>Sözcük Türleri:</b>
 İsim, Zamir, Sıfat, Zarf, Fiil, Edat, Bağlaç, Ünlem
 
@@ -10039,7 +10040,7 @@ Her kuvvete eşit büyüklükte, zıt yönde tepki vardır.
       ]
     },
     {
-      id:'edebi', name:'Türk Edebiyatı', icon:'📚', color:'#1e88e5', svgAnim:'',
+      id:'edebi', name:'Türk Edebiyatı', icon:'📚', color:'#1e88e5', svgAnim:'edebi',
       ozet:`<b>Dönemler Özeti:</b>
 
 <b>Divan Edebiyatı (13−19.yy):</b>
@@ -10073,7 +10074,7 @@ Her kuvvete eşit büyüklükte, zıt yönde tepki vardır.
 
   tar: [
     {
-      id:'osmanli', name:'Osmanlı Tarihi', icon:'⚔️', color:'#795548', svgAnim:'',
+      id:'osmanli', name:'Osmanlı Tarihi', icon:'⚔️', color:'#795548', svgAnim:'osmanli',
       ozet:`<b>Osmanlı Kronolojisi (Özet)</b>
 
 <b>Kuruluş (1299−1453):</b>
@@ -10101,7 +10102,7 @@ Her kuvvete eşit büyüklükte, zıt yönde tepki vardır.
       ]
     },
     {
-      id:'kurtulus', name:'Kurtuluş Savaşı & Cumhuriyet', icon:'🇹🇷', color:'#795548', svgAnim:'',
+      id:'kurtulus', name:'Kurtuluş Savaşı & Cumhuriyet', icon:'🇹🇷', color:'#795548', svgAnim:'kurtulus',
       ozet:`<b>Kurtuluş Savaşı (1919−1923)</b>
 
 <b>Başlangıç:</b>
@@ -10132,7 +10133,7 @@ Her kuvvete eşit büyüklükte, zıt yönde tepki vardır.
 
   cog: [
     {
-      id:'iklim', name:'İklim Tipleri', icon:'🌍', color:'#2e7d32', svgAnim:'',
+      id:'iklim', name:'İklim Tipleri', icon:'🌍', color:'#2e7d32', svgAnim:'iklim',
       ozet:`<b>İklim Tipleri ve Özellikleri</b>
 
 <b>Ekvator (Tropikal):</b>
@@ -10165,7 +10166,7 @@ Akdeniz (güney/batı kıyı) | Karadeniz (K. kıyı) | Karasal (iç) | Ege (bat
       ]
     },
     {
-      id:'nufus', name:'Nüfus & Yerleşme', icon:'🏙️', color:'#2e7d32', svgAnim:'',
+      id:'nufus', name:'Nüfus & Yerleşme', icon:'🏙️', color:'#2e7d32', svgAnim:'nufus',
       ozet:`<b>Nüfus Artışını Etkileyen Faktörler:</b>
 • Doğal artış = Doğum oranı − Ölüm oranı
 • Göç: iç ve dış göç
@@ -10196,7 +10197,7 @@ Akdeniz (güney/batı kıyı) | Karadeniz (K. kıyı) | Karasal (iç) | Ege (bat
 
   fels: [
     {
-      id:'bilgi', name:'Bilgi & Varlık Felsefesi', icon:'🧠', color:'#7c4dff', svgAnim:'',
+      id:'bilgi', name:'Bilgi & Varlık Felsefesi', icon:'🧠', color:'#7c4dff', svgAnim:'bilgi',
       ozet:`<b>Epistemoloji (Bilgi Felsefesi)</b>
 
 <b>Bilgi Kaynağı Görüşleri:</b>
@@ -10219,7 +10220,7 @@ Akdeniz (güney/batı kıyı) | Karadeniz (K. kıyı) | Karasal (iç) | Ege (bat
       ]
     },
     {
-      id:'ahlak', name:'Ahlak & Siyaset Felsefesi', icon:'⚖️', color:'#7c4dff', svgAnim:'',
+      id:'ahlak', name:'Ahlak & Siyaset Felsefesi', icon:'⚖️', color:'#7c4dff', svgAnim:'ahlak',
       ozet:`<b>Etik (Ahlak Felsefesi)</b>
 
 <b>Temel Görüşler:</b>
@@ -10245,7 +10246,7 @@ Akdeniz (güney/batı kıyı) | Karadeniz (K. kıyı) | Karasal (iç) | Ege (bat
 
   geo: [
     {
-      id:'ucgen', name:'Üçgenler & Trigonometri', icon:'📐', color:'#00897b', svgAnim:'',
+      id:'ucgen', name:'Üçgenler & Trigonometri', icon:'📐', color:'#00897b', svgAnim:'ucgen',
       ozet:`<b>Üçgenlerde Temel Teoremler</b>
 
 <b>Alan Formülleri:</b>
@@ -10272,7 +10273,7 @@ Akdeniz (güney/batı kıyı) | Karadeniz (K. kıyı) | Karasal (iç) | Ege (bat
       ]
     },
     {
-      id:'analitik', name:'Analitik Geometri', icon:'📈', color:'#00897b', svgAnim:'',
+      id:'analitik', name:'Analitik Geometri', icon:'📈', color:'#00897b', svgAnim:'analitik',
       ozet:`<b>Doğru Denklemi:</b>
 • y = mx + b  (m: eğim, b: y-kesimi)
 • m = (y₂−y₁)/(x₂−x₁)
@@ -11123,6 +11124,479 @@ function getKonuSVG(id, color){
     <animate attributeName="opacity" values="0;0.8;0" dur="1.2s" repeatCount="indefinite"/>
     <animate attributeName="r" values="5;9;5" dur="1.2s" repeatCount="indefinite"/>
   </circle>
+</svg>`,
+
+    integral: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d20" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#e53935" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">∫ İntegral</text>
+  <!-- Axes -->
+  <line x1="30" y1="200" x2="280" y2="200" stroke="#555" stroke-width="1.5"/>
+  <line x1="60" y1="220" x2="60" y2="40" stroke="#555" stroke-width="1.5"/>
+  <text x="282" y="204" fill="#aaa" font-size="9" font-family="Nunito,sans-serif">x</text>
+  <text x="62" y="38" fill="#aaa" font-size="9" font-family="Nunito,sans-serif">y</text>
+  <!-- Curve f(x) = x^2 approximated -->
+  <path d="M70,196 Q110,170 150,130 Q190,88 230,48" fill="none" stroke="#e53935" stroke-width="2.5"/>
+  <!-- Filled area under curve (Riemann sum bars) -->
+  <rect x="70" y="163" width="20" height="37" fill="rgba(229,57,53,0.25)" stroke="#e53935" stroke-width="0.8"/>
+  <rect x="90" y="148" width="20" height="52" fill="rgba(229,57,53,0.25)" stroke="#e53935" stroke-width="0.8"/>
+  <rect x="110" y="130" width="20" height="70" fill="rgba(229,57,53,0.25)" stroke="#e53935" stroke-width="0.8">
+    <animate attributeName="fill" values="rgba(229,57,53,0.25);rgba(229,57,53,0.5);rgba(229,57,53,0.25)" dur="2s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="130" y="108" width="20" height="92" fill="rgba(229,57,53,0.25)" stroke="#e53935" stroke-width="0.8"/>
+  <rect x="150" y="84" width="20" height="116" fill="rgba(229,57,53,0.25)" stroke="#e53935" stroke-width="0.8"/>
+  <rect x="170" y="57" width="20" height="143" fill="rgba(229,57,53,0.25)" stroke="#e53935" stroke-width="0.8"/>
+  <!-- Labels -->
+  <text x="70" y="215" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">a</text>
+  <text x="190" y="215" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">b</text>
+  <!-- Integration symbol -->
+  <text x="100" y="148" fill="#f9a825" font-size="22" font-family="Georgia,serif">∫</text>
+  <text x="118" y="148" fill="#f9a825" font-size="10" font-family="Nunito,sans-serif">f(x) dx</text>
+  <!-- Formulas -->
+  <rect x="15" y="228" width="270" height="44" rx="8" fill="#1a0a0a"/>
+  <text x="25" y="244" fill="#ef9a9a" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">∫xⁿdx = xⁿ⁺¹/(n+1) + C</text>
+  <text x="25" y="260" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Alan = ∫ₐᵇ f(x)dx | Türev↔İntegral ters işlem</text>
+</svg>`,
+
+    olasilik: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d20" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#e53935" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">🎲 Olasılık &amp; Kombinasyon</text>
+  <!-- Dice -->
+  <rect x="20" y="35" width="50" height="50" rx="8" fill="#1a1a2e" stroke="#e53935" stroke-width="2">
+    <animate attributeName="transform" values="translate(0,0);translate(0,-5);translate(0,0)" dur="1.5s" repeatCount="indefinite"/>
+  </rect>
+  <circle cx="35" cy="50" r="4" fill="#e53935"/>
+  <circle cx="55" cy="50" r="4" fill="#e53935"/>
+  <circle cx="35" cy="70" r="4" fill="#e53935"/>
+  <circle cx="55" cy="70" r="4" fill="#e53935"/>
+  <circle cx="45" cy="60" r="4" fill="#e53935"/>
+  <!-- P formula -->
+  <rect x="85" y="38" width="120" height="42" rx="8" fill="#1a0a0a" stroke="#e53935" stroke-width="1"/>
+  <text x="145" y="56" text-anchor="middle" fill="#ef9a9a" font-size="10" font-weight="bold" font-family="Nunito,sans-serif">P(A) = n(A)/n(S)</text>
+  <text x="145" y="70" text-anchor="middle" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">0 ≤ P(A) ≤ 1</text>
+  <!-- Venn diagram -->
+  <circle cx="90" cy="145" r="40" fill="rgba(229,57,53,0.2)" stroke="#e53935" stroke-width="1.5"/>
+  <circle cx="120" cy="145" r="40" fill="rgba(33,150,243,0.2)" stroke="#1e88e5" stroke-width="1.5"/>
+  <text x="75" y="148" text-anchor="middle" fill="#e53935" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">A</text>
+  <text x="135" y="148" text-anchor="middle" fill="#1e88e5" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">B</text>
+  <text x="105" y="148" text-anchor="middle" fill="#f9a825" font-size="7" font-weight="bold" font-family="Nunito,sans-serif">A∩B</text>
+  <text x="60" y="198" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">P(A∪B)=P(A)+P(B)-P(A∩B)</text>
+  <!-- Combinations -->
+  <rect x="175" y="105" width="115" height="80" rx="8" fill="#0a1a2a" stroke="#1e88e5" stroke-width="1"/>
+  <text x="232" y="122" text-anchor="middle" fill="#42a5f5" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Permütasyon</text>
+  <text x="232" y="137" text-anchor="middle" fill="#f9a825" font-size="10" font-family="Nunito,sans-serif">P(n,r) = n!/(n-r)!</text>
+  <text x="232" y="155" text-anchor="middle" fill="#42a5f5" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Kombinasyon</text>
+  <text x="232" y="170" text-anchor="middle" fill="#f9a825" font-size="10" font-family="Nunito,sans-serif">C(n,r) = n!/r!(n-r)!</text>
+  <!-- Formulas -->
+  <rect x="15" y="218" width="270" height="50" rx="8" fill="#1a0a0a"/>
+  <text x="25" y="234" fill="#ef9a9a" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Bağımsız olaylar: P(A∩B)=P(A)·P(B)</text>
+  <text x="25" y="250" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Koşullu: P(A|B) = P(A∩B)/P(B)</text>
+  <text x="25" y="262" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">n! = n×(n-1)×...×2×1</text>
+</svg>`,
+
+    diziler: `<svg viewBox="0 0 300 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:250px;">
+  <rect width="300" height="270" fill="#0d0d20" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#e53935" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">🔢 Diziler (AP / GP)</text>
+  <!-- AP bars -->
+  <text x="20" y="45" fill="#42a5f5" font-size="10" font-weight="bold" font-family="Nunito,sans-serif">Aritmetik Dizi</text>
+  <rect x="20" y="52" width="18" height="20" rx="3" fill="#1e88e5" opacity="0.9"/>
+  <rect x="42" y="52" width="18" height="33" rx="3" fill="#1e88e5" opacity="0.9"/>
+  <rect x="64" y="52" width="18" height="46" rx="3" fill="#1e88e5" opacity="0.9"/>
+  <rect x="86" y="52" width="18" height="59" rx="3" fill="#1e88e5" opacity="0.9"/>
+  <rect x="108" y="52" width="18" height="72" rx="3" fill="#1e88e5" opacity="0.9">
+    <animate attributeName="height" values="72;85;72" dur="1.5s" repeatCount="indefinite"/>
+  </rect>
+  <text x="70" y="140" text-anchor="middle" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">aₙ = a₁ + (n-1)d</text>
+  <text x="70" y="152" text-anchor="middle" fill="#f9a825" font-size="8" font-family="Nunito,sans-serif">Sₙ = n(a₁+aₙ)/2</text>
+  <!-- GP circles -->
+  <text x="175" y="45" fill="#e53935" font-size="10" font-weight="bold" font-family="Nunito,sans-serif">Geometrik Dizi</text>
+  <circle cx="178" cy="90" r="8" fill="#e53935" opacity="0.9"/>
+  <circle cx="200" cy="90" r="12" fill="#e53935" opacity="0.9"/>
+  <circle cx="228" cy="90" r="18" fill="#e53935" opacity="0.9"/>
+  <circle cx="265" cy="90" r="27" fill="#e53935" opacity="0.9">
+    <animate attributeName="r" values="27;30;27" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+  <text x="225" y="140" text-anchor="middle" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">aₙ = a₁ · rⁿ⁻¹</text>
+  <text x="225" y="152" text-anchor="middle" fill="#f9a825" font-size="8" font-family="Nunito,sans-serif">Sₙ = a₁(rⁿ-1)/(r-1)</text>
+  <!-- Summary table -->
+  <rect x="15" y="165" width="270" height="92" rx="10" fill="#1a1a2e" stroke="rgba(255,255,255,0.08)"/>
+  <text x="150" y="182" text-anchor="middle" fill="#aaa" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Karşılaştırma</text>
+  <text x="30" y="200" fill="#42a5f5" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">AP: 2, 5, 8, 11... d=3</text>
+  <text x="170" y="200" fill="#e53935" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">GP: 2, 6, 18, 54... r=3</text>
+  <text x="30" y="216" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Orta terim: b=(a+c)/2</text>
+  <text x="170" y="216" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Orta terim: b²=a·c</text>
+  <text x="30" y="232" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">|∞ serisi: Sₙ = a₁/(1-r), |r|&lt;1</text>
+  <text x="30" y="248" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Harmonik dizi: 1/a + 1/b + 1/c</text>
+</svg>`,
+
+    paragraf: `<svg viewBox="0 0 300 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:250px;">
+  <rect width="300" height="270" fill="#0d0d18" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#1e88e5" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">📝 Paragraf &amp; Anlam</text>
+  <!-- Paragraph structure -->
+  <rect x="20" y="35" width="260" height="155" rx="10" fill="#0a1528" stroke="rgba(30,136,229,0.3)"/>
+  <!-- Giriş -->
+  <rect x="30" y="45" width="240" height="22" rx="5" fill="rgba(30,136,229,0.25)" stroke="#1e88e5" stroke-width="1">
+    <animate attributeName="fill" values="rgba(30,136,229,0.25);rgba(30,136,229,0.45);rgba(30,136,229,0.25)" dur="3s" repeatCount="indefinite"/>
+  </rect>
+  <text x="150" y="60" text-anchor="middle" fill="#42a5f5" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">🎯 GİRİŞ (Ana fikir / Konu cümlesi)</text>
+  <!-- Gelişme -->
+  <rect x="30" y="72" width="240" height="18" rx="4" fill="rgba(255,255,255,0.05)"/>
+  <rect x="30" y="93" width="220" height="18" rx="4" fill="rgba(255,255,255,0.05)"/>
+  <rect x="30" y="114" width="240" height="18" rx="4" fill="rgba(255,255,255,0.05)"/>
+  <text x="150" y="83" text-anchor="middle" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Gelişme — destekleyici fikirler &amp; kanıtlar</text>
+  <!-- Sonuç -->
+  <rect x="30" y="157" width="240" height="22" rx="5" fill="rgba(67,160,71,0.22)" stroke="#43a047" stroke-width="1">
+    <animate attributeName="fill" values="rgba(67,160,71,0.22);rgba(67,160,71,0.4);rgba(67,160,71,0.22)" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+  </rect>
+  <text x="150" y="172" text-anchor="middle" fill="#66bb6a" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">✅ SONUÇ (Ana fikri destekler / tamamlar)</text>
+  <!-- Soru türleri -->
+  <rect x="20" y="198" width="260" height="60" rx="8" fill="#1a1a2e"/>
+  <text x="150" y="214" text-anchor="middle" fill="#f9a825" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">YKS Paragraf Soru Türleri</text>
+  <text x="30" y="230" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Ana fikir / Başlık</text>
+  <text x="160" y="230" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Boşluk doldurma</text>
+  <text x="30" y="244" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Anlam&amp;Bağdaşıklık</text>
+  <text x="160" y="244" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Tutarsız cümle</text>
+  <text x="30" y="256" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Bağlaçlar: ama, çünkü, oysa, nitekim, dolayısıyla...</text>
+</svg>`,
+
+    fiilimsi: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d18" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#1e88e5" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">📖 Dil Bilgisi</text>
+  <!-- Fiilimsi 3 types -->
+  <!-- İsim-fiil -->
+  <rect x="15" y="35" width="84" height="120" rx="10" fill="#0a1528" stroke="#1e88e5" stroke-width="1.5">
+    <animate attributeName="stroke-width" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite"/>
+  </rect>
+  <text x="57" y="55" text-anchor="middle" fill="#42a5f5" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">İSİM-FİİL</text>
+  <text x="57" y="70" text-anchor="middle" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Ekleri:</text>
+  <text x="57" y="83" text-anchor="middle" fill="#f9a825" font-size="8.5" font-family="Nunito,sans-serif">-mak/-mek</text>
+  <text x="57" y="97" text-anchor="middle" fill="#f9a825" font-size="8.5" font-family="Nunito,sans-serif">-ma/-me</text>
+  <text x="57" y="111" text-anchor="middle" fill="#f9a825" font-size="8.5" font-family="Nunito,sans-serif">-ış/-iş</text>
+  <text x="57" y="127" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">"gitmek iyi"</text>
+  <text x="57" y="140" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">(isim gibi)</text>
+  <!-- Sıfat-fiil -->
+  <rect x="108" y="35" width="84" height="120" rx="10" fill="#0a1528" stroke="#e53935" stroke-width="1.5">
+    <animate attributeName="stroke-width" values="1.5;2.5;1.5" dur="2s" begin="0.7s" repeatCount="indefinite"/>
+  </rect>
+  <text x="150" y="55" text-anchor="middle" fill="#ef9a9a" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">SIFAT-FİİL</text>
+  <text x="150" y="70" text-anchor="middle" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Ekleri:</text>
+  <text x="150" y="83" text-anchor="middle" fill="#f9a825" font-size="8.5" font-family="Nunito,sans-serif">-an/-en</text>
+  <text x="150" y="97" text-anchor="middle" fill="#f9a825" font-size="8.5" font-family="Nunito,sans-serif">-ar/-er</text>
+  <text x="150" y="111" text-anchor="middle" fill="#f9a825" font-size="8.5" font-family="Nunito,sans-serif">-mış/-miş</text>
+  <text x="150" y="127" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">"giden adam"</text>
+  <text x="150" y="140" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">(sıfat gibi)</text>
+  <!-- Zarf-fiil -->
+  <rect x="201" y="35" width="84" height="120" rx="10" fill="#0a1528" stroke="#43a047" stroke-width="1.5">
+    <animate attributeName="stroke-width" values="1.5;2.5;1.5" dur="2s" begin="1.4s" repeatCount="indefinite"/>
+  </rect>
+  <text x="243" y="55" text-anchor="middle" fill="#81c784" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">ZARF-FİİL</text>
+  <text x="243" y="70" text-anchor="middle" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Ekleri:</text>
+  <text x="243" y="83" text-anchor="middle" fill="#f9a825" font-size="8.5" font-family="Nunito,sans-serif">-arak/-erek</text>
+  <text x="243" y="97" text-anchor="middle" fill="#f9a825" font-size="8.5" font-family="Nunito,sans-serif">-ınca/-ince</text>
+  <text x="243" y="111" text-anchor="middle" fill="#f9a825" font-size="8.5" font-family="Nunito,sans-serif">-ken, -ip</text>
+  <text x="243" y="127" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">"koşarak geldi"</text>
+  <text x="243" y="140" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">(zarf gibi)</text>
+  <!-- Ortak özellik -->
+  <rect x="15" y="168" width="270" height="50" rx="8" fill="#1a1a2e"/>
+  <text x="150" y="184" text-anchor="middle" fill="#f9a825" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">⚠️ Ortak Özellikler</text>
+  <text x="25" y="200" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Yüklem olamaz (fiil değil, türemiş)</text>
+  <text x="25" y="213" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Nesne alabilir, zaman eki almaz, olumsuzlanabilir</text>
+  <!-- Cümle yapısı -->
+  <rect x="15" y="228" width="270" height="42" rx="8" fill="#0a0a1a"/>
+  <text x="150" y="245" text-anchor="middle" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Ünlü Uyumu: Kalınlık (a/ı/o/u) — İncelik (e/i/ö/ü)</text>
+  <text x="150" y="260" text-anchor="middle" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Ünsüz Benzeşmesi: kitap+çı=kitapçı (p→p, c değil)</text>
+</svg>`,
+
+    edebi: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d18" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#1e88e5" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">📚 Türk Edebiyatı</text>
+  <!-- Timeline -->
+  <line x1="30" y1="45" x2="30" y2="230" stroke="#1e88e5" stroke-width="2"/>
+  <!-- Periods -->
+  <circle cx="30" cy="58" r="6" fill="#1e88e5"><animate attributeName="r" values="6;8;6" dur="2s" repeatCount="indefinite"/></circle>
+  <text x="44" y="62" fill="#42a5f5" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">İslamiyet Öncesi (Sözlü)</text>
+  <text x="44" y="73" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Koşuk, Sagu, Destan, Sav | Ozan/Kam/Baksı</text>
+  <circle cx="30" cy="95" r="6" fill="#42a5f5"/>
+  <text x="44" y="99" fill="#42a5f5" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Divan Edebiyatı (13-19.yy)</text>
+  <text x="44" y="110" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Gazel, Kaside, Mesnevi | Fuzuli, Baki, Nedim</text>
+  <circle cx="30" cy="130" r="6" fill="#42a5f5"/>
+  <text x="44" y="134" fill="#42a5f5" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Halk Edebiyatı</text>
+  <text x="44" y="145" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Koşma, Semai, Mani | Yunus Emre, Köroğlu</text>
+  <circle cx="30" cy="165" r="6" fill="#e53935"/>
+  <text x="44" y="169" fill="#ef9a9a" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Tanzimat (1860-1895)</text>
+  <text x="44" y="180" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Namık Kemal, Şinasi, Ziya Paşa</text>
+  <circle cx="30" cy="198" r="6" fill="#e53935"/>
+  <text x="44" y="202" fill="#ef9a9a" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Servet-i Fünun / Milli Ed.</text>
+  <text x="44" y="213" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Halit Ziya, Tevfik Fikret, Mehmet Akif</text>
+  <circle cx="30" cy="228" r="6" fill="#43a047"><animate attributeName="r" values="6;8;6" dur="2s" begin="1s" repeatCount="indefinite"/></circle>
+  <text x="44" y="232" fill="#81c784" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Cumhuriyet Dönemi (1923+)</text>
+  <!-- Sanat akımları -->
+  <rect x="15" y="245" width="270" height="26" rx="6" fill="#1a1a2e"/>
+  <text x="150" y="262" text-anchor="middle" fill="#555" font-size="8" font-family="Nunito,sans-serif">Nazım Hikmet · Orhan Pamuk · Yaşar Kemal · Cahit Sıtkı</text>
+</svg>`,
+
+    osmanli: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d18" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#795548" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">⚔️ Osmanlı Tarihi</text>
+  <!-- Timeline -->
+  <line x1="150" y1="35" x2="150" y2="235" stroke="rgba(121,85,72,0.4)" stroke-width="2" stroke-dasharray="4,3"/>
+  <!-- Key events with pulsing dots -->
+  <circle cx="150" cy="50" r="7" fill="#795548"><animate attributeName="r" values="7;9;7" dur="2s" repeatCount="indefinite"/></circle>
+  <text x="158" y="48" fill="#bcaaa4" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">1299 Kuruluş</text>
+  <text x="158" y="58" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Osman Bey</text>
+  <circle cx="150" cy="88" r="6" fill="#b71c1c"/>
+  <text x="158" y="92" fill="#ef9a9a" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">1453 İstanbul'un Fethi</text>
+  <text x="30" y="92" fill="#aaa" font-size="7.5" text-anchor="end" font-family="Nunito,sans-serif">Fatih Sultan Mehmet</text>
+  <circle cx="150" cy="125" r="6" fill="#f9a825"/>
+  <text x="158" y="129" fill="#f9a825" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">1520-1566 Kanuni</text>
+  <text x="30" y="129" fill="#aaa" font-size="7.5" text-anchor="end" font-family="Nunito,sans-serif">En geniş topraklar</text>
+  <circle cx="150" cy="162" r="6" fill="#1e88e5"/>
+  <text x="158" y="166" fill="#42a5f5" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">17-18.yy Gerileme</text>
+  <text x="30" y="166" fill="#aaa" font-size="7.5" text-anchor="end" font-family="Nunito,sans-serif">Karlofça 1699</text>
+  <circle cx="150" cy="198" r="6" fill="#43a047"/>
+  <text x="158" y="202" fill="#81c784" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Tanzimat 1839</text>
+  <text x="30" y="202" fill="#aaa" font-size="7.5" text-anchor="end" font-family="Nunito,sans-serif">Modernleşme</text>
+  <circle cx="150" cy="230" r="7" fill="#e53935"><animate attributeName="r" values="7;9;7" dur="2s" begin="1s" repeatCount="indefinite"/></circle>
+  <text x="158" y="234" fill="#ef9a9a" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">1923 Cumhuriyet</text>
+  <!-- Devşirme / sistem info -->
+  <rect x="15" y="248" width="270" height="24" rx="6" fill="#1a1a2e"/>
+  <text x="150" y="264" text-anchor="middle" fill="#555" font-size="8" font-family="Nunito,sans-serif">Tımar · Kapıkulu · Devşirme · Divan · Millet Sistemi</text>
+</svg>`,
+
+    kurtulus: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d18" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#795548" font-size="11" font-weight="bold" font-family="Nunito,sans-serif">🇹🇷 Kurtuluş Savaşı &amp; Cumhuriyet</text>
+  <!-- Key events -->
+  <rect x="15" y="33" width="270" height="195" rx="10" fill="#0a0a18" stroke="rgba(121,85,72,0.2)"/>
+  <!-- Mondros -->
+  <rect x="25" y="42" width="250" height="24" rx="5" fill="rgba(183,28,28,0.15)" stroke="rgba(183,28,28,0.4)"/>
+  <text x="35" y="58" fill="#ef9a9a" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">1918 Mondros Ateşkesi → İşgaller başlıyor</text>
+  <!-- 19 Mayıs -->
+  <rect x="25" y="70" width="250" height="24" rx="5" fill="rgba(245,166,35,0.15)" stroke="rgba(245,166,35,0.4)">
+    <animate attributeName="fill" values="rgba(245,166,35,0.15);rgba(245,166,35,0.3);rgba(245,166,35,0.15)" dur="2s" repeatCount="indefinite"/>
+  </rect>
+  <text x="35" y="86" fill="#f9a825" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">19 Mayıs 1919 → M.Kemal Samsun'a çıkış</text>
+  <!-- Kongreler -->
+  <rect x="25" y="98" width="250" height="24" rx="5" fill="rgba(30,136,229,0.15)" stroke="rgba(30,136,229,0.3)"/>
+  <text x="35" y="114" fill="#42a5f5" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">1919 Erzurum &amp; Sivas Kongreleri</text>
+  <!-- TBMM -->
+  <rect x="25" y="126" width="250" height="24" rx="5" fill="rgba(67,160,71,0.15)" stroke="rgba(67,160,71,0.3)"/>
+  <text x="35" y="142" fill="#81c784" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">23 Nisan 1920 → TBMM açıldı</text>
+  <!-- Savaşlar -->
+  <rect x="25" y="154" width="250" height="24" rx="5" fill="rgba(121,85,72,0.25)" stroke="rgba(121,85,72,0.5)"/>
+  <text x="35" y="170" fill="#bcaaa4" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">1921 İnönü / Sakarya / 1922 Büyük Taarruz</text>
+  <!-- Lozan -->
+  <rect x="25" y="182" width="250" height="24" rx="5" fill="rgba(233,30,99,0.15)" stroke="rgba(233,30,99,0.3)"/>
+  <text x="35" y="198" fill="#f48fb1" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">24 Temmuz 1923 → Lozan Antlaşması</text>
+  <!-- Cumhuriyet -->
+  <rect x="25" y="210" width="250" height="24" rx="5" fill="rgba(183,28,28,0.3)" stroke="#c62828">
+    <animate attributeName="fill" values="rgba(183,28,28,0.3);rgba(183,28,28,0.55);rgba(183,28,28,0.3)" dur="2s" begin="1s" repeatCount="indefinite"/>
+  </rect>
+  <text x="35" y="226" fill="#ef9a9a" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">29 Ekim 1923 → Cumhuriyet ilan edildi 🇹🇷</text>
+  <!-- Inkılaplar -->
+  <rect x="15" y="238" width="270" height="32" rx="8" fill="#1a1a2e"/>
+  <text x="150" y="253" text-anchor="middle" fill="#f9a825" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">Atatürk İnkılapları</text>
+  <text x="150" y="264" text-anchor="middle" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Harf · Takvim · Medeni Kanun · Kıyafet · Eğitim · Ekonomi</text>
+</svg>`,
+
+    iklim: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d18" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#2e7d32" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">🌍 İklim Tipleri</text>
+  <!-- Türkiye haritası simgesi (basit dikdörtgen) -->
+  <rect x="50" y="35" width="200" height="100" rx="8" fill="#0a1a0a" stroke="rgba(46,125,50,0.4)"/>
+  <!-- İklim bölgeleri -->
+  <!-- Karadeniz -->
+  <rect x="55" y="40" width="60" height="40" rx="5" fill="rgba(33,150,243,0.35)" stroke="#1e88e5" stroke-width="1"/>
+  <text x="85" y="55" text-anchor="middle" fill="#42a5f5" font-size="7.5" font-weight="bold" font-family="Nunito,sans-serif">Karadeniz</text>
+  <text x="85" y="66" text-anchor="middle" fill="#aaa" font-size="6.5" font-family="Nunito,sans-serif">Nemli/Yağışlı</text>
+  <text x="85" y="76" text-anchor="middle" fill="#aaa" font-size="6.5" font-family="Nunito,sans-serif">4 mevsim</text>
+  <!-- Akdeniz -->
+  <rect x="120" y="85" width="55" height="43" rx="5" fill="rgba(255,193,7,0.3)" stroke="#f9a825" stroke-width="1"/>
+  <text x="147" y="100" text-anchor="middle" fill="#f9a825" font-size="7.5" font-weight="bold" font-family="Nunito,sans-serif">Akdeniz</text>
+  <text x="147" y="111" text-anchor="middle" fill="#aaa" font-size="6.5" font-family="Nunito,sans-serif">Yaz kuru</text>
+  <text x="147" y="121" text-anchor="middle" fill="#aaa" font-size="6.5" font-family="Nunito,sans-serif">Kış yağışlı</text>
+  <!-- Karasal -->
+  <rect x="180" y="45" width="65" height="80" rx="5" fill="rgba(121,85,72,0.3)" stroke="#795548" stroke-width="1"/>
+  <text x="212" y="70" text-anchor="middle" fill="#bcaaa4" font-size="7.5" font-weight="bold" font-family="Nunito,sans-serif">Karasal</text>
+  <text x="212" y="83" text-anchor="middle" fill="#aaa" font-size="6.5" font-family="Nunito,sans-serif">İç bölge</text>
+  <text x="212" y="93" text-anchor="middle" fill="#aaa" font-size="6.5" font-family="Nunito,sans-serif">Yazlar sıcak</text>
+  <text x="212" y="103" text-anchor="middle" fill="#aaa" font-size="6.5" font-family="Nunito,sans-serif">Kışlar soğuk</text>
+  <!-- İklim özellikleri -->
+  <rect x="15" y="148" width="270" height="120" rx="10" fill="#1a1a2e"/>
+  <text x="150" y="165" text-anchor="middle" fill="#81c784" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">İklimi Belirleyen Etkenler</text>
+  <text x="25" y="182" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Enlem: Ekvatordan uzaklaştıkça soğur</text>
+  <text x="25" y="196" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Yükselti: 100m ↑ → 0.6°C ↓ (adiabatik)</text>
+  <text x="25" y="210" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Kara-deniz dağılımı: Kıta=karasal, kıyı=ılıman</text>
+  <text x="25" y="224" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Okyanus akıntıları: Sıcak↑ soğuk↓ yağış</text>
+  <text x="25" y="238" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">• Rüzgar: Deniz rüzgarı ılımanlaştırır</text>
+  <text x="25" y="260" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Köppen: A(tropikal) B(kurak) C(ılıman) D(kıta) E(kutup)</text>
+</svg>`,
+
+    nufus: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d18" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#2e7d32" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">🏙️ Nüfus &amp; Yerleşme</text>
+  <!-- Population pyramid -->
+  <text x="100" y="42" text-anchor="middle" fill="#81c784" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Nüfus Piramidi</text>
+  <!-- Pyramid bars (age groups) -->
+  <rect x="55" y="50" width="40" height="12" rx="2" fill="rgba(33,150,243,0.7)"/> <!-- 0-14 left -->
+  <rect x="105" y="50" width="40" height="12" rx="2" fill="rgba(233,30,99,0.7)"/> <!-- 0-14 right -->
+  <rect x="62" y="65" width="33" height="10" rx="2" fill="rgba(33,150,243,0.6)"/>
+  <rect x="105" y="65" width="33" height="10" rx="2" fill="rgba(233,30,99,0.6)"/>
+  <rect x="70" y="78" width="25" height="10" rx="2" fill="rgba(33,150,243,0.5)"/>
+  <rect x="105" y="78" width="25" height="10" rx="2" fill="rgba(233,30,99,0.5)"/>
+  <rect x="78" y="91" width="17" height="10" rx="2" fill="rgba(33,150,243,0.4)"/>
+  <rect x="105" y="91" width="17" height="10" rx="2" fill="rgba(233,30,99,0.4)"/>
+  <rect x="86" y="104" width="9" height="10" rx="2" fill="rgba(33,150,243,0.3)"/>
+  <rect x="105" y="104" width="9" height="10" rx="2" fill="rgba(233,30,99,0.3)"/>
+  <line x1="102" y1="46" x2="102" y2="118" stroke="#555" stroke-width="1"/>
+  <text x="72" y="128" text-anchor="middle" fill="#42a5f5" font-size="7.5" font-family="Nunito,sans-serif">Erkek</text>
+  <text x="122" y="128" text-anchor="middle" fill="#f48fb1" font-size="7.5" font-family="Nunito,sans-serif">Kadın</text>
+  <!-- Population growth chart -->
+  <text x="225" y="42" text-anchor="middle" fill="#f9a825" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Büyüme Modeli</text>
+  <polyline points="168,115 185,110 200,100 215,84 230,62 245,48" fill="none" stroke="#f9a825" stroke-width="2">
+    <animate attributeName="points" values="168,115 185,110 200,100 215,84 230,62 245,48;168,115 185,108 200,96 215,80 230,58 245,42;168,115 185,110 200,100 215,84 230,62 245,48" dur="2s" repeatCount="indefinite"/>
+  </polyline>
+  <line x1="165" y1="45" x2="165" y2="120" stroke="#555" stroke-width="1"/>
+  <line x1="163" y1="118" x2="285" y2="118" stroke="#555" stroke-width="1"/>
+  <text x="225" y="128" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">Üstel büyüme</text>
+  <!-- Faktörler -->
+  <rect x="15" y="142" width="270" height="128" rx="10" fill="#1a1a2e"/>
+  <text x="150" y="159" text-anchor="middle" fill="#81c784" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Nüfusu Etkileyen Faktörler</text>
+  <text x="25" y="176" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Doğal: Doğum oranı − Ölüm oranı = Doğal artış</text>
+  <text x="25" y="191" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Mekanik: Göç (iç-dış, beyin göçü)</text>
+  <text x="25" y="206" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Türkiye: 85M+ / km² = 105 / kentleşme %77</text>
+  <text x="25" y="222" fill="#f9a825" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Yerleşme: İtme-Çekme Teorisi</text>
+  <text x="25" y="237" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">İtici: İşsizlik, kuraklık, savaş, yoksulluk</text>
+  <text x="25" y="252" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Çekici: İş imkânı, eğitim, altyapı, güvenlik</text>
+  <text x="25" y="263" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Nüfus yoğunluğu = Nüfus / Alan (km²)</text>
+</svg>`,
+
+    bilgi: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d20" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#7c4dff" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">🧠 Bilgi &amp; Varlık Felsefesi</text>
+  <!-- Brain center -->
+  <ellipse cx="150" cy="95" rx="55" ry="45" fill="rgba(124,77,255,0.15)" stroke="#7c4dff" stroke-width="1.5">
+    <animate attributeName="rx" values="55;60;55" dur="2s" repeatCount="indefinite"/>
+  </ellipse>
+  <text x="150" y="90" text-anchor="middle" fill="#b39ddb" font-size="10" font-weight="bold" font-family="Nunito,sans-serif">BİLGİ</text>
+  <text x="150" y="103" text-anchor="middle" fill="#7c4dff" font-size="8" font-family="Nunito,sans-serif">Episteme</text>
+  <!-- Branches -->
+  <line x1="95" y1="70" x2="40" y2="55" stroke="#7c4dff" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <rect x="5" y="42" width="62" height="28" rx="6" fill="rgba(124,77,255,0.15)" stroke="#7c4dff"/>
+  <text x="36" y="54" text-anchor="middle" fill="#b39ddb" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">Rasyonalizm</text>
+  <text x="36" y="64" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">Descartes, Kant</text>
+  <line x1="205" y1="70" x2="260" y2="55" stroke="#7c4dff" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <rect x="234" y="42" width="62" height="28" rx="6" fill="rgba(124,77,255,0.15)" stroke="#7c4dff"/>
+  <text x="265" y="54" text-anchor="middle" fill="#b39ddb" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">Empirizm</text>
+  <text x="265" y="64" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">Hume, Locke</text>
+  <line x1="150" y1="140" x2="50" y2="165" stroke="#7c4dff" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <rect x="5" y="158" width="62" height="28" rx="6" fill="rgba(124,77,255,0.15)" stroke="#7c4dff"/>
+  <text x="36" y="170" text-anchor="middle" fill="#b39ddb" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">Şüphecilik</text>
+  <text x="36" y="180" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">Pyrrho</text>
+  <line x1="150" y1="140" x2="250" y2="165" stroke="#7c4dff" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <rect x="234" y="158" width="62" height="28" rx="6" fill="rgba(124,77,255,0.15)" stroke="#7c4dff"/>
+  <text x="265" y="170" text-anchor="middle" fill="#b39ddb" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">Sezgicilik</text>
+  <text x="265" y="180" text-anchor="middle" fill="#aaa" font-size="7" font-family="Nunito,sans-serif">Bergson</text>
+  <!-- Varlık -->
+  <rect x="70" y="200" width="160" height="30" rx="8" fill="rgba(224,64,251,0.12)" stroke="rgba(224,64,251,0.4)"/>
+  <text x="150" y="220" text-anchor="middle" fill="#ce93d8" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">ONTOLOJİ: Varlık nedir?</text>
+  <!-- Summary -->
+  <rect x="15" y="240" width="270" height="32" rx="8" fill="#1a1a2e"/>
+  <text x="150" y="256" text-anchor="middle" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Platon: İdealar | Aristoteles: Töz | Berkeley: Esse percipi</text>
+  <text x="150" y="267" text-anchor="middle" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Tabula rasa (Locke) · A priori/posteriori (Kant)</text>
+</svg>`,
+
+    ahlak: `<svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px;">
+  <rect width="300" height="280" fill="#0d0d20" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#7c4dff" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">⚖️ Ahlak &amp; Siyaset Felsefesi</text>
+  <!-- Scale / Terazi -->
+  <line x1="150" y1="38" x2="150" y2="75" stroke="#7c4dff" stroke-width="2"/>
+  <line x1="80" y1="75" x2="220" y2="75" stroke="#7c4dff" stroke-width="2"/>
+  <circle cx="150" cy="38" r="5" fill="#7c4dff">
+    <animate attributeName="r" values="5;7;5" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Left pan -->
+  <line x1="80" y1="75" x2="80" y2="100" stroke="#7c4dff" stroke-width="1.5"/>
+  <ellipse cx="80" cy="105" rx="28" ry="8" fill="rgba(124,77,255,0.25)" stroke="#7c4dff" stroke-width="1">
+    <animate attributeName="cy" values="105;100;105" dur="2s" repeatCount="indefinite"/>
+  </ellipse>
+  <text x="80" y="108" text-anchor="middle" fill="#b39ddb" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">İYİ</text>
+  <!-- Right pan -->
+  <line x1="220" y1="75" x2="220" y2="105" stroke="#7c4dff" stroke-width="1.5"/>
+  <ellipse cx="220" cy="110" rx="28" ry="8" fill="rgba(224,64,251,0.25)" stroke="#e040fb" stroke-width="1">
+    <animate attributeName="cy" values="110;105;110" dur="2s" repeatCount="indefinite"/>
+  </ellipse>
+  <text x="220" y="113" text-anchor="middle" fill="#ce93d8" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">DOĞRU</text>
+  <!-- Ethical theories -->
+  <rect x="15" y="128" width="270" height="110" rx="10" fill="#1a1a2e"/>
+  <text x="150" y="145" text-anchor="middle" fill="#f9a825" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Ahlak Teorileri</text>
+  <text x="25" y="162" fill="#b39ddb" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Erdem Ahlakı (Aristoteles):</text>
+  <text x="25" y="173" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Mutluluk (eudaimonia) — altın orta — erdem alışkanlıktır</text>
+  <text x="25" y="190" fill="#b39ddb" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Ödev Ahlakı (Kant):</text>
+  <text x="25" y="201" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Kategorik imperatif — iyi niyet — evrensel yasa</text>
+  <text x="25" y="218" fill="#b39ddb" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Faydacılık (Bentham, Mill):</text>
+  <text x="25" y="229" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">En fazla kişiye en fazla mutluluk — sonuç önemli</text>
+  <!-- Siyaset -->
+  <rect x="15" y="248" width="270" height="24" rx="6" fill="#0a0a20"/>
+  <text x="150" y="264" text-anchor="middle" fill="#555" font-size="8" font-family="Nunito,sans-serif">Platon: Filozoflar yönetmeli | Hobbes: Leviathan | Locke: Sözleşme</text>
+</svg>`,
+
+    ucgen: `<svg viewBox="0 0 300 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:250px;">
+  <defs>
+    <marker id="ta" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#00897b"/></marker>
+  </defs>
+  <rect width="300" height="270" fill="#0d0d20" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#00897b" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">📐 Üçgenler &amp; Trigonometri</text>
+  <!-- Main triangle -->
+  <polygon points="150,40 55,170 245,170" fill="rgba(0,137,123,0.12)" stroke="#00897b" stroke-width="2"/>
+  <!-- Right angle indicator -->
+  <rect x="145" y="163" width="12" height="12" fill="none" stroke="#f9a825" stroke-width="1.5"/>
+  <!-- Labels -->
+  <text x="150" y="35" text-anchor="middle" fill="#80cbc4" font-size="11" font-weight="bold" font-family="Nunito,sans-serif">A</text>
+  <text x="45" y="180" fill="#80cbc4" font-size="11" font-weight="bold" font-family="Nunito,sans-serif">B</text>
+  <text x="248" y="180" fill="#80cbc4" font-size="11" font-weight="bold" font-family="Nunito,sans-serif">C</text>
+  <!-- Side labels -->
+  <text x="88" y="120" fill="#f9a825" font-size="10" font-weight="bold" font-family="Nunito,sans-serif">c</text>
+  <text x="205" y="120" fill="#f9a825" font-size="10" font-weight="bold" font-family="Nunito,sans-serif">b</text>
+  <text x="148" y="185" fill="#f9a825" font-size="10" font-weight="bold" font-family="Nunito,sans-serif">a</text>
+  <!-- Height (pulsing) -->
+  <line x1="150" y1="42" x2="150" y2="168" stroke="rgba(0,137,123,0.5)" stroke-width="1.5" stroke-dasharray="4,3">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <text x="155" y="105" fill="#00897b" font-size="9" font-family="Nunito,sans-serif">h</text>
+  <!-- Formulas right -->
+  <rect x="15" y="185" width="270" height="75" rx="10" fill="#1a1a2e"/>
+  <text x="25" y="203" fill="#80cbc4" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">sin A = karşı/hipotenüs = a/c</text>
+  <text x="25" y="218" fill="#80cbc4" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">cos A = komşu/hipotenüs = b/c</text>
+  <text x="25" y="233" fill="#80cbc4" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">tan A = karşı/komşu = a/b</text>
+  <text x="25" y="248" fill="#f9a825" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Pisagor: a²+b²=c²</text>
+  <text x="160" y="248" fill="#f9a825" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Alan = (1/2)·a·h</text>
+  <text x="25" y="255" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">A+B+C=180° | sin²+cos²=1 | Sinüs/Kosinüs kuralları</text>
+</svg>`,
+
+    analitik: `<svg viewBox="0 0 300 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:250px;">
+  <rect width="300" height="270" fill="#0d0d20" rx="12"/>
+  <text x="150" y="22" text-anchor="middle" fill="#00897b" font-size="13" font-weight="bold" font-family="Nunito,sans-serif">📈 Analitik Geometri</text>
+  <!-- Coordinate system -->
+  <line x1="30" y1="165" x2="270" y2="165" stroke="#555" stroke-width="1.5"/>
+  <line x1="150" y1="200" x2="150" y2="30" stroke="#555" stroke-width="1.5"/>
+  <text x="272" y="169" fill="#aaa" font-size="9" font-family="Nunito,sans-serif">x</text>
+  <text x="153" y="28" fill="#aaa" font-size="9" font-family="Nunito,sans-serif">y</text>
+  <!-- Line y = x + 2 -->
+  <line x1="55" y1="197" x2="250" y2="36" stroke="#00897b" stroke-width="2" opacity="0.9"/>
+  <text x="255" y="40" fill="#00897b" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">y=mx+b</text>
+  <!-- Circle -->
+  <circle cx="150" cy="115" r="45" fill="none" stroke="#f9a825" stroke-width="1.8" stroke-dasharray="5,3">
+    <animateTransform attributeName="transform" type="rotate" from="0 150 115" to="360 150 115" dur="8s" repeatCount="indefinite"/>
+  </circle>
+  <text x="150" y="74" text-anchor="middle" fill="#f9a825" font-size="8" font-family="Nunito,sans-serif">x²+y²=r²</text>
+  <!-- Point -->
+  <circle cx="150" cy="115" r="4" fill="#e53935"/>
+  <text x="155" y="113" fill="#e53935" font-size="8" font-family="Nunito,sans-serif">O(h,k)</text>
+  <!-- Formulas -->
+  <rect x="15" y="213" width="270" height="48" rx="8" fill="#1a1a2e"/>
+  <text x="25" y="229" fill="#80cbc4" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">İki nokta arası: d=√[(x₂-x₁)²+(y₂-y₁)²]</text>
+  <text x="25" y="243" fill="#80cbc4" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">Doğru: y-y₁=m(x-x₁) | Eğim: m=tanα=(y₂-y₁)/(x₂-x₁)</text>
+  <text x="25" y="254" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Parabol: y=ax²+bx+c | Çember: (x-h)²+(y-k)²=r²</text>
 </svg>`,
   };
   return svgs[id] || `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#0d0d20" rx="12"/><text x="150" y="105" text-anchor="middle" fill="#555" font-size="12" font-family="Nunito,sans-serif">Animasyon hazırlanıyor...</text></svg>`;
@@ -14571,6 +15045,9 @@ window.uniOpen = function(uid){
 
   let html = '';
 
+  // ─ WRAPPER (arka plan için) ─
+  html += `<div style="background:var(--c1);border-radius:22px 22px 0 0;overflow:hidden;min-height:100px;">`;
+
   // ─ COVER ─
   html += `<div style="position:relative;height:155px;background:${bg};overflow:hidden;flex-shrink:0;">`;
   if(photo) html += `<img src="${photo}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;" onerror="this.style.display='none'"/>`;
@@ -14706,7 +15183,8 @@ window.uniOpen = function(uid){
   html += `<button onclick="uniDelete('${uid}')" style="padding:10px 14px;border-radius:11px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.06);color:#ef4444;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;flex-shrink:0;">🗑 Sil</button>`;
   html += `<button onclick="closeOv('ov-uni')" style="flex:1;padding:10px;border-radius:11px;border:1px solid var(--br);background:var(--c2);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">Kapat</button>`;
   html += `</div>`;
-  html += `</div>`;
+  html += `</div>`; // padding wrapper
+  html += `</div>`; // background wrapper
 
   document.getElementById('uni-det-in').innerHTML = html;
   showOv('ov-uni');
@@ -15338,108 +15816,72 @@ window.atlasLocalDBSearch = function(uniQ, deptQ){
     .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
     .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c').trim();
 
-  // University id → display name mapping
-  const UNI_NAMES = {
-    odtu:['odtü','orta dogu teknik','metu','odtu'],
-    boun:['bogazici','boğaziçi','boun'],
-    itu:['itu','itü','istanbul teknik','ist teknik'],
-    hac:['hacettepe'],
-    ankara:['ankara üniversitesi','ankara uni'],
-    bilkent:['bilkent'],
-    gsu:['galatasaray'],
-    koc:['koc','koç'],
-    sabanci:['sabanci','sabancı'],
-    istanbul:['istanbul üniversitesi','i.ü.','iu '],
-    gazi:['gazi'],
-    marmara:['marmara'],
-    yildiz:['yildiz','yıldız'],
-    ege:['ege'],
-  };
-
   const uniNorm = norm(uniQ);
   const deptNorm = norm(deptQ);
 
-  // Which UNI_DB IDs match the university query
-  let matchedIds = Object.keys(UNI_DB||{});
-  if(uniNorm){
-    matchedIds = matchedIds.filter(id => {
-      const aliases = UNI_NAMES[id] || [id];
-      const dbEntry = UNI_DB[id] || {};
-      const names = aliases.concat([
-        norm(dbEntry.tamAd||''), norm(dbEntry.kisaAd||''), id
-      ]);
-      return names.some(n => n && (n.includes(uniNorm) || uniNorm.includes(n)));
-    });
+  const results = [];
+  const seen = new Set();
+
+  function addResult(r){
+    const key = norm(r.uni)+'|'+norm(r.bolum);
+    if(!seen.has(key)){ seen.add(key); results.push(r); }
   }
 
-  const results = [];
-
-  // Search UNI_DB yokAtlasByDept
-  for(const uid of matchedIds){
-    const entry = UNI_DB[uid] || {};
-    const byDept = entry.yokAtlasByDept || {};
+  // ── 1. UNI_DB ile yokAtlasByDept ──
+  for(const [uid, entry] of Object.entries(UNI_DB||{})){
     const uniLabel = entry.tamAd || entry.kisaAd || uid.toUpperCase();
     const uniTip = entry.tip || 'Devlet';
     const sehir = entry.sehir || '';
-
+    // Üniversite filtresi
+    if(uniNorm){
+      const names = [norm(uniLabel), norm(entry.tamAd||''), norm(entry.kisaAd||''), norm(uid)];
+      if(!names.some(n => n && (n.includes(uniNorm) || uniNorm.includes(n)))) continue;
+    }
+    // Bölüm arama
+    const byDept = entry.yokAtlasByDept || {};
     for(const [dName, dData] of Object.entries(byDept)){
       if(deptNorm && !norm(dName).includes(deptNorm) && !deptNorm.includes(norm(dName))) continue;
       const puan = dData.puanlar ? dData.puanlar[dData.puanlar.length-1] : null;
       const sira = dData.siralar ? dData.siralar[dData.siralar.length-1] : null;
-      results.push({
-        uni: uniLabel, bolum: dName,
-        tip: _guessTip(dName), uniTip, sehir,
-        puan: puan || null, sira: sira || null,
-        kont: dData.kontenjan ? dData.kontenjan[dData.kontenjan.length-1] : null,
-        yop: '', yillar: dData.yillar||[2024],
-        siralar: dData.siralar||[], puanlar: dData.puanlar||[],
-        _fromLocal: true
-      });
-    }
-
-    // If no yokAtlasByDept match but university matched, also try DEPT_DB scores
-    if(!Object.keys(byDept).length || (deptNorm && !results.find(r=>r.uni===uniLabel))){
-      const scoreEntry = (DEPT_DB||[]).find(d => !deptNorm || norm(d.name).includes(deptNorm) || deptNorm.includes(norm(d.name)));
-      if(scoreEntry){
-        const uniKey = Object.keys(scoreEntry.scores||{}).find(k => norm(k).includes(norm(uid)) || norm(uid).includes(norm(k)));
-        if(uniKey){
-          results.push({
-            uni: uniLabel, bolum: scoreEntry.name,
-            tip: scoreEntry.type||'SAY', uniTip, sehir,
-            puan: parseFloat(scoreEntry.scores[uniKey])||null,
-            sira: scoreEntry.rankBase||null, kont: scoreEntry.kontenjan||null,
-            yop:'', yillar:[2024], siralar:[], puanlar:[],
-            _fromLocal:true
-          });
-        }
-      }
+      addResult({ uni:uniLabel, bolum:dName, tip:_guessTip(dName), uniTip, sehir,
+        puan:puan||null, sira:sira||null,
+        kont:dData.kontenjan?dData.kontenjan[dData.kontenjan.length-1]:null,
+        yop:'', yillar:dData.yillar||[2024],
+        siralar:dData.siralar||[], puanlar:dData.puanlar||[], _fromLocal:true });
     }
   }
 
-  // If no university filter, also search DEPT_DB broadly
-  if(!uniNorm && deptNorm){
-    for(const dept of (DEPT_DB||[])){
-      if(!norm(dept.name).includes(deptNorm) && !deptNorm.includes(norm(dept.name))) continue;
-      for(const [uniName, puan] of Object.entries(dept.scores||{})){
-        results.push({
-          uni: uniName, bolum: dept.name,
-          tip: dept.type||'SAY', uniTip:'Devlet', sehir:'',
-          puan: parseFloat(puan)||null, sira: dept.rankBase||null,
-          kont: dept.kontenjan||null,
-          yop:'', yillar:[2024], siralar:[], puanlar:[],
-          _fromLocal:true
-        });
-      }
+  // ── 2. DEPT_DB × DEPT_DB.scores ──
+  for(const dept of (DEPT_DB||[])){
+    if(deptNorm && !norm(dept.name).includes(deptNorm) && !deptNorm.includes(norm(dept.name))) continue;
+    for(const [uniName, puan] of Object.entries(dept.scores||{})){
+      if(uniNorm && !norm(uniName).includes(uniNorm) && !uniNorm.includes(norm(uniName))) continue;
+      // Tip bilgisini ALL_UNI_LIST'ten al
+      const listEntry = (typeof ALL_UNI_LIST!=='undefined'?ALL_UNI_LIST:[]).find(u=>norm(u.name)===norm(uniName)||norm(u.name).includes(norm(uniName))||norm(uniName).includes(norm(u.name)));
+      addResult({ uni:uniName, bolum:dept.name, tip:dept.type||'SAY',
+        uniTip:listEntry?.tip||'Devlet', sehir:listEntry?.sehir||'',
+        puan:parseFloat(puan)||null, sira:dept.rankBase||null, kont:dept.kontenjan||null,
+        yop:'', yillar:[2024], siralar:[], puanlar:[], _fromLocal:true });
     }
   }
 
-  // Deduplicate
-  const seen = new Set();
-  return results.filter(r => {
-    const key = norm(r.uni) + '|' + norm(r.bolum);
-    if(seen.has(key)) return false;
-    seen.add(key); return true;
-  }).sort((a,b) => (b.puan||0)-(a.puan||0)).slice(0,30);
+  // ── 3. Sadece üniversite araması — bölüm filtresi yoksa ALL_UNI_LIST'ten ──
+  if(uniNorm && !deptNorm){
+    const allList = (typeof ALL_UNI_LIST!=='undefined'?ALL_UNI_LIST:[]).concat(
+      (typeof DEF_UNIS!=='undefined'?DEF_UNIS:[])
+    );
+    for(const u of allList){
+      const names = [norm(u.name), norm(u.fullName||''), norm(u.id)];
+      if(!names.some(n=>n&&(n.includes(uniNorm)||uniNorm.includes(n)))) continue;
+      // En az bir bölüm placeholder ekle
+      addResult({ uni:u.fullName||u.name, bolum:'Tüm Bölümler', tip:'SAY',
+        uniTip:u.tip||'Devlet', sehir:u.sehir||'',
+        puan:null, sira:null, kont:null,
+        yop:'', yillar:[], siralar:[], puanlar:[], _fromLocal:true, _uniOnly:true });
+    }
+  }
+
+  return results.sort((a,b)=>(b.puan||0)-(a.puan||0)).slice(0,40);
 };
 
 function _guessTip(deptName){
@@ -15644,23 +16086,24 @@ window.atlasAddToList = async function(idx){
         return t.includes(uniNameNorm.split(' ')[0]) || uniNameNorm.includes(id);
       }) : null;
 
-    const listMatch = typeof FULL_UNI_LIST !== 'undefined' ?
-      FULL_UNI_LIST.find(x => {
-        const a=(x.ad||'').toLowerCase();
-        const fWord=uniNameNorm.split(' ')[0];
-        return a.includes(fWord) || fWord.includes(a.split(' ')[0]);
+    // ALL_UNI_LIST'te ara
+    const allListMatch = typeof ALL_UNI_LIST !== 'undefined' ?
+      ALL_UNI_LIST.find(x => {
+        const n = (x.name||'').toLowerCase().replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');
+        const nn = uniNameNorm.replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');
+        return n.includes(nn.split(' ')[0]) || nn.includes(n.split(' ')[0]);
       }) : null;
 
-    const id = dbMatch ? dbMatch[0] : (listMatch ? listMatch.id : 'atlas_'+Date.now().toString(36));
+    const id = dbMatch ? dbMatch[0] : (allListMatch ? allListMatch.id : 'atlas_'+Date.now().toString(36));
     const db = dbMatch ? dbMatch[1] : {};
     if(!S.unis) S.unis = [];
     u = {
       id,
-      name: listMatch?.kisaAd || (r.uni||id),
-      fullName: r.uni||id,
-      sehir: r.sehir||db.sehir||listMatch?.sehir||'',
-      tip: r.uniTip||db.tip||listMatch?.tip||'Devlet',
-      bg: 'linear-gradient(135deg,'+(db.logoColor||'#1a1a2e')+',#4c1d95)',
+      name: allListMatch?.name || db.kisaAd || (r.uni||id).split(' ').slice(0,2).join(' '),
+      fullName: allListMatch?.name || r.uni||id,
+      sehir: r.sehir||db.sehir||allListMatch?.sehir||'',
+      tip: r.uniTip||db.tip||allListMatch?.tip||'Devlet',
+      bg: allListMatch?.bg || db.logoColor || 'linear-gradient(135deg,#1a1a2e,#4c1d95)',
       depts: [], hedefDept: null, photo: null
     };
     S.unis.push(u);
