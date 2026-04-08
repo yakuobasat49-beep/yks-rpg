@@ -1244,30 +1244,25 @@ const BDGS_S=[
 {id:'b_sozel_basl',icon:'📚',name:'Sözel Başlangıç',desc:'Sözel Başlangıç',chk:s=>['tur','tar','cog','fels'].every(id=>(s.subjects[id]||{}).questions>=10)},
 {id:'b_mat_geo',icon:'📐',name:'Mat-Geo İkili',desc:'Mat-Geo İkili',chk:s=>(s.subjects.mat||{}).questions>=50&&(s.subjects.geo||{}).questions>=50},
 {id:'b_fiz_kim',icon:'⚗️',name:'Fen İkili',desc:'Fen İkili',chk:s=>(s.subjects.fiz||{}).questions>=50&&(s.subjects.kim||{}).questions>=50},
-{id:'b_hedef_uni',icon:'🏛️',name:'Hayalim',desc:'Hayalim',chk:s=>(s.unis||[]).some(u=>u.hedefDept!=null)},
-{id:'b_photo_banka',icon:'📸',name:'Fotoğraflı Banka',desc:'Fotoğraflı Banka',chk:s=>(s.soruBankalari||[]).some(b=>b.photo)},
-{id:'b_photo_uni',icon:'🖼️',name:'Üniversite Fotoğrafı',desc:'Üniversite Fotoğrafı',chk:s=>(s.unis||[]).some(u=>u.photo)},
 {id:'b_arkadas_ekle',icon:'👥',name:'Takım Oyuncusu',desc:'Takım Oyuncusu',chk:s=>(s.friendScores||[]).length>=1},
-{id:'b_deneme1',icon:'📊',name:'İlk Deneme',desc:'İlk Deneme',chk:s=>(s.denemeler||[]).length>=1},
-{id:'b_ses_acik',icon:'🎵',name:'Odak Modu',desc:'Odak Modu',chk:s=>(s.dailyMins||0)>=30&&!!s.activeSound},
-{id:'b_boss_mat_1',icon:'🥊',name:'Matematik İlk Boss',desc:'Matematik dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=1},
-{id:'b_boss_mat_3',icon:'🥉',name:'Matematik 3 Boss',desc:'Matematik dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=3},
-{id:'b_boss_fiz_1',icon:'🥊',name:'Fizik İlk Boss',desc:'Fizik dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=1},
-{id:'b_boss_fiz_3',icon:'🥉',name:'Fizik 3 Boss',desc:'Fizik dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=3},
-{id:'b_boss_kim_1',icon:'🥊',name:'Kimya İlk Boss',desc:'Kimya dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=1},
-{id:'b_boss_kim_3',icon:'🥉',name:'Kimya 3 Boss',desc:'Kimya dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=3},
-{id:'b_boss_bio_1',icon:'🥊',name:'Biyoloji İlk Boss',desc:'Biyoloji dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=1},
-{id:'b_boss_bio_3',icon:'🥉',name:'Biyoloji 3 Boss',desc:'Biyoloji dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=3},
-{id:'b_boss_tur_1',icon:'🥊',name:'Türkçe İlk Boss',desc:'Türkçe dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=1},
-{id:'b_boss_tur_3',icon:'🥉',name:'Türkçe 3 Boss',desc:'Türkçe dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=3},
-{id:'b_boss_tar_1',icon:'🥊',name:'Tarih İlk Boss',desc:'Tarih dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=1},
-{id:'b_boss_tar_3',icon:'🥉',name:'Tarih 3 Boss',desc:'Tarih dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=3},
-{id:'b_boss_cog_1',icon:'🥊',name:'Coğrafya İlk Boss',desc:'Coğrafya dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=1},
-{id:'b_boss_cog_3',icon:'🥉',name:'Coğrafya 3 Boss',desc:'Coğrafya dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=3},
-{id:'b_boss_fels_1',icon:'🥊',name:'Felsefe İlk Boss',desc:'Felsefe dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=1},
-{id:'b_boss_fels_3',icon:'🥉',name:'Felsefe 3 Boss',desc:'Felsefe dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=3},
-{id:'b_boss_geo_1',icon:'🥊',name:'Geometri İlk Boss',desc:'Geometri dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=1},
-{id:'b_boss_geo_3',icon:'🥉',name:'Geometri 3 Boss',desc:'Geometri dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=3}
+{id:'b_boss_mat_1',icon:'🥊',name:'Matematik İlk Boss',desc:'Matematik dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=1},
+{id:'b_boss_mat_3',icon:'🥉',name:'Matematik 3 Boss',desc:'Matematik dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=3},
+{id:'b_boss_fiz_1',icon:'🥊',name:'Fizik İlk Boss',desc:'Fizik dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0)).length>=1},
+{id:'b_boss_fiz_3',icon:'🥉',name:'Fizik 3 Boss',desc:'Fizik dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0)).length>=3},
+{id:'b_boss_kim_1',icon:'🥊',name:'Kimya İlk Boss',desc:'Kimya dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0)).length>=1},
+{id:'b_boss_kim_3',icon:'🥉',name:'Kimya 3 Boss',desc:'Kimya dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0)).length>=3},
+{id:'b_boss_bio_1',icon:'🥊',name:'Biyoloji İlk Boss',desc:'Biyoloji dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0)).length>=1},
+{id:'b_boss_bio_3',icon:'🥉',name:'Biyoloji 3 Boss',desc:'Biyoloji dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0)).length>=3},
+{id:'b_boss_tur_1',icon:'🥊',name:'Türkçe İlk Boss',desc:'Türkçe dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0)).length>=1},
+{id:'b_boss_tur_3',icon:'🥉',name:'Türkçe 3 Boss',desc:'Türkçe dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0)).length>=3},
+{id:'b_boss_tar_1',icon:'🥊',name:'Tarih İlk Boss',desc:'Tarih dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0)).length>=1},
+{id:'b_boss_tar_3',icon:'🥉',name:'Tarih 3 Boss',desc:'Tarih dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0)).length>=3},
+{id:'b_boss_cog_1',icon:'🥊',name:'Coğrafya İlk Boss',desc:'Coğrafya dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0)).length>=1},
+{id:'b_boss_cog_3',icon:'🥉',name:'Coğrafya 3 Boss',desc:'Coğrafya dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0)).length>=3},
+{id:'b_boss_fels_1',icon:'🥊',name:'Felsefe İlk Boss',desc:'Felsefe dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0)).length>=1},
+{id:'b_boss_fels_3',icon:'🥉',name:'Felsefe 3 Boss',desc:'Felsefe dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0)).length>=3},
+{id:'b_boss_geo_1',icon:'🥊',name:'Geometri İlk Boss',desc:'Geometri dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0)).length>=1},
+{id:'b_boss_geo_3',icon:'🥉',name:'Geometri 3 Boss',desc:'Geometri dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0)).length>=3}
 ];
 const BDGS_L=[
 
@@ -1539,7 +1534,6 @@ const BDGS_L=[
 {id:'b_timer50',icon:'🚀',name:'Haftalık 50 Saat',desc:'Haftalık 50 Saat',chk:s=>(s.weekTotalMins||0)>=3000},
 {id:'b_daily4',icon:'📅',name:'Günlük 4 Saat',desc:'Günlük 4 Saat',chk:s=>(s.dailyMins||0)>=240},
 {id:'b_daily8',icon:'🌟',name:'Günlük 8 Saat',desc:'Günlük 8 Saat',chk:s=>(s.dailyMins||0)>=480},
-{id:'b_den10',icon:'📋',name:'10 Deneme',desc:'10 Deneme',chk:s=>(s.denemeler||[]).length>=10},
 {id:'b_den20',icon:'📌',name:'20 Deneme',desc:'20 Deneme',chk:s=>(s.denemeler||[]).length>=20},
 {id:'b_den50',icon:'🏆',name:'50 Deneme',desc:'50 Deneme',chk:s=>(s.denemeler||[]).length>=50},
 {id:'b_brans5',icon:'⚡',name:'5 Branş Denemesi',desc:'5 Branş Denemesi',chk:s=>(s.denemeler||[]).filter(d=>d.tur==='BRANS').length>=5},
@@ -1560,42 +1554,42 @@ const BDGS_L=[
 {id:'b_banka_done10',icon:'🏆',name:'10 Banka Bitti',desc:'10 Banka Bitti',chk:s=>(s.soruBankalari||[]).filter(b=>b.topics.length>0&&b.topics.every(t=>t.done)).length>=10},
 {id:'b_haftalik_plan_3',icon:'📆',name:'3 Hafta Planlı',desc:'3 Hafta Planlı',chk:s=>s.weekPlanReset!=null&&s.streak>=21},
 {id:'b_arkadas_3',icon:'👫',name:'3 Arkadaş',desc:'3 Arkadaş',chk:s=>(s.friendScores||[]).length>=3},
-{id:'b_boss_mat_5',icon:'🥈',name:'Matematik 5 Boss',desc:'Matematik dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=5},
-{id:'b_boss_mat_8',icon:'🥇',name:'Matematik 8 Boss',desc:'Matematik dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=8},
-{id:'b_boss_mat_10',icon:'🏆',name:'Matematik 10 Boss',desc:'Matematik dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=10},
-{id:'b_boss_mat_15',icon:'👑',name:'Matematik 15 Boss',desc:'Matematik dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=15},
-{id:'b_boss_fiz_5',icon:'🥈',name:'Fizik 5 Boss',desc:'Fizik dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=5},
-{id:'b_boss_fiz_8',icon:'🥇',name:'Fizik 8 Boss',desc:'Fizik dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=8},
-{id:'b_boss_fiz_10',icon:'🏆',name:'Fizik 10 Boss',desc:'Fizik dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=10},
-{id:'b_boss_fiz_15',icon:'👑',name:'Fizik 15 Boss',desc:'Fizik dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=15},
-{id:'b_boss_kim_5',icon:'🥈',name:'Kimya 5 Boss',desc:'Kimya dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=5},
-{id:'b_boss_kim_8',icon:'🥇',name:'Kimya 8 Boss',desc:'Kimya dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=8},
-{id:'b_boss_kim_10',icon:'🏆',name:'Kimya 10 Boss',desc:'Kimya dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=10},
-{id:'b_boss_kim_15',icon:'👑',name:'Kimya 15 Boss',desc:'Kimya dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=15},
-{id:'b_boss_bio_5',icon:'🥈',name:'Biyoloji 5 Boss',desc:'Biyoloji dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=5},
-{id:'b_boss_bio_8',icon:'🥇',name:'Biyoloji 8 Boss',desc:'Biyoloji dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=8},
-{id:'b_boss_bio_10',icon:'🏆',name:'Biyoloji 10 Boss',desc:'Biyoloji dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=10},
-{id:'b_boss_bio_15',icon:'👑',name:'Biyoloji 15 Boss',desc:'Biyoloji dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=15},
-{id:'b_boss_tur_5',icon:'🥈',name:'Türkçe 5 Boss',desc:'Türkçe dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=5},
-{id:'b_boss_tur_8',icon:'🥇',name:'Türkçe 8 Boss',desc:'Türkçe dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=8},
-{id:'b_boss_tur_10',icon:'🏆',name:'Türkçe 10 Boss',desc:'Türkçe dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=10},
-{id:'b_boss_tur_15',icon:'👑',name:'Türkçe 15 Boss',desc:'Türkçe dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=15},
-{id:'b_boss_tar_5',icon:'🥈',name:'Tarih 5 Boss',desc:'Tarih dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=5},
-{id:'b_boss_tar_8',icon:'🥇',name:'Tarih 8 Boss',desc:'Tarih dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=8},
-{id:'b_boss_tar_10',icon:'🏆',name:'Tarih 10 Boss',desc:'Tarih dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=10},
-{id:'b_boss_tar_15',icon:'👑',name:'Tarih 15 Boss',desc:'Tarih dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=15},
-{id:'b_boss_cog_5',icon:'🥈',name:'Coğrafya 5 Boss',desc:'Coğrafya dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=5},
-{id:'b_boss_cog_8',icon:'🥇',name:'Coğrafya 8 Boss',desc:'Coğrafya dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=8},
-{id:'b_boss_cog_10',icon:'🏆',name:'Coğrafya 10 Boss',desc:'Coğrafya dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=10},
-{id:'b_boss_cog_15',icon:'👑',name:'Coğrafya 15 Boss',desc:'Coğrafya dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=15},
-{id:'b_boss_fels_5',icon:'🥈',name:'Felsefe 5 Boss',desc:'Felsefe dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=5},
-{id:'b_boss_fels_8',icon:'🥇',name:'Felsefe 8 Boss',desc:'Felsefe dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=8},
-{id:'b_boss_fels_10',icon:'🏆',name:'Felsefe 10 Boss',desc:'Felsefe dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=10},
-{id:'b_boss_fels_15',icon:'👑',name:'Felsefe 15 Boss',desc:'Felsefe dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=15},
-{id:'b_boss_geo_5',icon:'🥈',name:'Geometri 5 Boss',desc:'Geometri dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=5},
-{id:'b_boss_geo_8',icon:'🥇',name:'Geometri 8 Boss',desc:'Geometri dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=8},
-{id:'b_boss_geo_10',icon:'🏆',name:'Geometri 10 Boss',desc:'Geometri dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=10},
-{id:'b_boss_geo_15',icon:'👑',name:'Geometri 15 Boss',desc:'Geometri dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0||s.bossesBeaten>b.id)).length>=15},
+{id:'b_boss_mat_5',icon:'🥈',name:'Matematik 5 Boss',desc:'Matematik dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_mat_8',icon:'🥇',name:'Matematik 8 Boss',desc:'Matematik dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=8},
+{id:'b_boss_mat_10',icon:'🏆',name:'Matematik 10 Boss',desc:'Matematik dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=10},
+{id:'b_boss_mat_15',icon:'👑',name:'Matematik 15 Boss',desc:'Matematik dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=15},
+{id:'b_boss_fiz_5',icon:'🥈',name:'Fizik 5 Boss',desc:'Fizik dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_fiz_8',icon:'🥇',name:'Fizik 8 Boss',desc:'Fizik dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0)).length>=8},
+{id:'b_boss_fiz_10',icon:'🏆',name:'Fizik 10 Boss',desc:'Fizik dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0)).length>=10},
+{id:'b_boss_fiz_15',icon:'👑',name:'Fizik 15 Boss',desc:'Fizik dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0)).length>=15},
+{id:'b_boss_kim_5',icon:'🥈',name:'Kimya 5 Boss',desc:'Kimya dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_kim_8',icon:'🥇',name:'Kimya 8 Boss',desc:'Kimya dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0)).length>=8},
+{id:'b_boss_kim_10',icon:'🏆',name:'Kimya 10 Boss',desc:'Kimya dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0)).length>=10},
+{id:'b_boss_kim_15',icon:'👑',name:'Kimya 15 Boss',desc:'Kimya dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0)).length>=15},
+{id:'b_boss_bio_5',icon:'🥈',name:'Biyoloji 5 Boss',desc:'Biyoloji dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_bio_8',icon:'🥇',name:'Biyoloji 8 Boss',desc:'Biyoloji dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0)).length>=8},
+{id:'b_boss_bio_10',icon:'🏆',name:'Biyoloji 10 Boss',desc:'Biyoloji dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0)).length>=10},
+{id:'b_boss_bio_15',icon:'👑',name:'Biyoloji 15 Boss',desc:'Biyoloji dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0)).length>=15},
+{id:'b_boss_tur_5',icon:'🥈',name:'Türkçe 5 Boss',desc:'Türkçe dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_tur_8',icon:'🥇',name:'Türkçe 8 Boss',desc:'Türkçe dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0)).length>=8},
+{id:'b_boss_tur_10',icon:'🏆',name:'Türkçe 10 Boss',desc:'Türkçe dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0)).length>=10},
+{id:'b_boss_tur_15',icon:'👑',name:'Türkçe 15 Boss',desc:'Türkçe dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TUR')&&(s.bossHp[b.id]<=0)).length>=15},
+{id:'b_boss_tar_5',icon:'🥈',name:'Tarih 5 Boss',desc:'Tarih dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_tar_8',icon:'🥇',name:'Tarih 8 Boss',desc:'Tarih dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0)).length>=8},
+{id:'b_boss_tar_10',icon:'🏆',name:'Tarih 10 Boss',desc:'Tarih dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0)).length>=10},
+{id:'b_boss_tar_15',icon:'👑',name:'Tarih 15 Boss',desc:'Tarih dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')&&(s.bossHp[b.id]<=0)).length>=15},
+{id:'b_boss_cog_5',icon:'🥈',name:'Coğrafya 5 Boss',desc:'Coğrafya dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_cog_8',icon:'🥇',name:'Coğrafya 8 Boss',desc:'Coğrafya dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0)).length>=8},
+{id:'b_boss_cog_10',icon:'🏆',name:'Coğrafya 10 Boss',desc:'Coğrafya dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0)).length>=10},
+{id:'b_boss_cog_15',icon:'👑',name:'Coğrafya 15 Boss',desc:'Coğrafya dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('COG')&&(s.bossHp[b.id]<=0)).length>=15},
+{id:'b_boss_fels_5',icon:'🥈',name:'Felsefe 5 Boss',desc:'Felsefe dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_fels_8',icon:'🥇',name:'Felsefe 8 Boss',desc:'Felsefe dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0)).length>=8},
+{id:'b_boss_fels_10',icon:'🏆',name:'Felsefe 10 Boss',desc:'Felsefe dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0)).length>=10},
+{id:'b_boss_fels_15',icon:'👑',name:'Felsefe 15 Boss',desc:'Felsefe dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')&&(s.bossHp[b.id]<=0)).length>=15},
+{id:'b_boss_geo_5',icon:'🥈',name:'Geometri 5 Boss',desc:'Geometri dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_geo_8',icon:'🥇',name:'Geometri 8 Boss',desc:'Geometri dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0)).length>=8},
+{id:'b_boss_geo_10',icon:'🏆',name:'Geometri 10 Boss',desc:'Geometri dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0)).length>=10},
+{id:'b_boss_geo_15',icon:'👑',name:'Geometri 15 Boss',desc:'Geometri dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0)).length>=15},
 // ── Eğlenceli & özel rozetler ──
 {id:'b_gece_catisi',icon:'🌙',name:'Gece Çalışkanı',desc:'Gece yarısından sonra çalış',chk:s=>new Date().getHours()>=0&&new Date().getHours()<4&&s.tasks>=1},
 {id:'b_sabah_erken',icon:'🌅',name:'Güneş Doğmadan',desc:'Sabah 05:00-06:00 arasında çalış',chk:s=>new Date().getHours()===5&&s.tasks>=1},
@@ -1937,8 +1931,8 @@ function mkState(){
     curTab:'home',topicTab:'mat',
     soruBankalari:[],soruBankaId:1,
     fasikuller:[],fasikulId:1,fasikulSelDers:null,fasikulSelId:null,
-    subjectMinutes:Object.fromEntries(['mat','tur','fiz','kim','bio','geo'].map(id=>[id,0])),
-    subjectQuestions:Object.fromEntries(['mat','tur','fiz','kim','bio','geo'].map(id=>[id,0])),
+    subjectMinutes:Object.fromEntries(SUBJ.map(s=>[s.id,0])),
+    subjectQuestions:Object.fromEntries(SUBJ.map(s=>[s.id,0])),
     // YENİ
     denemeler:[],denemeId:1,
     weekPlan:{mat:0,tur:0,fiz:0,kim:0,bio:0,geo:0,tar:0,cog:0,fels:0},
@@ -1985,8 +1979,9 @@ function _cleanOldPhotos(){
     for(let i=0;i<localStorage.length;i++){
       const k=localStorage.key(i);
       if(!k||!k.startsWith(SKEY+'_ph_'))continue;
+      // Key format: "yksrpg5_ph_uni_123" → split('_') → ['yksrpg5','ph','uni','123']
       const parts=k.split('_');
-      const type=parts[3], id=parts[4];
+      const type=parts[2], id=parts[3];
       if(type==='uni'&&!validUniIds.has(id)){localStorage.removeItem(k);i--;}
       else if(type==='bank'&&!validBankIds.has(Number(id))){localStorage.removeItem(k);i--;}
       else if(type==='fask'&&!validFaskIds.has(Number(id))){localStorage.removeItem(k);i--;}
@@ -2382,7 +2377,7 @@ function delLog(id){
   let entry=S.log.find(l=>l.id===id);
   if(!entry){toast('Aktivite bulunamadı');return;}
   if(!confirm(`"${entry.txt}" silinsin ve ${entry.xp} XP geri alınsın?`))return;
-  S.log=S.log.filter(l=>l!==entry);
+  S.log=S.log.filter(l=>l.id!==entry.id);
   S.xp=Math.max(0,S.xp-entry.xp);
   S.tasks=Math.max(0,S.tasks-1);
   if(entryIsThisWeek(entry)){
@@ -2427,7 +2422,7 @@ function delLog(id){
 function clearAllLog(){
   if(!S.log.length)return;
   if(!confirm(`Tüm ${S.log.length} aktivite kaydı silinecek. XP değişmeyecek. Devam?`))return;
-  S.log=[];
+  S.log=[];S.logId=1;
   save();renderHome();toast('Tüm aktiviteler silindi 🗑');
 }
 
@@ -2484,7 +2479,6 @@ function delLogByDay(dayStr){
 // ═══════════════════ HERO HTML ═══════════════════
 function heroH(){
   const l=getLvl(S.xp);const{cur,need,pct}=getXI(S.xp);const days=daysLeft();
-  const hours=Math.floor(((new Date(2026,5,19)-new Date())%(864e5))/3600000);
   const urgency=days<=30?'var(--rd)':days<=60?'#f39c12':'var(--gr)';
   const myName=S.myName||'YKS Savaşçısı';
   return`<div class="hero"><div class="h-row">
@@ -2511,7 +2505,7 @@ function heroH(){
         let wm=0;
         for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);const dl=S.dailyLog&&S.dailyLog[d.toDateString()];if(dl)wm+=(dl.mins||0);}
         const h=Math.floor(wm/60),m=wm%60;
-        return h>0?(m>0?h+'s'+m:'d'):wm>0?wm+'dk':'0dk';
+        return h>0?(m>0?h+'s'+m+'dk':h+'s'):wm>0?wm+'dk':'0dk';
       })()}</span>
       <span class="l">Bu Hafta</span>
     </div>
@@ -4413,6 +4407,9 @@ function toggleBankaTopic(bid,ti){
     addWXP(15);streakUpd();addLog(ders?ders.icon:'📚',`${b.name}: ${topicName}`,15);
     chkBdgs();maybeLU(ox);toast(`"${topicName}" tamamlandı! +15 XP ✅`);
   }else{
+    // Geri al: XP ve görev sayısını düzelt
+    S.xp=Math.max(0,S.xp-15);S.tasks=Math.max(0,S.tasks-1);
+    if(s)S.subjects[s.id].xp=Math.max(0,(S.subjects[s.id].xp||0)-15);
     // Banka'dan kaldırınca: başka banka yoksa konu haritasından da kaldır
     if(s){const stillDone=(S.soruBankalari||[]).filter(x=>x.id!==bid&&(x.subjId||'')===s.id).some(x=>x.topics.some(t=>t.name===topicName&&t.done));if(!stillDone)delete (S.subjects[s.id].topics||{})[topicName];}
   }
@@ -7111,7 +7108,8 @@ function answerFight(chosen,correct,btn){
   }
   res.style.display='block';
   fQ++;
-  const isLast=fQ>=BOSSES.find(b=>b.id===fB).qs.length;
+  const _curBoss=BOSSES.find(b=>b.id===fB)||BOSSES[fB];
+  const isLast=!_curBoss||fQ>=_curBoss.qs.length;
   fEnded=isLast;
   const nxt=document.getElementById('fi-nxt');
   nxt.style.display='block';
@@ -7121,7 +7119,7 @@ function answerFight(chosen,correct,btn){
     save();
     nxt.textContent=fH<=0?'🏆 Boss Yenildi! Ödülü Al ➡️':'Sonucu Gör ➡️';
   }else{
-    nxt.textContent=`Sonraki Soru (${fQ+1}/${BOSSES.find(b=>b.id===fB).qs.length}) ➡️`;
+    nxt.textContent=`Sonraki Soru (${fQ+1}/${_curBoss.qs.length}) ➡️`;
   }
 }
 
@@ -12165,6 +12163,11 @@ const TABS=[
   {id:'kutuphane',ico:'📖',lbl:'Kütüphane'},
   {id:'settings',ico:'⚙️',lbl:'Ayarlar'},
 ];
+
+// recalcLevel: XP zaten getLvl() ile dinamik hesaplanıyor; stub olarak bırakılıyor
+function recalcLevel(){ /* no-op: seviye getLvl(S.xp) ile anlık hesaplanır */ }
+// renderAll: mevcut sekmeyi yeniden render et
+function renderAll(){ nav(S.curTab||'home'); }
 
 function nav(tab){
   S.curTab=tab;
