@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-58CSCJSZM8"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-58CSCJSZM8');
+</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
@@ -1534,26 +1543,11 @@ const BDGS_L=[
 {id:'b_timer50',icon:'🚀',name:'Haftalık 50 Saat',desc:'Haftalık 50 Saat',chk:s=>(s.weekTotalMins||0)>=3000},
 {id:'b_daily4',icon:'📅',name:'Günlük 4 Saat',desc:'Günlük 4 Saat',chk:s=>(s.dailyMins||0)>=240},
 {id:'b_daily8',icon:'🌟',name:'Günlük 8 Saat',desc:'Günlük 8 Saat',chk:s=>(s.dailyMins||0)>=480},
-{id:'b_den20',icon:'📌',name:'20 Deneme',desc:'20 Deneme',chk:s=>(s.denemeler||[]).length>=20},
-{id:'b_den50',icon:'🏆',name:'50 Deneme',desc:'50 Deneme',chk:s=>(s.denemeler||[]).length>=50},
 {id:'b_brans5',icon:'⚡',name:'5 Branş Denemesi',desc:'5 Branş Denemesi',chk:s=>(s.denemeler||[]).filter(d=>d.tur==='BRANS').length>=5},
 {id:'b_allboss_banka',icon:'🐉',name:'Tam Kombat',desc:'Tam Kombat',chk:s=>s.bossesBeaten>=12&&(s.soruBankalari||[]).length>=10},
 {id:'b_xp_streak_combo',icon:'🌈',name:'Altın Combo',desc:'Altın Combo',chk:s=>s.xp>=5000&&s.streak>=14},
 {id:'b_mat_fiz_kim',icon:'🔬',name:'Sayısal Üçlü',desc:'Sayısal Üçlü',chk:s=>(s.subjects.mat||{}).questions>=200&&(s.subjects.fiz||{}).questions>=200&&(s.subjects.kim||{}).questions>=200},
-{id:'b_tum_dersler',icon:'🎓',name:'Tam Donanımlı',desc:'Tam Donanımlı',chk:s=>SUBJ.every(sb=>s.subjects[sb.id].tasks>0)},
-{id:'b_sosyal_tam',icon:'📚',name:'Sözel Tam',desc:'Sözel Tam',chk:s=>s.subjects.tar.tasks>0&&s.subjects.cog.tasks>0&&s.subjects.fels.tasks>0},
-{id:'b_sayisal_tam',icon:'🔬',name:'Sayısal Tam',desc:'Sayısal Tam',chk:s=>s.subjects.mat.tasks>0&&s.subjects.fiz.tasks>0&&s.subjects.kim.tasks>0&&s.subjects.bio.tasks>0},
 {id:'b_2ay_streak',icon:'🌙',name:'60 Gün Serisi',desc:'60 Gün Serisi',chk:s=>s.streak>=60},
-{id:'b_yks_savasci',icon:'⚔️',name:'YKS Savaşçısı',desc:'YKS Savaşçısı',chk:s=>s.xp>=50000},
-{id:'b_legend',icon:'🐉',name:'Efsane',desc:'Efsane',chk:s=>s.bossesBeaten>=12&&s.questions>=10000},
-{id:'b_ultimate',icon:'👑',name:'Nihayeti',desc:'Nihayeti',chk:s=>s.xp>=25000&&s.questions>=1000&&s.bossesBeaten>=12&&s.streak>=30},
-{id:'b_god_mode',icon:'🌌',name:'Ultra Mod',desc:'Ultra Mod',chk:s=>s.xp>=100000&&s.questions>=5000&&s.bossesBeaten>=12&&s.streak>=100},
-{id:'b_all_topics',icon:'🗺️',name:'Konu Fatihi',desc:'Konu Fatihi',chk:s=>SUBJ.every(sb=>Object.keys((s.subjects[sb.id]||{}).topics||{}).length>=5)},
-{id:'b_all_topics_full',icon:'🌍',name:'Konu Efsanesi',desc:'Konu Efsanesi',chk:s=>SUBJ.every(sb=>Object.keys((s.subjects[sb.id]||{}).topics||{}).length>=10)},
-{id:'b_net_1000',icon:'💎',name:'Net Efsanesi',desc:'Net Efsanesi',chk:s=>(s.totalNet||0)>=1000},
-{id:'b_banka_done10',icon:'🏆',name:'10 Banka Bitti',desc:'10 Banka Bitti',chk:s=>(s.soruBankalari||[]).filter(b=>b.topics.length>0&&b.topics.every(t=>t.done)).length>=10},
-{id:'b_haftalik_plan_3',icon:'📆',name:'3 Hafta Planlı',desc:'3 Hafta Planlı',chk:s=>s.weekPlanReset!=null&&s.streak>=21},
-{id:'b_arkadas_3',icon:'👫',name:'3 Arkadaş',desc:'3 Arkadaş',chk:s=>(s.friendScores||[]).length>=3},
 {id:'b_boss_mat_5',icon:'🥈',name:'Matematik 5 Boss',desc:'Matematik dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=5},
 {id:'b_boss_mat_8',icon:'🥇',name:'Matematik 8 Boss',desc:'Matematik dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=8},
 {id:'b_boss_mat_10',icon:'🏆',name:'Matematik 10 Boss',desc:'Matematik dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=10},
@@ -9271,11 +9265,13 @@ function handlePhotoUpload(input){
   const file=input.files[0];if(!file||!uid)return;
   const reader=new FileReader();
   reader.onload=e=>{
-    const u=S.unis.find(x=>x.id===uid);if(!u)return;
-    if(!u.photos)u.photos={};
-    u.photos[slotKey]=e.target.result;
-    if(slotKey==='anaBina')u.photo=e.target.result;
-    save();renderTargets();showUniDet(uid);toast('Fotoğraf eklendi! 📸');
+    compressImage(e.target.result,function(compressed){
+      const u=S.unis.find(x=>x.id===uid);if(!u)return;
+      if(!u.photos)u.photos={};
+      u.photos[slotKey]=compressed;
+      if(slotKey==='anaBina')u.photo=compressed;
+      save();renderTargets();showUniDet(uid);toast('Fotoğraf eklendi! 📸');
+    });
   };
   reader.readAsDataURL(file);
 }
