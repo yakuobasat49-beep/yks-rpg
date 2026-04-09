@@ -690,6 +690,7 @@ const SUBJ=[
   {id:'tar',name:'Tarih',icon:'⚔️',color:'#795548',xpQ:2.5,xpM:2,xpT:25,diff:'★★★☆☆'},
   {id:'cog',name:'Coğrafya',icon:'🌍',color:'#2e7d32',xpQ:2.5,xpM:2,xpT:25,diff:'★★★☆☆'},
   {id:'fels',name:'Felsefe',icon:'🧠',color:'#4527a0',xpQ:2.5,xpM:2,xpT:25,diff:'★★★☆☆'},
+  {id:'ing',name:'İngilizce',icon:'🇬🇧',color:'#0288d1',xpQ:3,xpM:2.5,xpT:28,diff:'★★★☆☆'},
 ];
 const RANKS=[[1,'Çaylak Öğrenci'],[2,'Azimli Talip'],[3,'Bilgi Avcısı'],[4,'Soru Ustası'],[5,'Konu Efendisi'],[7,'YKS Şampiyonu'],[10,'Efsanevi Savaşçı'],[15,'Bilge Büyücü'],[20,'Ölümsüz Dahi'],[25,'YKS Efsanesi'],[30,'Sınav Efsanesi'],[40,'Mutlak Üstün']];
 const XPT=[0,120,280,500,780,1150,1620,2200,2900,3750,4750,6000,7500,9300,11400,13900,16800,20200,24200,28800,34000,40000,47000,55000,64000,74000,85000,97000,110000,125000,141000];
@@ -883,6 +884,22 @@ const TMAP={
     'Din Felsefesi','Estetik (Sanat Felsefesi)','Çevre Felsefesi',
     'Gelişim Psikolojisi','Klinik Psikoloji ve Davranış',
     'Toplumsal Değişim','Toplumsal Kurumlar','Sosyal Tabakalaşma',
+  ],
+  ing:[
+    'Vocabulary (Kelime Bilgisi)','Reading Comprehension (Okuduğunu Anlama)',
+    'Grammar - Tenses (Zamanlar)','Grammar - Modals (Kiplik)','Grammar - Conditionals (Koşul Cümleleri)',
+    'Grammar - Passive Voice (Edilgen Yapı)','Grammar - Relative Clauses (Sıfat Cümleleri)',
+    'Grammar - Reported Speech (Dolaylı Anlatım)','Grammar - Inversion (Devrik Cümle)',
+    'Cloze Test (Boşluk Doldurma)','Paragraph Completion (Paragraf Tamamlama)',
+    'Sentence Ordering (Cümle Sıralama)','Irrelevant Sentence (Anlam Dışı Cümle)',
+    'Translation (Çeviri - TR→EN)','Translation (Çeviri - EN→TR)',
+    'Dialogue Completion (Diyalog Tamamlama)','Inference (Çıkarım)',
+    'Main Idea (Ana Fikir)','Word Formation (Kelime Yapısı)','Prepositions (Edatlar)',
+    'Linking Words (Bağlaçlar)','Phrasal Verbs (Fiil+Edat)','Idioms (Deyimler)',
+    'Pronoun Reference (Zamir Atıfı)','Paragraph Structure (Paragraf Yapısı)',
+    'Listening Comprehension (Dinleme - YDT)','Speaking Skills (Konuşma)',
+    'Academic Writing (Akademik Yazı)','Formal vs Informal (Resmi / Gayri Resmi)',
+    'Data Interpretation (Grafik-Tablo Yorumlama)',
   ],
 };
 
@@ -1606,6 +1623,25 @@ const BDGS_L=[
 {id:'b_xp_streak_combo',icon:'🌈',name:'Altın Combo',desc:'Altın Combo',chk:s=>s.xp>=5000&&s.streak>=14},
 {id:'b_mat_fiz_kim',icon:'🔬',name:'Sayısal Üçlü',desc:'Sayısal Üçlü',chk:s=>(s.subjects.mat||{}).questions>=200&&(s.subjects.fiz||{}).questions>=200&&(s.subjects.kim||{}).questions>=200},
 {id:'b_2ay_streak',icon:'🌙',name:'60 Gün Serisi',desc:'60 Gün Serisi',chk:s=>s.streak>=60},
+// ── İNGİLİZCE / YDT ROZETLERİ ──
+{id:'b_ing_ilk',icon:'🇬🇧',name:'İngilizce Başlangıç',desc:'İngilizce dersinde ilk soruyu çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=1},
+{id:'b_ing_q50',icon:'📖',name:'50 İngilizce Soru',desc:'İngilizce dersinde 50 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=50},
+{id:'b_ing_q200',icon:'📚',name:'200 İngilizce Soru',desc:'İngilizce dersinde 200 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=200},
+{id:'b_ing_q500',icon:'🏆',name:'500 İngilizce Soru',desc:'İngilizce dersinde 500 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=500},
+{id:'b_ing_xp500',icon:'⚡',name:'İngilizce XP 500',desc:'İngilizce dersinden 500 XP kazan',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.xp||0)>=500},
+{id:'b_ing_xp2000',icon:'🌟',name:'İngilizce Ustası',desc:'İngilizce dersinden 2000 XP kazan',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.xp||0)>=2000},
+{id:'b_ing_min30',icon:'⏱️',name:'İngilizce 30dk',desc:'İngilizce dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['ing']||0)>=30},
+{id:'b_ing_min60',icon:'⏱️',name:'İngilizce 60dk',desc:'İngilizce dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['ing']||0)>=60},
+{id:'b_ing_min120',icon:'⏱️',name:'İngilizce 2 Saat',desc:'İngilizce dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['ing']||0)>=120},
+{id:'b_ing_min300',icon:'🔥',name:'İngilizce Maraton',desc:'İngilizce dersinde toplam 300 dk çalış',chk:s=>((s.subjectMinutes||{})['ing']||0)>=300},
+{id:'b_ydt_ilk',icon:'✏️',name:'İlk YDT Denemesi',desc:'İlk YDT denemeni gir',chk:s=>(s.denemeler||[]).some(d=>d.tur==='YDT')},
+{id:'b_ydt_full',icon:'📋',name:'YDT Hazır',desc:'5+ YDT denemesi gir',chk:s=>(s.denemeler||[]).filter(d=>d.tur==='YDT').length>=5},
+{id:'b_ydt_net50',icon:'📊',name:'YDT 50+ Net',desc:'YDT denemesinde 50+ net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='YDT'&&d.totalNet>=50)},
+{id:'b_ydt_net65',icon:'📈',name:'YDT 65+ Net',desc:'YDT denemesinde 65+ net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='YDT'&&d.totalNet>=65)},
+{id:'b_ydt_net75',icon:'🏆',name:'YDT 75+ Net',desc:'YDT denemesinde 75+ net yap (neredeyse tam!)',chk:s=>(s.denemeler||[]).some(d=>d.tur==='YDT'&&d.totalNet>=75)},
+{id:'b_ydt_yukselen',icon:'📈',name:'YDT Yükselişte',desc:'Son 3 YDT denemende net artışı',chk:s=>{const d=(s.denemeler||[]).filter(x=>x.tur==='YDT');return d.length>=3&&d[d.length-1].totalNet>d[d.length-2].totalNet&&d[d.length-2].totalNet>d[d.length-3].totalNet;}},
+{id:'b_ing_konu10',icon:'🗺️',name:'İngilizce 10 Konu',desc:'İngilizce dersinde 10 konu tamamla',chk:s=>Object.values((s.subjects&&s.subjects.ing&&s.subjects.ing.topics)||{}).filter(Boolean).length>=10},
+{id:'b_ing_konu_all',icon:'👑',name:'İngilizce Tam Konu',desc:'İngilizce konularının tamamını bitir',chk:s=>Object.values((s.subjects&&s.subjects.ing&&s.subjects.ing.topics)||{}).filter(Boolean).length>=20},
 {id:'b_boss_mat_5',icon:'🥈',name:'Matematik 5 Boss',desc:'Matematik dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=5},
 {id:'b_boss_mat_8',icon:'🥇',name:'Matematik 8 Boss',desc:'Matematik dersinden 8 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=8},
 {id:'b_boss_mat_10',icon:'🏆',name:'Matematik 10 Boss',desc:'Matematik dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=10},
@@ -2988,7 +3024,7 @@ function renderHome(){
 
     // Konu listesi — banka + tmap birleşik
     const allBankaKonular=[];
-    (S.soruBankalari||[]).filter(b=>b.subjId===s.id||(b.dersId&&[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT].find(d=>d.id===b.dersId)?.subjId===s.id)).forEach(b=>{
+    (S.soruBankalari||[]).filter(b=>b.subjId===s.id||(b.dersId&&[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT,...(BANKA_DERSLER.YDT||[])].find(d=>d.id===b.dersId)?.subjId===s.id)).forEach(b=>{
       b.topics.forEach(t=>{ if(!allBankaKonular.find(k=>k.name===t.name)) allBankaKonular.push({name:t.name}); });
     });
     const tmapKonular=(TMAP[s.id]||[]);
@@ -3525,6 +3561,22 @@ const BANKA_DERSLER={
       'Mantık (Sembolik)','Mantık (Klasik)',
     ]},
   ],
+  YDT:[
+    {id:'ydt_ing',name:'İngilizce (YDT)',icon:'🇬🇧',color:'#0288d1',subjId:'ing',konular:[
+      'Vocabulary (Kelime Bilgisi)','Cloze Test (Boşluk Doldurma)',
+      'Reading Comprehension (Okuduğunu Anlama)','Paragraph Completion (Paragraf Tamamlama)',
+      'Sentence Ordering (Cümle Sıralama)','Irrelevant Sentence (Anlam Dışı Cümle)',
+      'Translation TR→EN (Türkçe→İngilizce)','Translation EN→TR (İngilizce→Türkçe)',
+      'Dialogue Completion (Diyalog Tamamlama)','Inference (Çıkarım Soruları)',
+      'Main Idea (Ana Fikir)','Grammar - Tenses (Zamanlar)',
+      'Grammar - Modals (Kiplik Fiilleri)','Grammar - Conditionals (Koşul Cümleleri)',
+      'Grammar - Passive Voice (Edilgen)','Grammar - Relative Clauses (Sıfat Cümleleri)',
+      'Grammar - Reported Speech (Dolaylı Anlatım)','Grammar - Inversion (Devrik)',
+      'Word Formation (Kelime Yapısı)','Prepositions (Edatlar)',
+      'Linking Words (Bağlaçlar)','Phrasal Verbs','Idioms (Deyimler)',
+      'Pronoun Reference (Zamir Atıfı)','Data Interpretation (Tablo-Grafik)',
+    ]},
+  ],
 };
 
 function renderTopics(){
@@ -3792,6 +3844,7 @@ function renderBankalar(){
     <div style="display:flex;gap:5px;margin-bottom:12px;">
       <button onclick="S.bankaTab='TYT';S.bankaSelDers=null;save();renderBankalar()" style="flex:1;padding:9px;border-radius:9px;border:none;font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;background:${tur==='TYT'?'var(--pu)':'var(--c2)'};color:${tur==='TYT'?'#fff':'var(--t3)'};">TYT</button>
       <button onclick="S.bankaTab='AYT';S.bankaSelDers=null;save();renderBankalar()" style="flex:1;padding:9px;border-radius:9px;border:none;font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;background:${tur==='AYT'?'var(--pk)':'var(--c2)'};color:${tur==='AYT'?'#fff':'var(--t3)'};">AYT</button>
+      <button onclick="S.bankaTab='YDT';S.bankaSelDers=null;save();renderBankalar()" style="flex:1;padding:9px;border-radius:9px;border:none;font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;background:${tur==='YDT'?'#0288d1':'var(--c2)'};color:${tur==='YDT'?'#fff':'var(--t3)'};">YDT 🇬🇧</button>
       <button onclick="S.bankaTab='FASIKUL';S.bankaSelDers=null;save();renderBankalar()" style="flex:1;padding:9px;border-radius:9px;border:none;font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;background:${tur==='FASIKUL'?'#00897b':'var(--c2)'};color:${tur==='FASIKUL'?'#fff':'var(--t3)'};">📒 Fasikül</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">${dersCards}</div>`;
@@ -4209,7 +4262,7 @@ function moveFasikulBolum(fid,from,to){
 
 function renderBankaDers(dersId){
   const tur=S.bankaTab||'TYT';
-  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT].find(d=>d.id===dersId);
+  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT,...(BANKA_DERSLER.YDT||[])].find(d=>d.id===dersId);
   if(!ders)return;
   const bankalar=(S.soruBankalari||[]).filter(b=>b.dersId===dersId);
   const selBanka=S.bankaSelBanka||null;
@@ -4256,7 +4309,7 @@ function renderBankaDers(dersId){
 }
 
 function renderBankaDetay(dersId,bankaId){
-  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT].find(d=>d.id===dersId);
+  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT,...(BANKA_DERSLER.YDT||[])].find(d=>d.id===dersId);
   const b=(S.soruBankalari||[]).find(x=>x.id===bankaId);
   if(!ders||!b){S.bankaSelBanka=null;renderBankaDers(dersId);return;}
   const done=b.topics.filter(t=>t.done).length;
@@ -4343,7 +4396,7 @@ function renderBankaDetay(dersId,bankaId){
 
 function editBankaTopicInline(bankaId, ti, dersId){
   const b=(S.soruBankalari||[]).find(x=>x.id===bankaId);if(!b)return;
-  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT].find(d=>d.id===dersId);
+  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT,...(BANKA_DERSLER.YDT||[])].find(d=>d.id===dersId);
   const color=ders?ders.color:'#7c4dff';
   const el=document.getElementById(`bd-tn-${ti}`);if(!el)return;
   const cur=b.topics[ti].name;
@@ -4459,7 +4512,7 @@ function delTopicFromBanka(bankaId,ti,dersId){
 }
 
 function showAddBankaOv(dersId){
-  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT].find(d=>d.id===dersId);
+  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT,...(BANKA_DERSLER.YDT||[])].find(d=>d.id===dersId);
   if(!ders)return;
   window._addBankaDersId=dersId;
   // Pre-fill konular from BANKA_DERSLER
@@ -4492,7 +4545,7 @@ function addBankaNew(){
   const topicStr=document.getElementById('banka-topics')?.value||'';
   const topics=topicStr.split(',').map(t=>t.trim()).filter(Boolean).map(t=>({name:t,done:false}));
   if(!topics.length){toast('En az 1 konu gir!');return;}
-  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT].find(d=>d.id===dersId);
+  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT,...(BANKA_DERSLER.YDT||[])].find(d=>d.id===dersId);
   const photoInp=document.getElementById('banka-photo');
   const doSave=(photo)=>{
     if(!S.soruBankalari)S.soruBankalari=[];
@@ -4542,7 +4595,7 @@ function previewBankaPhoto(inp){
 function toggleBankaTopic(bid,ti){
   const b=(S.soruBankalari||[]).find(x=>x.id===bid);if(!b)return;
   b.topics[ti].done=!b.topics[ti].done;
-  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT].find(d=>d.id===b.dersId);
+  const ders=[...BANKA_DERSLER.TYT,...BANKA_DERSLER.AYT,...(BANKA_DERSLER.YDT||[])].find(d=>d.id===b.dersId);
   const s=SUBJ.find(x=>x.id===(b.subjId||ders?.subjId));
   const topicName=b.topics[ti].name;
   if(b.topics[ti].done){
@@ -4595,6 +4648,8 @@ const DN_SUBJ=[
   {id:'edb',name:'Edebiyat',icon:'📖',max:24,color:'#1e88e5',tur:'AYT'},
   {id:'tar',name:'Tarih',icon:'⚔️',max:10,color:'#00897b',tur:'AYT'},
   {id:'cog',name:'Coğrafya',icon:'🌍',max:6,color:'#827717',tur:'AYT'},
+  // YDT
+  {id:'ing',name:'İngilizce',icon:'🇬🇧',max:80,color:'#0288d1',tur:'YDT'},
 ];
 
 // Branş denemesi tanımları
@@ -4618,6 +4673,8 @@ const BRANS_DEFS=[
   {id:'ayt_geo',name:'Geometri',icon:'📐',color:'#00897b',tur:'AYT',subjs:[{id:'bayt_geo',name:'Geometri',max:10}]},
   {id:'ayt_fels',name:'Felsefe',icon:'🧠',color:'#4527a0',tur:'AYT',subjs:[{id:'bayt_fels',name:'Felsefe',max:12}]},
   {id:'ayt_fen',name:'Fen Bil.',icon:'🔬',color:'#f39c12',tur:'AYT',subjs:[{id:'bayt_fiz2',name:'Fizik',max:14},{id:'bayt_kim2',name:'Kimya',max:13},{id:'bayt_bio2',name:'Biyoloji',max:13}]},
+  // YDT
+  {id:'ydt_ing',name:'İngilizce',icon:'🇬🇧',color:'#0288d1',tur:'YDT',subjs:[{id:'bydt_ing',name:'İngilizce',max:80}]},
   // KONU BAZLI (Alt Branş)
   {id:'konu_paragraf',name:'Paragraf',icon:'📄',color:'#1e88e5',tur:'KONU',subjs:[{id:'kp_paragraf',name:'Paragraf',max:20}]},
   {id:'konu_dilbilgisi',name:'Dil Bilgisi',icon:'🔤',color:'#0288d1',tur:'KONU',subjs:[{id:'kp_dilbilgisi',name:'Dil Bilgisi',max:20}]},
@@ -4647,6 +4704,7 @@ function renderDeneme(){
     <button onclick="S.denMode='TYT';S.denTur='TYT';save();renderDeneme()" style="flex:1;padding:7px;border-radius:8px;border:none;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;min-width:60px;background:${mode==='TYT'?'var(--pu)':'var(--c1)'};color:${mode==='TYT'?'#fff':'var(--t3)'};border:1px solid ${mode==='TYT'?'var(--pu)':'var(--br)'};">TYT</button>
     <button onclick="S.denMode='AYT';S.denTur='AYT';save();renderDeneme()" style="flex:1;padding:7px;border-radius:8px;border:none;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;min-width:60px;background:${mode==='AYT'?'var(--pk)':'var(--c1)'};color:${mode==='AYT'?'#fff':'var(--t3)'};border:1px solid ${mode==='AYT'?'var(--pk)':'var(--br)'};">AYT</button>
     <button onclick="S.denMode='BRANS';S.bransTur='TYT';save();renderDeneme()" style="flex:1;padding:7px;border-radius:8px;border:none;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;min-width:60px;background:${mode==='BRANS'?'var(--gold)':'var(--c1)'};color:${mode==='BRANS'?'#1a1a2e':'var(--t3)'};border:1px solid ${mode==='BRANS'?'var(--gold)':'var(--br)'};">Branş</button>
+    <button onclick="S.denMode='YDT';S.denTur='YDT';save();renderDeneme()" style="flex:1;padding:7px;border-radius:8px;border:none;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;min-width:60px;background:${mode==='YDT'?'#0288d1':'var(--c1)'};color:${mode==='YDT'?'#fff':'var(--t3)'};border:1px solid ${mode==='YDT'?'#0288d1':'var(--br)'};">YDT 🇬🇧</button>
     <button onclick="S.denMode='KONU';S.bransTur='KONU';S.denBrans='konu_paragraf';save();renderDeneme()" style="flex:1;padding:7px;border-radius:8px;border:none;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;min-width:60px;background:${mode==='KONU'?'#00897b':'var(--c1)'};color:${mode==='KONU'?'#fff':'var(--t3)'};border:1px solid ${mode==='KONU'?'#00897b':'var(--br)'};">Konu</button>
   </div>`;
 
@@ -4898,13 +4956,13 @@ function renderDeneme(){
   const trendDown=prev!==null&&last<prev;
   const trendArrow=prev===null?'—':trendUp?'📈 +'+( last-prev).toFixed(1):trendDown?'📉 '+(last-prev).toFixed(1):'➡️ =';
   const trendColor=trendUp?'var(--gr)':trendDown?'var(--rd)':'var(--t3)';
-  const totalColor=tur==='TYT'?'var(--pu)':'var(--pk)';
+  const totalColor=tur==='TYT'?'var(--pu)':tur==='YDT'?'#0288d1':'var(--pk)';
   const totalTooltips=list.map(d=>`${d.note||d.date||''} · ${(d.totalNet||0).toFixed(1)} net`);
   const totalDs={data:list.map(d=>d.totalNet||0),color:totalColor,name:'Toplam Net',tooltips:totalTooltips};
   const branchDs=curSubjs.map(s=>({data:list.map(d=>d.nets&&d.nets[s.id]!=null?d.nets[s.id]:0),color:s.color,name:s.name,id:s.id,tooltips:list.map(d=>`${d.note||d.date||''} · ${(d.nets&&d.nets[s.id]||0).toFixed(1)}`)}));
   const totalChart=list.length>=2?makeInteractiveChart([totalDs],labels,130,`tytayt-${tur}-total`):'';
   // Performance bar for last deneme
-  const maxNet=tur==='TYT'?120:80;
+  const maxNet=tur==='TYT'?120:tur==='YDT'?80:80;
   const lastPct=Math.min(100,Math.round((last/maxNet)*100));
   const avgPct=Math.min(100,Math.round((avg/maxNet)*100));
   const perfColor=lastPct>=80?'var(--gr)':lastPct>=55?'var(--gold)':'var(--rd)';
@@ -4921,8 +4979,8 @@ function renderDeneme(){
   document.getElementById('page').innerHTML=heroH()+tabs+
   `<div class="card" style="background:linear-gradient(135deg,rgba(${tur==='TYT'?'124,77,255':'224,64,251'},0.1),rgba(${tur==='TYT'?'124,77,255':'224,64,251'},0.04));border-color:rgba(${tur==='TYT'?'124,77,255':'224,64,251'},0.3);">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-      <div style="width:36px;height:36px;border-radius:10px;background:${totalColor}22;display:flex;align-items:center;justify-content:center;font-size:18px;">${tur==='TYT'?'📋':'📝'}</div>
-      <div><div style="font-weight:900;font-size:14px;">Yeni ${tur} Denemesi</div><div style="font-size:9px;color:var(--t3);">Max: ${maxNet} net · ${tur==='TYT'?'120 soru':'80 soru'}</div></div>
+      <div style="width:36px;height:36px;border-radius:10px;background:${totalColor}22;display:flex;align-items:center;justify-content:center;font-size:18px;">${tur==='TYT'?'📋':tur==='YDT'?'🇬🇧':'📝'}</div>
+      <div><div style="font-weight:900;font-size:14px;">Yeni ${tur} Denemesi</div><div style="font-size:9px;color:var(--t3);">Max: ${maxNet} net · ${tur==='TYT'?'120 soru':tur==='YDT'?'80 soru (YDT)':'80 soru'}</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px;">
       ${curSubjs.map(s=>`
@@ -5449,7 +5507,7 @@ async function ldrSyncNow(btn){
 }
 const DAYS_TR=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
 const DAYS_FULL=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
-const SUBJ_COLORS={mat:'#e53935',tur:'#1e88e5',fiz:'#f39c12',kim:'#8e24aa',bio:'#43a047',geo:'#00897b',tar:'#795548',cog:'#2e7d32',fels:'#4527a0'};
+const SUBJ_COLORS={mat:'#e53935',tur:'#1e88e5',fiz:'#f39c12',kim:'#8e24aa',bio:'#43a047',geo:'#00897b',tar:'#795548',cog:'#2e7d32',fels:'#4527a0',ing:'#0288d1'};
 
 function getWeekKey(){
   return curWeekKey();
@@ -12684,6 +12742,14 @@ function renderObStep(){
         <div class="ob-exam-title">⚡ TYT + AYT</div>
         <div class="ob-exam-desc">Her ikisine de hazırlanıyorum</div>
       </div>
+      <div class="ob-exam-card${cur==='YDT'?' on':''}" onclick="obSetExam('YDT')" id="ob-ex-ydt">
+        <div class="ob-exam-title">🇬🇧 YDT</div>
+        <div class="ob-exam-desc">Yabancı Dil Testi · 80 soru · 180 dakika</div>
+      </div>
+      <div class="ob-exam-card${cur==='TYT+YDT'?' on':''}" onclick="obSetExam('TYT+YDT')" id="ob-ex-tyt-ydt">
+        <div class="ob-exam-title">📋🇬🇧 TYT + YDT</div>
+        <div class="ob-exam-desc">Dil bölümlerine hazırlanıyorum</div>
+      </div>
       <button class="ob-btn" onclick="obNext()" style="margin-top:14px;">Devam Et →</button>`;
   } else if(_obStep===2){
     const subjIds=S.obFocusSubjs||[];
@@ -12741,8 +12807,8 @@ function obNext(){
 
 function obSetExam(t){
   S.denMode=t;save();
-  ['TYT','AYT','TYT+AYT'].forEach(k=>{
-    const el=document.getElementById('ob-ex-'+k.toLowerCase().replace('+','-'));
+  ['TYT','AYT','TYT+AYT','YDT','TYT+YDT'].forEach(k=>{
+    const el=document.getElementById('ob-ex-'+k.toLowerCase().replace(/\+/g,'-'));
     if(el)el.classList.toggle('on',k===t);
   });
 }
