@@ -340,6 +340,8 @@ input::placeholder{color:var(--t3);}
 .ov{display:none;position:fixed;inset:0;background:rgba(4,4,16,.92);align-items:center;justify-content:center;z-index:200;padding:14px;}
 .ov.show{display:flex;}
 @keyframes popIn{from{transform:scale(.7);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes trophySlideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@keyframes trophyPulse{0%,100%{box-shadow:0 0 20px rgba(245,166,35,0.2);}50%{box-shadow:0 0 40px rgba(245,166,35,0.5);}}
 .ov-box{background:linear-gradient(135deg,#1a1a2e,#0f3460);border:2px solid var(--gold);border-radius:17px;padding:26px 20px;text-align:center;max-width:280px;width:100%;animation:popIn .4s cubic-bezier(.4,0,.2,1);}
 .ov-em{font-size:48px;margin-bottom:4px;}
 .ov-lb{font-size:9px;color:var(--gl);letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:2px;}
@@ -626,15 +628,38 @@ input::placeholder{color:var(--t3);}
   </div>
 </div>
 
-<!-- BADGE -->
-<div class="ov" id="ov-badge">
-  <div class="bdg-ov">
-    <div class="bdg-big" id="bu-i"></div>
-    <div class="bdg-ov-ttl">🏅 Yeni Rozet!</div>
-    <div class="bdg-ov-nm" id="bu-n"></div>
-    <div class="bdg-ov-ds" id="bu-d"></div>
-    <div id="bu-count" style="font-size:11px;color:var(--gold);font-weight:700;margin:4px 0 8px;min-height:18px;"></div>
-    <button class="ov-btn" onclick="nextBadge()" style="background:linear-gradient(135deg,var(--gold),#f39c12);color:#1a1a2e;">Harika! 🏅</button>
+<!-- BADGE — PlayStation Trophy Style -->
+<div class="ov" id="ov-badge" style="align-items:flex-end;padding:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);">
+  <div id="bdg-trophy-box" style="width:100%;max-width:500px;animation:trophySlideUp .45s cubic-bezier(.4,0,.2,1);background:linear-gradient(160deg,#0a0a1a,#12082e,#0a1020);border-top:2px solid;border-image:linear-gradient(90deg,transparent,var(--gold),var(--pu),var(--gold),transparent) 1;padding:20px 20px 32px;position:relative;overflow:hidden;">
+    <!-- Arka fon efekti -->
+    <div id="bdg-bg-glow" style="position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(245,166,35,0.15),transparent 70%);pointer-events:none;"></div>
+    <div style="position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:20px 20px;pointer-events:none;"></div>
+    <!-- Trophy tip etiketi -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative;">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <div id="bdg-trophy-icon" style="width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#1a1a2e;background:var(--gold);">🥉</div>
+        <div id="bdg-trophy-type" style="font-size:9px;font-weight:900;color:var(--gold);letter-spacing:2px;text-transform:uppercase;">BRONZ BAŞARIM</div>
+      </div>
+      <div id="bu-count" style="font-size:9px;color:var(--t3);font-weight:700;"></div>
+    </div>
+    <!-- Ana içerik -->
+    <div style="display:flex;align-items:center;gap:14px;position:relative;">
+      <!-- Kupa ikonu -->
+      <div id="bdg-cup-wrap" style="flex-shrink:0;position:relative;">
+        <div id="bdg-cup-glow" style="position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle,rgba(245,166,35,0.3),transparent 70%);"></div>
+        <div id="bdg-cup" style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,rgba(245,166,35,0.2),rgba(245,166,35,0.05));border:2px solid rgba(245,166,35,0.4);display:flex;align-items:center;justify-content:center;font-size:34px;position:relative;z-index:1;box-shadow:0 0 20px rgba(245,166,35,0.2);">
+          <span id="bu-i"></span>
+        </div>
+      </div>
+      <!-- Metin -->
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:8px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Başarım Kazanıldı!</div>
+        <div id="bu-n" style="font-size:16px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:4px;"></div>
+        <div id="bu-d" style="font-size:10px;color:var(--t2);line-height:1.4;"></div>
+      </div>
+    </div>
+    <!-- Buton -->
+    <button onclick="nextBadge()" style="width:100%;margin-top:18px;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--gold),#e6901a);color:#1a1a2e;font-size:12px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;letter-spacing:.3px;position:relative;z-index:1;">Harika! ✓</button>
   </div>
 </div>
 
@@ -654,21 +679,8 @@ input::placeholder{color:var(--t3);}
 <div class="ov" id="ov-uni" style="align-items:flex-end;padding:0;background:rgba(4,4,16,.85);">
   <div id="uni-det-in" style="max-width:500px;width:100%;max-height:92vh;overflow-y:auto;background:var(--c1);border-radius:22px 22px 0 0;"></div>
 </div>
-<!-- STREAK EDIT OVERLAY -->
-<div class="ov" id="ov-streak">
-  <div style="background:var(--c1);border:1px solid var(--br);border-radius:17px;padding:20px;max-width:300px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);">
-    <div style="font-size:20px;text-align:center;margin-bottom:6px;">🔥</div>
-    <div style="font-weight:900;font-size:14px;text-align:center;margin-bottom:4px;">Seri Güncelle</div>
-    <div style="font-size:10px;color:var(--t3);text-align:center;margin-bottom:14px;" id="ov-streak-hint"></div>
-    <input type="number" id="ov-streak-inp" min="0" max="9999" placeholder="Gün sayısı..."
-      style="width:100%;padding:10px;border-radius:8px;border:1.5px solid var(--pu);background:var(--c2);color:var(--t1);font-size:16px;font-family:Nunito,sans-serif;outline:none;text-align:center;margin-bottom:12px;"
-      onkeydown="if(event.key==='Enter')saveStreakOv()"/>
-    <div style="display:flex;gap:8px;">
-      <button onclick="closeOv('ov-streak')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--br);background:transparent;color:var(--t2);font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">İptal</button>
-      <button onclick="saveStreakOv()" style="flex:2;padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;font-size:12px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">Kaydet 🔥</button>
-    </div>
-  </div>
-</div>
+<!-- STREAK EDIT OVERLAY KALDIRILDI - otomatik sistem -->
+<div id="ov-streak" style="display:none;"></div>
 <!-- Hidden file input for photo upload - outside overlay to avoid innerHTML issues -->
 <input type="file" id="photo-file-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(this)"/>
 <input type="hidden" id="photo-uid-target" value=""/>
@@ -700,41 +712,77 @@ const SKILL_TREE=[
   {id:'xp1',name:'XP Yeteneği I',desc:'+15% XP kazan',icon:'⚡',pts:1,req:null,branch:'calisma',bonus:'xp',val:0.15},
   {id:'xp2',name:'XP Yeteneği II',desc:'+30% XP (toplam)',icon:'⚡',pts:2,req:'xp1',branch:'calisma',bonus:'xp',val:0.30},
   {id:'xp3',name:'XP Ustası',desc:'+50% XP (toplam)',icon:'🌟',pts:3,req:'xp2',branch:'calisma',bonus:'xp',val:0.50},
+  {id:'xp4',name:'XP Efsanesi',desc:'+75% XP (toplam)',icon:'💫',pts:4,req:'xp3',branch:'calisma',bonus:'xp',val:0.75},
   {id:'study1',name:'Odak Modu',desc:'Çalışma süresi bonusu +20%',icon:'🎯',pts:1,req:null,branch:'calisma',bonus:'study',val:0.20},
   {id:'study2',name:'Derin Odak',desc:'Günlük 60dk hedefinde +50 bonus XP',icon:'🔮',pts:2,req:'study1',branch:'calisma',bonus:'deepfocus',val:50},
   {id:'study3',name:'Maraton Çalışan',desc:'Günlük 120dk üstünde +100 bonus XP',icon:'🏃',pts:3,req:'study2',branch:'calisma',bonus:'marathon',val:100},
+  {id:'study4',name:'Zamansız Kahraman',desc:'Günlük 240dk üstünde +200 bonus XP',icon:'⏳',pts:4,req:'study3',branch:'calisma',bonus:'ultramarathon',val:200},
   // ── DENEME DALI ──
   {id:'den1',name:'Deneme Analisti',desc:'Deneme XP +25%',icon:'📊',pts:1,req:null,branch:'deneme',bonus:'denxp',val:0.25},
   {id:'den2',name:'Net Avcısı',desc:'Her denemede +1 XP/net başına',icon:'📈',pts:2,req:'den1',branch:'deneme',bonus:'netxp',val:1},
   {id:'den3',name:'Deneme Efsanesi',desc:'Deneme XP +60% (toplam)',icon:'🏆',pts:3,req:'den2',branch:'deneme',bonus:'denxp',val:0.60},
   {id:'den4',name:'Hatasız Kahraman',desc:'Net ≥ 35 olan denemede +200 bonus XP',icon:'💎',pts:4,req:'den3',branch:'deneme',bonus:'perfectden',val:200},
+  {id:'den5',name:'Süper Analist',desc:'3 TYT denemesi üst üste net artışında +300 XP',icon:'🧮',pts:5,req:'den4',branch:'deneme',bonus:'trendbonus',val:300},
   // ── BOSS DALI ──
   {id:'boss1',name:'Savaşçı Ruhu',desc:'Boss savaşında joker hakkı (+1)',icon:'⚔️',pts:2,req:null,branch:'boss',bonus:'joker',val:1},
   {id:'boss2',name:'Dragon Slayer',desc:'Boss XP ödülleri +40%',icon:'🐉',pts:2,req:'boss1',branch:'boss',bonus:'bossxp',val:0.40},
   {id:'boss3',name:'Efsane Savaşçı',desc:'Boss savaşında can +1 ekstra joker',icon:'🗡️',pts:3,req:'boss2',branch:'boss',bonus:'joker2',val:1},
+  {id:'boss4',name:'Titan Katili',desc:'Boss XP ödülleri +80% (toplam)',icon:'💀',pts:4,req:'boss3',branch:'boss',bonus:'bossxp',val:0.80},
   // ── SERİ DALI ──
   {id:'streak1',name:'Seri Kalkanı',desc:'Seri 1 kez kırılmaz (korumalı)',icon:'🛡️',pts:2,req:null,branch:'streak',bonus:'shield',val:1},
   {id:'streak2',name:'Demir İrade',desc:'Günlük seri bonusu x2',icon:'🔥',pts:3,req:'streak1',branch:'streak',bonus:'streakx2',val:1},
   {id:'streak3',name:'Efsane Seri',desc:'7+ günlük seride her gün +25 bonus XP',icon:'💫',pts:4,req:'streak2',branch:'streak',bonus:'streakbonus',val:25},
+  {id:'streak4',name:'Asla Yılmaz',desc:'30+ günlük seride her gün +75 bonus XP',icon:'♾️',pts:5,req:'streak3',branch:'streak',bonus:'megastreakbonus',val:75},
+  // ── KONU DALI ──
+  {id:'konu1',name:'Konu Tarayıcı',desc:'Konu tamamladığında +5 bonus XP',icon:'🗺️',pts:1,req:null,branch:'konu',bonus:'topicxp',val:5},
+  {id:'konu2',name:'Konu Fatihi',desc:'Konu tamamladığında +15 bonus XP',icon:'📚',pts:2,req:'konu1',branch:'konu',bonus:'topicxp',val:15},
+  {id:'konu3',name:'Konu Efsanesi',desc:'Konu tamamladığında +30 bonus XP + özel rozet şansı',icon:'🌍',pts:3,req:'konu2',branch:'konu',bonus:'topicxp',val:30},
+  {id:'konu4',name:'Omniscient',desc:'Tüm derslerde konu tamamladığında +100 bonus XP',icon:'🧠',pts:4,req:'konu3',branch:'konu',bonus:'allsubjectbonus',val:100},
+  // ── SOSYAL DAL ──
+  {id:'sosyal1',name:'Takım Oyuncusu',desc:'Arkadaş ekleyince +50 XP',icon:'👥',pts:1,req:null,branch:'sosyal',bonus:'friendxp',val:50},
+  {id:'sosyal2',name:'Lider',desc:'Liderboard\'da üst 3\'e girince +100 XP',icon:'🏅',pts:2,req:'sosyal1',branch:'sosyal',bonus:'lbbonus',val:100},
+  {id:'sosyal3',name:'Efsane Lider',desc:'Liderboard 1. olunca +250 XP',icon:'👑',pts:3,req:'sosyal2',branch:'sosyal',bonus:'lbtop1',val:250},
+  // ── GÖREV DALI ──
+  {id:'gorev1',name:'Görev Ustası',desc:'Her görev +3 bonus XP',icon:'✅',pts:1,req:null,branch:'gorev',bonus:'taskxp',val:3},
+  {id:'gorev2',name:'Görev Savaşçısı',desc:'Günlük tüm görevler +50 bonus XP',icon:'🎯',pts:2,req:'gorev1',branch:'gorev',bonus:'dailyallxp',val:50},
+  {id:'gorev3',name:'Görev Efsanesi',desc:'Haftalık 50+ görevde +300 bonus XP',icon:'🌟',pts:3,req:'gorev2',branch:'gorev',bonus:'weeklytaskbonus',val:300},
 ];
 
 // ═══════════════════ AVATAR CUSTOMIZATION ═══════════════════
 const AVATAR_EMOJIS=[
-  // Başlangıç
-  {e:'🧑‍💻',unlockLvl:1,cat:'Karakter'},{e:'🧑‍🎓',unlockLvl:1,cat:'Karakter'},{e:'📚',unlockLvl:1,cat:'Nesne'},
-  // Seviye 2-5
+  // ── Başlangıç Karakterler (Sv 1) ──
+  {e:'🧑‍💻',unlockLvl:1,cat:'Karakter'},{e:'🧑‍🎓',unlockLvl:1,cat:'Karakter'},{e:'🧑‍🏫',unlockLvl:1,cat:'Karakter'},
+  {e:'👦',unlockLvl:1,cat:'Karakter'},{e:'👧',unlockLvl:1,cat:'Karakter'},{e:'🙂',unlockLvl:1,cat:'Karakter'},
+  // ── Maceracılar (Sv 2-4) ──
   {e:'🧙‍♂️',unlockLvl:2,cat:'Karakter'},{e:'🧙‍♀️',unlockLvl:2,cat:'Karakter'},{e:'🥷',unlockLvl:3,cat:'Karakter'},
-  {e:'🦸',unlockLvl:3,cat:'Karakter'},{e:'🦸‍♀️',unlockLvl:4,cat:'Karakter'},{e:'🧝‍♂️',unlockLvl:4,cat:'Karakter'},
-  {e:'🧝‍♀️',unlockLvl:5,cat:'Karakter'},{e:'🧛',unlockLvl:5,cat:'Karakter'},
-  // Hayvanlar
+  {e:'🦸',unlockLvl:3,cat:'Karakter'},{e:'🦸‍♀️',unlockLvl:3,cat:'Karakter'},{e:'🧝‍♂️',unlockLvl:4,cat:'Karakter'},
+  {e:'🧝‍♀️',unlockLvl:4,cat:'Karakter'},{e:'🧛',unlockLvl:5,cat:'Karakter'},{e:'🧟',unlockLvl:5,cat:'Karakter'},
+  {e:'🧞‍♂️',unlockLvl:5,cat:'Karakter'},{e:'🧜‍♀️',unlockLvl:6,cat:'Karakter'},{e:'🧚‍♀️',unlockLvl:6,cat:'Karakter'},
+  {e:'🤖',unlockLvl:6,cat:'Karakter'},{e:'👾',unlockLvl:7,cat:'Karakter'},{e:'🥸',unlockLvl:7,cat:'Karakter'},
+  {e:'🤩',unlockLvl:2,cat:'Karakter'},{e:'😎',unlockLvl:2,cat:'Karakter'},{e:'🤓',unlockLvl:1,cat:'Karakter'},
+  // ── Hayvanlar (Sv 6-10) ──
   {e:'🦊',unlockLvl:6,cat:'Hayvan'},{e:'🐺',unlockLvl:6,cat:'Hayvan'},{e:'🦁',unlockLvl:7,cat:'Hayvan'},
   {e:'🐯',unlockLvl:7,cat:'Hayvan'},{e:'🦅',unlockLvl:8,cat:'Hayvan'},{e:'🐉',unlockLvl:8,cat:'Hayvan'},
-  // Nesne/Sembol
-  {e:'⚔️',unlockLvl:5,cat:'Sembol'},{e:'🔮',unlockLvl:8,cat:'Sembol'},{e:'🧿',unlockLvl:9,cat:'Sembol'},
+  {e:'🦄',unlockLvl:9,cat:'Hayvan'},{e:'🐻',unlockLvl:6,cat:'Hayvan'},{e:'🐼',unlockLvl:6,cat:'Hayvan'},
+  {e:'🦝',unlockLvl:7,cat:'Hayvan'},{e:'🐸',unlockLvl:5,cat:'Hayvan'},{e:'🦋',unlockLvl:7,cat:'Hayvan'},
+  {e:'🦉',unlockLvl:8,cat:'Hayvan'},{e:'🦖',unlockLvl:9,cat:'Hayvan'},{e:'🐲',unlockLvl:10,cat:'Hayvan'},
+  {e:'🦈',unlockLvl:8,cat:'Hayvan'},{e:'🦁',unlockLvl:9,cat:'Hayvan'},{e:'🐺',unlockLvl:8,cat:'Hayvan'},
+  // ── Semboller & Nesneler (Sv 4-12) ──
+  {e:'⚔️',unlockLvl:4,cat:'Sembol'},{e:'🔮',unlockLvl:8,cat:'Sembol'},{e:'🧿',unlockLvl:9,cat:'Sembol'},
   {e:'🌙',unlockLvl:9,cat:'Sembol'},{e:'☀️',unlockLvl:10,cat:'Sembol'},{e:'⚡',unlockLvl:10,cat:'Sembol'},
-  // Yüksek Seviye
+  {e:'🎯',unlockLvl:4,cat:'Sembol'},{e:'🧲',unlockLvl:5,cat:'Sembol'},{e:'⚗️',unlockLvl:6,cat:'Sembol'},
+  {e:'🔭',unlockLvl:7,cat:'Sembol'},{e:'🧬',unlockLvl:8,cat:'Sembol'},{e:'💡',unlockLvl:3,cat:'Sembol'},
+  {e:'🎓',unlockLvl:5,cat:'Sembol'},{e:'📐',unlockLvl:4,cat:'Sembol'},{e:'🔬',unlockLvl:7,cat:'Sembol'},
+  {e:'📡',unlockLvl:9,cat:'Sembol'},{e:'🌌',unlockLvl:11,cat:'Sembol'},{e:'⭐',unlockLvl:6,cat:'Sembol'},
+  {e:'🌀',unlockLvl:10,cat:'Sembol'},{e:'🔥',unlockLvl:5,cat:'Sembol'},{e:'❄️',unlockLvl:6,cat:'Sembol'},
+  {e:'🌊',unlockLvl:7,cat:'Sembol'},{e:'⚖️',unlockLvl:8,cat:'Sembol'},{e:'🗡️',unlockLvl:9,cat:'Sembol'},
+  // ── Özel / Yüksek Seviye ──
   {e:'👑',unlockLvl:12,cat:'Özel'},{e:'💎',unlockLvl:13,cat:'Özel'},{e:'🌟',unlockLvl:15,cat:'Özel'},
   {e:'🏆',unlockLvl:18,cat:'Özel'},{e:'🔱',unlockLvl:20,cat:'Özel'},{e:'🌈',unlockLvl:25,cat:'Özel'},
+  {e:'🌠',unlockLvl:14,cat:'Özel'},{e:'💫',unlockLvl:16,cat:'Özel'},{e:'✨',unlockLvl:11,cat:'Özel'},
+  {e:'🎆',unlockLvl:17,cat:'Özel'},{e:'🚀',unlockLvl:19,cat:'Özel'},{e:'🌍',unlockLvl:22,cat:'Özel'},
+  {e:'🦚',unlockLvl:14,cat:'Özel'},{e:'🦋',unlockLvl:12,cat:'Özel'},{e:'🦩',unlockLvl:13,cat:'Özel'},
+  {e:'🌺',unlockLvl:10,cat:'Özel'},{e:'🍀',unlockLvl:8,cat:'Özel'},{e:'🌸',unlockLvl:9,cat:'Özel'},
 ];
 const AVATAR_FRAMES=[
   {id:'default',name:'Mor Aura',gradient:'linear-gradient(135deg,#7c4dff,#e040fb)',glow:'rgba(124,77,255,.5)',unlockLvl:1},
@@ -749,6 +797,17 @@ const AVATAR_FRAMES=[
   {id:'crimson',name:'Kırmızı Ejder',gradient:'linear-gradient(135deg,#b71c1c,#e53935,#ff1744)',glow:'rgba(183,28,28,.8)',unlockLvl:18},
   {id:'dark',name:'Karanlık Efendi',gradient:'linear-gradient(135deg,#0d0d0d,#37474f,#7c4dff)',glow:'rgba(124,77,255,.4)',unlockLvl:20},
   {id:'rainbow',name:'Gökkuşağı',gradient:'linear-gradient(135deg,#f44336,#ff9800,#ffeb3b,#4caf50,#2196f3,#9c27b0)',glow:'rgba(255,255,255,.5)',unlockLvl:25},
+  // Yeni çerçeveler
+  {id:'sakura',name:'Kiraz Çiçeği',gradient:'linear-gradient(135deg,#f8bbd0,#e91e63,#f8bbd0)',glow:'rgba(233,30,99,.5)',unlockLvl:6},
+  {id:'thunder',name:'Fırtına',gradient:'linear-gradient(135deg,#263238,#b0bec5,#ffd600)',glow:'rgba(255,214,0,.6)',unlockLvl:9},
+  {id:'mystic',name:'Mistik',gradient:'linear-gradient(135deg,#4a148c,#aa00ff,#0091ea)',glow:'rgba(170,0,255,.6)',unlockLvl:11},
+  {id:'emerald',name:'Zümrüt',gradient:'linear-gradient(135deg,#00695c,#1de9b6,#00695c)',glow:'rgba(29,233,182,.6)',unlockLvl:13},
+  {id:'volcano',name:'Volkan',gradient:'linear-gradient(135deg,#3e2723,#ff3d00,#ffab00)',glow:'rgba(255,61,0,.7)',unlockLvl:14},
+  {id:'arctic',name:'Kutup',gradient:'linear-gradient(135deg,#e0f7fa,#4dd0e1,#006064)',glow:'rgba(77,208,225,.7)',unlockLvl:16},
+  {id:'shadow',name:'Gölge',gradient:'linear-gradient(135deg,#000000,#424242,#7c4dff)',glow:'rgba(0,0,0,.8)',unlockLvl:17},
+  {id:'plasma',name:'Plazma',gradient:'linear-gradient(135deg,#00e5ff,#e040fb,#ffeb3b)',glow:'rgba(224,64,251,.8)',unlockLvl:19},
+  {id:'cosmic',name:'Kozmik',gradient:'linear-gradient(135deg,#0d47a1,#7b1fa2,#c62828,#0d47a1)',glow:'rgba(13,71,161,.9)',unlockLvl:22},
+  {id:'prism',name:'Prizma',gradient:'linear-gradient(135deg,#ffffff,#e3f2fd,#7c4dff,#e040fb)',glow:'rgba(255,255,255,.9)',unlockLvl:28},
 ];
 
 const DAYS_BASE_SHORT=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt']; // JS getDay sırasına göre
@@ -1324,11 +1383,11 @@ const BDGS_S=[
 {id:'b_min_cog_60',icon:'🌍',name:'Coğrafya 60dk',desc:'Coğrafya dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['cog']||0)>=60},
 {id:'b_min_fels_30',icon:'🧠',name:'Felsefe 30dk',desc:'Felsefe dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=30},
 {id:'b_min_fels_60',icon:'🧠',name:'Felsefe 60dk',desc:'Felsefe dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=60},
-{id:'b_sayisal_basl',icon:'🔬',name:'Sayısal Başlangıç',desc:'Sayısal Başlangıç',chk:s=>['mat','fiz','kim','bio'].every(id=>(s.subjects[id]||{}).questions>=10)},
-{id:'b_sozel_basl',icon:'📚',name:'Sözel Başlangıç',desc:'Sözel Başlangıç',chk:s=>['tur','tar','cog','fels'].every(id=>(s.subjects[id]||{}).questions>=10)},
-{id:'b_mat_geo',icon:'📐',name:'Mat-Geo İkili',desc:'Mat-Geo İkili',chk:s=>(s.subjects.mat||{}).questions>=50&&(s.subjects.geo||{}).questions>=50},
-{id:'b_fiz_kim',icon:'⚗️',name:'Fen İkili',desc:'Fen İkili',chk:s=>(s.subjects.fiz||{}).questions>=50&&(s.subjects.kim||{}).questions>=50},
-{id:'b_arkadas_ekle',icon:'👥',name:'Takım Oyuncusu',desc:'Takım Oyuncusu',chk:s=>(s.friendScores||[]).length>=1},
+{id:'b_sayisal_basl',icon:'🔬',name:'Sayısal Başlangıç',desc:'Sayısal derslerin her birinde 10 soru çöz (Mat, Fiz, Kim, Bio)',chk:s=>['mat','fiz','kim','bio'].every(id=>(s.subjects[id]||{}).questions>=10)},
+{id:'b_sozel_basl',icon:'📚',name:'Sözel Başlangıç',desc:'Sözel derslerin her birinde 10 soru çöz (Tur, Tar, Coğ, Fels)',chk:s=>['tur','tar','cog','fels'].every(id=>(s.subjects[id]||{}).questions>=10)},
+{id:'b_mat_geo',icon:'📐',name:'Mat-Geo İkili',desc:'Matematik ve Geometri derslerinde 50\'şer soru çöz',chk:s=>(s.subjects.mat||{}).questions>=50&&(s.subjects.geo||{}).questions>=50},
+{id:'b_fiz_kim',icon:'⚗️',name:'Fen İkili',desc:'Fizik ve Kimya derslerinde 50\'şer soru çöz',chk:s=>(s.subjects.fiz||{}).questions>=50&&(s.subjects.kim||{}).questions>=50},
+{id:'b_arkadas_ekle',icon:'👥',name:'Takım Oyuncusu',desc:'En az 1 arkadaş ekle ve sıralamaya katıl',chk:s=>(s.friendScores||[]).length>=1},
 {id:'b_boss_mat_1',icon:'🥊',name:'Matematik İlk Boss',desc:'Matematik dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=1},
 {id:'b_boss_mat_3',icon:'🥉',name:'Matematik 3 Boss',desc:'Matematik dersinden 3 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=3},
 {id:'b_boss_fiz_1',icon:'🥊',name:'Fizik İlk Boss',desc:'Fizik dersinden 1 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0)).length>=1},
@@ -1511,8 +1570,27 @@ const BDGS_L=[
 {id:'b_sosyal_tam',icon:'📚',name:'Sözel Tam',desc:'Tarih+Coğrafya+Felsefe görev',chk:s=>s.subjects.tar.tasks>0&&s.subjects.cog.tasks>0&&s.subjects.fels.tasks>0},
 {id:'b_sayisal_tam',icon:'🔬',name:'Sayısal Tam',desc:'Mat+Fiz+Kim+Bio görev',chk:s=>s.subjects.mat.tasks>0&&s.subjects.fiz.tasks>0&&s.subjects.kim.tasks>0&&s.subjects.bio.tasks>0},
 {id:'b_10boss_week',icon:'👹',name:'Boss Avcısı',desc:'Haftada 3+ boss yen',chk:s=>s.bossesBeaten>=3},
-{id:'b_yks_savasci',icon:'⚔️',name:'YKS Savaşçısı',desc:'50000 XP kazan',chk:s=>s.xp>=50000},
-{id:'b_legend',icon:'🐉',name:'Efsane',desc:'Tüm bossları yen ve 10K soru çöz',chk:s=>s.bossesBeaten>=12&&s.questions>=10000},
+{id:'b_yks_savasci',icon:'⚔️',name:'YKS Savaşçısı',desc:'Toplam 50.000 XP kazan',chk:s=>s.xp>=50000},
+{id:'b_legend',icon:'🐉',name:'Efsane',desc:'Tüm bossları yen (12+) ve 10.000 soru çöz',chk:s=>s.bossesBeaten>=12&&s.questions>=10000},
+// ── YENİ ÖZEL ROZETLER ──
+{id:'b_sabah_aksamci',icon:'🌅',name:'Sabah-Akşam',desc:'Sabah 07:00 öncesi çalış ve aynı gün gece 21:00 sonra çalış',chk:s=>s.tasks>=5&&new Date().getHours()>=21&&(s.dailyLog&&s.dailyLog[new Date().toDateString()]&&(s.dailyLog[new Date().toDateString()].xp||0)>0)},
+{id:'b_hiz_kazani',icon:'⚡',name:'Hız Kazanı',desc:'Bir günde 100+ soru çöz',chk:s=>(s.dailyQuestions||0)>=100},
+{id:'b_gece_gecesi',icon:'🌃',name:'Gece Yarısı',desc:'Gece 00:00-01:00 arası çalış',chk:s=>new Date().getHours()===0&&s.tasks>=1},
+{id:'b_super_hafta',icon:'🗓️',name:'Süper Hafta',desc:'7 günün 7\'sinde de çalış (mükemmel hafta)',chk:s=>s.streak>=7},
+{id:'b_ilk_500xp',icon:'🌱',name:'Filiz XP',desc:'İlk 500 XP\'ini kazan',chk:s=>s.xp>=500},
+{id:'b_sprint',icon:'🏃',name:'Sprint',desc:'3 günde 300+ dakika çalış',chk:s=>s.streak>=3&&(s.weekTotalMins||0)>=300},
+{id:'b_6ders_gun',icon:'📚',name:'6 Ders 1 Günde',desc:'Bir günde 6 farklı ders çalış',chk:s=>Object.keys(s.subjectMinutes||{}).filter(k=>(s.subjectMinutes[k]||0)>0).length>=6},
+{id:'b_netplus',icon:'📊',name:'Net Artışı',desc:'Son 2 TYT denemende net artışı yakala',chk:s=>{const d=(s.denemeler||[]).filter(x=>x.tur==='TYT');return d.length>=2&&d[d.length-1].totalNet>d[d.length-2].totalNet;}},
+{id:'b_goal_bos',icon:'🎯',name:'Hedef Belirleyici',desc:'İlk hedef üniversiteni seç',chk:s=>(s.unis||[]).some(u=>u.hedefDept!=null)},
+{id:'b_kombo_boss_den',icon:'💥',name:'Savaş+Deneme',desc:'Aynı gün hem boss yen hem deneme gir',chk:s=>s.bossesBeaten>=1&&(s.denemeler||[]).length>=1},
+{id:'b_azim',icon:'💪',name:'Azim',desc:'Sıfırdan 10. seviyeye ulaş',chk:s=>getLvl(s.xp)>=10},
+{id:'b_bilge',icon:'🧙',name:'Bilge',desc:'20. seviyeye ulaş',chk:s=>getLvl(s.xp)>=20},
+{id:'b_efsanevi',icon:'🌠',name:'Efsanevi',desc:'30. seviyeye ulaş — en yüksek rütbe!',chk:s=>getLvl(s.xp)>=30},
+{id:'b_coklu_boss',icon:'⚔️',name:'Çoklu Savaş',desc:'Bir haftada 5 farklı boss yen',chk:s=>s.bossesBeaten>=5},
+{id:'b_ing_tam',icon:'🇬🇧',name:'İngilizce Şampiyonu',desc:'İngilizce dersinde 500 soru çöz ve YDT denemesi gir',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=500&&(s.denemeler||[]).some(d=>d.tur==='YDT')},
+{id:'b_sosyal_tam',icon:'📚',name:'Sözel Tam',desc:'Tarih, Coğrafya ve Felsefe derslerinde görev tamamla',chk:s=>s.subjects.tar.tasks>0&&s.subjects.cog.tasks>0&&s.subjects.fels.tasks>0},
+{id:'b_sayisal_tam',icon:'🔬',name:'Sayısal Tam',desc:'Matematik, Fizik, Kimya ve Biyoloji derslerinde görev tamamla',chk:s=>s.subjects.mat.tasks>0&&s.subjects.fiz.tasks>0&&s.subjects.kim.tasks>0&&s.subjects.bio.tasks>0},
+{id:'b_10boss_week',icon:'👹',name:'Boss Avcısı',desc:'Toplamda en az 3 boss yen',chk:s=>s.bossesBeaten>=3},
 {id:'b_q_mat_50',icon:'➕',name:'Matematik Aday',desc:'Matematik dersinde 50 soru çöz',chk:s=>(s.subjects['mat']||{}).questions>=50},
 {id:'b_q_mat_100',icon:'➕',name:'Matematik Uzman',desc:'Matematik dersinde 100 soru çöz',chk:s=>(s.subjects['mat']||{}).questions>=100},
 {id:'b_q_mat_200',icon:'➕',name:'Matematik Usta',desc:'Matematik dersinde 200 soru çöz',chk:s=>(s.subjects['mat']||{}).questions>=200},
@@ -1594,35 +1672,35 @@ const BDGS_L=[
 {id:'b_min_fels_300',icon:'🧠',name:'Felsefe 300dk',desc:'Felsefe dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=300},
 {id:'b_min_fels_600',icon:'🧠',name:'Felsefe 600dk',desc:'Felsefe dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=600},
 {id:'b_min_fels_1200',icon:'🧠',name:'Felsefe 1200dk',desc:'Felsefe dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=1200},
-{id:'b_sayisal_100',icon:'🏆',name:'Sayısal Uzman',desc:'Sayısal Uzman',chk:s=>['mat','fiz','kim','bio'].every(id=>(s.subjects[id]||{}).questions>=100)},
-{id:'b_sozel_100',icon:'📖',name:'Sözel Uzman',desc:'Sözel Uzman',chk:s=>['tur','tar','cog','fels'].every(id=>(s.subjects[id]||{}).questions>=100)},
-{id:'b_tum_100',icon:'👑',name:'9 Ders Uzmanı',desc:'9 Ders Uzmanı',chk:s=>SUBJ.every(sb=>(s.subjects[sb.id]||{}).questions>=100)},
-{id:'b_sayisal_500',icon:'🥇',name:'Sayısal Efsane',desc:'Sayısal Efsane',chk:s=>['mat','fiz','kim','bio'].every(id=>(s.subjects[id]||{}).questions>=500)},
-{id:'b_sozel_500',icon:'📕',name:'Sözel Efsane',desc:'Sözel Efsane',chk:s=>['tur','tar','cog','fels'].every(id=>(s.subjects[id]||{}).questions>=500)},
-{id:'b_mat_king',icon:'➕',name:'Matematik Kralı',desc:'Matematik Kralı',chk:s=>(s.subjects.mat||{}).questions>=1000},
-{id:'b_fiz_king',icon:'⚡',name:'Fizik Sultanı',desc:'Fizik Sultanı',chk:s=>(s.subjects.fiz||{}).questions>=500},
-{id:'b_bio_king',icon:'🌿',name:'Biyoloji Sultanı',desc:'Biyoloji Sultanı',chk:s=>(s.subjects.bio||{}).questions>=500},
-{id:'b_kim_king',icon:'🧪',name:'Kimya Sultanı',desc:'Kimya Sultanı',chk:s=>(s.subjects.kim||{}).questions>=500},
-{id:'b_tur_king',icon:'📝',name:'Türkçe Sultanı',desc:'Türkçe Sultanı',chk:s=>(s.subjects.tur||{}).questions>=500},
-{id:'b_tyt_net50',icon:'📊',name:'TYT 50+ Net',desc:'TYT 50+ Net',chk:s=>(s.denemeler||[]).some(d=>d.tur==='TYT'&&d.totalNet>=50)},
-{id:'b_tyt_net80',icon:'📈',name:'TYT 80+ Net',desc:'TYT 80+ Net',chk:s=>(s.denemeler||[]).some(d=>d.tur==='TYT'&&d.totalNet>=80)},
-{id:'b_tyt_net100',icon:'🏆',name:'TYT 100+ Net',desc:'TYT 100+ Net',chk:s=>(s.denemeler||[]).some(d=>d.tur==='TYT'&&d.totalNet>=100)},
-{id:'b_tyt_net110',icon:'👑',name:'TYT 110+ Net',desc:'TYT 110+ Net',chk:s=>(s.denemeler||[]).some(d=>d.tur==='TYT'&&d.totalNet>=110)},
-{id:'b_ayt_net30',icon:'📊',name:'AYT 30+ Net',desc:'Bir AYT denemesinde 30+ net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='AYT'&&d.totalNet>=30)},
-{id:'b_ayt_net50',icon:'📈',name:'AYT 50+ Net',desc:'Bir AYT denemesinde 50+ net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='AYT'&&d.totalNet>=50)},
-{id:'b_ayt_net65',icon:'🏆',name:'AYT 65+ Net',desc:'Bir AYT denemesinde 65+ net yap (AYT 80 soru)',chk:s=>(s.denemeler||[]).some(d=>d.tur==='AYT'&&d.totalNet>=65)},
-{id:'b_ayt_net75',icon:'👑',name:'AYT 75+ Net',desc:'Bir AYT denemesinde 75+ net yap (neredeyse tam!)',chk:s=>(s.denemeler||[]).some(d=>d.tur==='AYT'&&d.totalNet>=75)},
-{id:'b_trend_up',icon:'📈',name:'Yükselişte',desc:'Yükselişte',chk:s=>{const d=(s.denemeler||[]).filter(x=>x.tur==='TYT');return d.length>=3&&d[d.length-1].totalNet>d[d.length-2].totalNet&&d[d.length-2].totalNet>d[d.length-3].totalNet;}},
-{id:'b_timer5',icon:'⏰',name:'Haftalık 5 Saat',desc:'Haftalık 5 Saat',chk:s=>(s.weekTotalMins||0)>=300},
-{id:'b_timer20',icon:'🕰️',name:'Haftalık 20 Saat',desc:'Haftalık 20 Saat',chk:s=>(s.weekTotalMins||0)>=1200},
-{id:'b_timer50',icon:'🚀',name:'Haftalık 50 Saat',desc:'Haftalık 50 Saat',chk:s=>(s.weekTotalMins||0)>=3000},
-{id:'b_daily4',icon:'📅',name:'Günlük 4 Saat',desc:'Günlük 4 Saat',chk:s=>(s.dailyMins||0)>=240},
-{id:'b_daily8',icon:'🌟',name:'Günlük 8 Saat',desc:'Günlük 8 Saat',chk:s=>(s.dailyMins||0)>=480},
-{id:'b_brans5',icon:'⚡',name:'5 Branş Denemesi',desc:'5 Branş Denemesi',chk:s=>(s.denemeler||[]).filter(d=>d.tur==='BRANS').length>=5},
-{id:'b_allboss_banka',icon:'🐉',name:'Tam Kombat',desc:'Tam Kombat',chk:s=>s.bossesBeaten>=12&&(s.soruBankalari||[]).length>=10},
-{id:'b_xp_streak_combo',icon:'🌈',name:'Altın Combo',desc:'Altın Combo',chk:s=>s.xp>=5000&&s.streak>=14},
-{id:'b_mat_fiz_kim',icon:'🔬',name:'Sayısal Üçlü',desc:'Sayısal Üçlü',chk:s=>(s.subjects.mat||{}).questions>=200&&(s.subjects.fiz||{}).questions>=200&&(s.subjects.kim||{}).questions>=200},
-{id:'b_2ay_streak',icon:'🌙',name:'60 Gün Serisi',desc:'60 Gün Serisi',chk:s=>s.streak>=60},
+{id:'b_sayisal_100',icon:'🏆',name:'Sayısal Uzman',desc:'Sayısal derslerin her birinde 100 soru çöz (Mat, Fiz, Kim, Bio)',chk:s=>['mat','fiz','kim','bio'].every(id=>(s.subjects[id]||{}).questions>=100)},
+{id:'b_sozel_100',icon:'📖',name:'Sözel Uzman',desc:'Sözel derslerin her birinde 100 soru çöz (Tur, Tar, Coğ, Fels)',chk:s=>['tur','tar','cog','fels'].every(id=>(s.subjects[id]||{}).questions>=100)},
+{id:'b_tum_100',icon:'👑',name:'9 Ders Uzmanı',desc:'Tüm derslerin her birinde 100 soru çöz',chk:s=>SUBJ.every(sb=>(s.subjects[sb.id]||{}).questions>=100)},
+{id:'b_sayisal_500',icon:'🥇',name:'Sayısal Efsane',desc:'Sayısal derslerin her birinde 500 soru çöz (Mat, Fiz, Kim, Bio)',chk:s=>['mat','fiz','kim','bio'].every(id=>(s.subjects[id]||{}).questions>=500)},
+{id:'b_sozel_500',icon:'📕',name:'Sözel Efsane',desc:'Sözel derslerin her birinde 500 soru çöz (Tur, Tar, Coğ, Fels)',chk:s=>['tur','tar','cog','fels'].every(id=>(s.subjects[id]||{}).questions>=500)},
+{id:'b_mat_king',icon:'➕',name:'Matematik Kralı',desc:'Matematik dersinde 1000 soru çöz',chk:s=>(s.subjects.mat||{}).questions>=1000},
+{id:'b_fiz_king',icon:'⚡',name:'Fizik Sultanı',desc:'Fizik dersinde 500 soru çöz',chk:s=>(s.subjects.fiz||{}).questions>=500},
+{id:'b_bio_king',icon:'🌿',name:'Biyoloji Sultanı',desc:'Biyoloji dersinde 500 soru çöz',chk:s=>(s.subjects.bio||{}).questions>=500},
+{id:'b_kim_king',icon:'🧪',name:'Kimya Sultanı',desc:'Kimya dersinde 500 soru çöz',chk:s=>(s.subjects.kim||{}).questions>=500},
+{id:'b_tur_king',icon:'📝',name:'Türkçe Sultanı',desc:'Türkçe dersinde 500 soru çöz',chk:s=>(s.subjects.tur||{}).questions>=500},
+{id:'b_tyt_net50',icon:'📊',name:'TYT 50+ Net',desc:'Bir TYT denemesinde 50 veya üzeri net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='TYT'&&d.totalNet>=50)},
+{id:'b_tyt_net80',icon:'📈',name:'TYT 80+ Net',desc:'Bir TYT denemesinde 80 veya üzeri net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='TYT'&&d.totalNet>=80)},
+{id:'b_tyt_net100',icon:'🏆',name:'TYT 100+ Net',desc:'Bir TYT denemesinde 100 veya üzeri net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='TYT'&&d.totalNet>=100)},
+{id:'b_tyt_net110',icon:'👑',name:'TYT 110+ Net',desc:'Bir TYT denemesinde 110 veya üzeri net yap (neredeyse tam!)',chk:s=>(s.denemeler||[]).some(d=>d.tur==='TYT'&&d.totalNet>=110)},
+{id:'b_ayt_net30',icon:'📊',name:'AYT 30+ Net',desc:'Bir AYT denemesinde 30 veya üzeri net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='AYT'&&d.totalNet>=30)},
+{id:'b_ayt_net50',icon:'📈',name:'AYT 50+ Net',desc:'Bir AYT denemesinde 50 veya üzeri net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='AYT'&&d.totalNet>=50)},
+{id:'b_ayt_net65',icon:'🏆',name:'AYT 65+ Net',desc:'Bir AYT denemesinde 65 veya üzeri net yap (AYT 80 soru)',chk:s=>(s.denemeler||[]).some(d=>d.tur==='AYT'&&d.totalNet>=65)},
+{id:'b_ayt_net75',icon:'👑',name:'AYT 75+ Net',desc:'Bir AYT denemesinde 75 veya üzeri net yap (neredeyse tam!)',chk:s=>(s.denemeler||[]).some(d=>d.tur==='AYT'&&d.totalNet>=75)},
+{id:'b_trend_up',icon:'📈',name:'Yükselişte',desc:'Son 3 TYT denemende net sayısı sürekli artmış olsun',chk:s=>{const d=(s.denemeler||[]).filter(x=>x.tur==='TYT');return d.length>=3&&d[d.length-1].totalNet>d[d.length-2].totalNet&&d[d.length-2].totalNet>d[d.length-3].totalNet;}},
+{id:'b_timer5',icon:'⏰',name:'Haftalık 5 Saat',desc:'Bu hafta toplam 300 dakika (5 saat) çalış',chk:s=>(s.weekTotalMins||0)>=300},
+{id:'b_timer20',icon:'🕰️',name:'Haftalık 20 Saat',desc:'Bu hafta toplam 1200 dakika (20 saat) çalış',chk:s=>(s.weekTotalMins||0)>=1200},
+{id:'b_timer50',icon:'🚀',name:'Haftalık 50 Saat',desc:'Bu hafta toplam 3000 dakika (50 saat) çalış — efsanevi!',chk:s=>(s.weekTotalMins||0)>=3000},
+{id:'b_daily4',icon:'📅',name:'Günlük 4 Saat',desc:'Bir günde kesintisiz 240 dakika (4 saat) çalış',chk:s=>(s.dailyMins||0)>=240},
+{id:'b_daily8',icon:'🌟',name:'Günlük 8 Saat',desc:'Bir günde tam 480 dakika (8 saat) çalış — dev performans!',chk:s=>(s.dailyMins||0)>=480},
+{id:'b_brans5',icon:'⚡',name:'5 Branş Denemesi',desc:'5 veya daha fazla branş denemesi gir',chk:s=>(s.denemeler||[]).filter(d=>d.tur==='BRANS').length>=5},
+{id:'b_allboss_banka',icon:'🐉',name:'Tam Kombat',desc:'Tüm 12 bossu yen ve en az 10 soru bankası oluştur',chk:s=>s.bossesBeaten>=12&&(s.soruBankalari||[]).length>=10},
+{id:'b_xp_streak_combo',icon:'🌈',name:'Altın Combo',desc:'5000 XP kazan ve 14 günlük seri oluştur',chk:s=>s.xp>=5000&&s.streak>=14},
+{id:'b_mat_fiz_kim',icon:'🔬',name:'Sayısal Üçlü',desc:'Matematik, Fizik ve Kimya derslerinde 200\'er soru çöz',chk:s=>(s.subjects.mat||{}).questions>=200&&(s.subjects.fiz||{}).questions>=200&&(s.subjects.kim||{}).questions>=200},
+{id:'b_2ay_streak',icon:'🌙',name:'60 Gün Serisi',desc:'60 gün üst üste çalış (2 aylık seri)',chk:s=>s.streak>=60},
 // ── İNGİLİZCE / YDT ROZETLERİ ──
 {id:'b_ing_ilk',icon:'🇬🇧',name:'İngilizce Başlangıç',desc:'İngilizce dersinde ilk soruyu çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=1},
 {id:'b_ing_q50',icon:'📖',name:'50 İngilizce Soru',desc:'İngilizce dersinde 50 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=50},
@@ -1679,7 +1757,7 @@ const BDGS_L=[
 {id:'b_boss_geo_10',icon:'🏆',name:'Geometri 10 Boss',desc:'Geometri dersinden 10 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0)).length>=10},
 {id:'b_boss_geo_15',icon:'👑',name:'Geometri 15 Boss',desc:'Geometri dersinden 15 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')&&(s.bossHp[b.id]<=0)).length>=15},
 // ── Eğlenceli & özel rozetler ──
-{id:'b_gece_catisi',icon:'🌙',name:'Gece Çalışkanı',desc:'Gece yarısından sonra çalış',chk:s=>new Date().getHours()>=0&&new Date().getHours()<4&&s.tasks>=1},
+{id:'b_gece_catisi',icon:'🌙',name:'Gece Çalışkanı',desc:'Gece yarısından sonra çalış',chk:s=>new Date().getHours()>=1&&new Date().getHours()<4&&s.tasks>=1},
 {id:'b_sabah_erken',icon:'🌅',name:'Güneş Doğmadan',desc:'Sabah 05:00-06:00 arasında çalış',chk:s=>new Date().getHours()===5&&s.tasks>=1},
 {id:'b_cuma_calisi',icon:'📚',name:'Cuma Savaşçısı',desc:'Cuma günü çalış',chk:s=>new Date().getDay()===5&&s.tasks>=1},
 {id:'b_hafta_sonu',icon:'🏖️',name:'Tatil Bozanı',desc:'Pazar günü en az 1 saat çalış',chk:s=>new Date().getDay()===0&&(s.dailyMins||0)>=60},
@@ -1698,6 +1776,33 @@ const BDGS_L=[
 {id:'b_ayt_yukselen',icon:'📈',name:'AYT Yükselişte',desc:'Son 3 AYT denemende net artışı',chk:s=>{const d=(s.denemeler||[]).filter(x=>x.tur==='AYT');return d.length>=3&&d[d.length-1].totalNet>d[d.length-2].totalNet&&d[d.length-2].totalNet>d[d.length-3].totalNet;}},
 {id:'b_xp_patlamasi',icon:'💫',name:'XP Patlaması',desc:'Tek seferinde 500+ XP kazan',chk:s=>(s._lastXpGain||0)>=500},
 {id:'b_level_up_hiz',icon:'🚀',name:'Süper Hızlı',desc:'3 günde 1000 XP kazan',chk:s=>s.xp>=1000&&s.streak<=3&&s.streak>=1},
+// ── İNGİLİZCE GENİŞLETİLMİŞ ──
+{id:'b_ing_vocab',icon:'📖',name:'Vocabulary Master',desc:'İngilizce dersinde 100 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=100},
+{id:'b_ing_grammar',icon:'✍️',name:'Grammar Guru',desc:'İngilizce dersinde 200 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=200},
+{id:'b_ing_fluent',icon:'🗣️',name:'Fluent Learner',desc:'İngilizce dersinde 1000 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=1000},
+{id:'b_ing_topic5',icon:'🗺️',name:'İngilizce 5 Konu',desc:'İngilizce dersinde 5 konu tamamla',chk:s=>Object.values((s.subjects&&s.subjects.ing&&s.subjects.ing.topics)||{}).filter(Boolean).length>=5},
+{id:'b_ing_min600',icon:'⏰',name:'İngilizce Maraton II',desc:'İngilizce dersinde toplam 600 dk çalış (10 saat!)',chk:s=>((s.subjectMinutes||{})['ing']||0)>=600},
+{id:'b_ing_min1200',icon:'🏅',name:'İngilizce Efsane',desc:'İngilizce dersinde toplam 1200 dk çalış (20 saat!)',chk:s=>((s.subjectMinutes||{})['ing']||0)>=1200},
+{id:'b_ydt_net80',icon:'🥇',name:'YDT 80+ Net',desc:'Bir YDT denemesinde 80 veya üzeri net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='YDT'&&d.totalNet>=80)},
+{id:'b_ydt_10deneme',icon:'📋',name:'YDT Uzmanı',desc:'10 veya daha fazla YDT denemesi gir',chk:s=>(s.denemeler||[]).filter(d=>d.tur==='YDT').length>=10},
+// ── EĞLENCELI BAŞARIMLAR ──
+{id:'b_fun_gece_yarisi',icon:'🌃',name:'Gece Yarısı Canavarı',desc:'Gece 00:00-01:00 arasında çalış',chk:s=>new Date().getHours()===0&&s.tasks>=1},
+{id:'b_fun_sabahci',icon:'🌅',name:'Güneşle Uyan',desc:'Sabah 05:00-06:00 arasında çalış',chk:s=>new Date().getHours()===5&&s.tasks>=1},
+{id:'b_fun_100soru_gun',icon:'💯',name:'Yüzlük Club',desc:'Bir günde tam 100 soru çöz',chk:s=>(s.dailyQuestions||0)>=100},
+{id:'b_fun_200soru_gun',icon:'⚡',name:'Soru Makinesi',desc:'Bir günde 200 soru çöz — inanılmaz!',chk:s=>(s.dailyQuestions||0)>=200},
+{id:'b_fun_hizli_seviye',icon:'🚀',name:'Roket',desc:'İlk 3 günde 1000 XP kazan',chk:s=>s.xp>=1000&&(s.streak||0)<=3},
+{id:'b_fun_sadece_mat',icon:'🔢',name:'Sayı Bağımlısı',desc:'Günlük çalışmanın %80\'i matematik olsun (en az 30dk)',chk:s=>{const m=(s.subjectMinutes&&s.subjectMinutes.mat)||0;const total=Object.values(s.subjectMinutes||{}).reduce((a,b)=>a+b,0);return total>=30&&m/total>=0.8;}},
+{id:'b_fun_5ders',icon:'🎒',name:'Çok Yönlü',desc:'Bir günde 5 farklı ders çalış',chk:s=>Object.keys(s.subjectMinutes||{}).filter(k=>(s.subjectMinutes[k]||0)>0).length>=5},
+{id:'b_fun_sessiz_kahraman',icon:'🤫',name:'Sessiz Kahraman',desc:'Hiç arkadaş eklemeden 5000 XP kazan',chk:s=>s.xp>=5000&&!(s.friendScores&&s.friendScores.length)},
+{id:'b_fun_ilk_giris',icon:'👋',name:'Hoş Geldin!',desc:'YKS RPG\'ye ilk kez gir — macera başlıyor!',chk:s=>true},
+{id:'b_fun_gece_kusu',icon:'🦉',name:'Gece Kuşu',desc:'Gece 23:00-00:00 arasında çalış',chk:s=>new Date().getHours()===23&&s.tasks>=1},
+{id:'b_fun_hafta_sonu',icon:'🏖️',name:'Hafta Sonu Yok',desc:'Cumartesi veya Pazar günü en az 60 dk çalış',chk:s=>[0,6].includes(new Date().getDay())&&(s.dailyMins||0)>=60},
+{id:'b_fun_lng_session',icon:'🌙',name:'Uzun Oturum',desc:'Bir günde 3+ saat çalış',chk:s=>(s.dailyMins||0)>=180},
+{id:'b_fun_combo_boss_den',icon:'💥',name:'Çift Tehlike',desc:'Aynı gün hem boss yen hem deneme gir',chk:s=>s.bossesBeaten>=1&&(s.denemeler||[]).length>=1},
+{id:'b_fun_streak_kahraman',icon:'🦸',name:'Seri Kahramanı',desc:'14 günlük seri oluştur',chk:s=>(s.streak||0)>=14},
+{id:'b_fun_azim',icon:'💪',name:'Azim',desc:'Sıfırdan 10. seviyeye ulaş — daha başlıyoruz!',chk:s=>getLvl(s.xp)>=10},
+{id:'b_fun_bilge',icon:'🧙',name:'Bilge',desc:'20. seviyeye ulaş — artık ustasın',chk:s=>getLvl(s.xp)>=20},
+{id:'b_fun_efsanevi',icon:'🌠',name:'Efsanevi',desc:'30. seviyeye ulaş — en yüksek unvan!',chk:s=>getLvl(s.xp)>=30},
 ];
 const ALL_BDGS=[...BDGS_S,...BDGS_L];
 
@@ -2337,6 +2442,22 @@ function consumeStreakShield(){
 function bossJokers(){return (S.skills||{}).boss1?1:0;}
 
 let badgeQueue=[];let badgeShowing=false;
+
+// Rozet tipini belirle (PlayStation trophy sistemi gibi)
+function getBadgeTrophy(b){
+  // Platinum — en nadirler
+  if(['b_legend','b_efsanevi','b_allboss_banka','b_net_master','b_xp100000','b_q5000','b_str365','b_tum_100','b_all_topics_full'].includes(b.id))
+    return{type:'PLATİN',icon:'🏆',color:'#e8d5ff',glow:'rgba(200,150,255,0.4)',bg:'linear-gradient(135deg,#2a0050,#4a0080,#1a003a)'};
+  // Gold — büyük başarımlar
+  if(['b_lv30','b_lv25','b_lv20','b_str180','b_str120','b_str90','b_xp50000','b_xp25000','b_q3000','b_q2000','b_boss12','b_tyt_net110','b_ayt_net75','b_yks_savasci'].includes(b.id)||b.id.includes('_king')||b.id.includes('_efsane'))
+    return{type:'ALTIN',icon:'🥇',color:'#ffd97d',glow:'rgba(245,166,35,0.4)',bg:'linear-gradient(135deg,#2a1800,#4a2c00,#1a1000)'};
+  // Silver — orta seviye
+  if(['b_lv15','b_lv12','b_str60','b_str45','b_str30','b_xp10000','b_xp7500','b_q1000','b_q750','b_boss10','b_boss8','b_tyt_net100','b_ayt_net65'].includes(b.id)||b.id.includes('_usta')||b.id.includes('_uzman'))
+    return{type:'GÜMÜŞ',icon:'🥈',color:'#c8d8e8',glow:'rgba(180,200,220,0.4)',bg:'linear-gradient(135deg,#0a1520,#152535,#080e18)'};
+  // Bronze — standart
+  return{type:'BRONZ',icon:'🥉',color:'var(--gold)',glow:'rgba(245,166,35,0.2)',bg:'linear-gradient(160deg,#0a0a1a,#12082e,#0a1020)'};
+}
+
 function chkBdgs(){
   let newOnes=[];
   const now=Date.now();
@@ -2344,7 +2465,6 @@ function chkBdgs(){
     if(!S.badges.includes(b.id)){
       try{if(b.chk(S)){
         S.badges.push(b.id);
-        // Store earn timestamp to avoid showing stale badges
         if(!S.badgeTimes)S.badgeTimes={};
         S.badgeTimes[b.id]=now;
         newOnes.push(b);
@@ -2352,10 +2472,13 @@ function chkBdgs(){
     }
   });
   if(newOnes.length){
-    // Only show badges earned in this session (last 10 seconds)
     const fresh=newOnes.filter(b=>!S.badgeTimes||!S.badgeTimes[b.id]||(now-S.badgeTimes[b.id])<10000);
     fresh.forEach(b=>badgeQueue.push(b));
-    if(!badgeShowing&&badgeQueue.length)setTimeout(popBdg,800);
+    // Hemen göster — başka overlay açıksa kısa bekle, yoksa anında
+    if(!badgeShowing&&badgeQueue.length){
+      const delay=document.querySelector('.ov.show:not(#ov-badge)')?1200:300;
+      setTimeout(popBdg,delay);
+    }
   }
 }
 function chkBdgsSilent(){
@@ -2373,34 +2496,68 @@ function popBdg(){
   if(!badgeQueue.length){badgeShowing=false;return;}
   badgeShowing=true;
   const b=badgeQueue.shift();
+  const trophy=getBadgeTrophy(b);
+
+  // Kupa alanı
   document.getElementById('bu-i').textContent=b.icon;
   document.getElementById('bu-n').textContent=b.name;
   document.getElementById('bu-d').textContent=b.desc;
+
+  // Trophy tier uygula
+  const typeEl=document.getElementById('bdg-trophy-type');
+  const iconEl=document.getElementById('bdg-trophy-icon');
+  const cupEl=document.getElementById('bdg-cup');
+  const glowEl=document.getElementById('bdg-cup-glow');
+  const bgGlowEl=document.getElementById('bdg-bg-glow');
+  const boxEl=document.getElementById('bdg-trophy-box');
+
+  if(typeEl)typeEl.textContent=trophy.type+' BAŞARIM';
+  if(typeEl)typeEl.style.color=trophy.color;
+  if(iconEl){iconEl.textContent=trophy.icon;iconEl.style.background=trophy.color;iconEl.style.color='#1a1a2e';}
+  if(cupEl){
+    cupEl.style.borderColor=trophy.color.replace('var(--gold)','#f5a623')+'88';
+    cupEl.style.background=`linear-gradient(135deg,${trophy.glow.replace('rgba','rgba').replace(/[\d.]+\)$/,'0.2)')},${trophy.glow.replace(/[\d.]+\)$/,'0.05)')})`;
+    cupEl.style.boxShadow=`0 0 24px ${trophy.glow}`;
+    cupEl.style.animation='trophyPulse 2s ease-in-out infinite';
+  }
+  if(glowEl)glowEl.style.background=`radial-gradient(circle,${trophy.glow},transparent 70%)`;
+  if(bgGlowEl)bgGlowEl.style.background=`radial-gradient(circle,${trophy.glow.replace(/[\d.]+\)$/,'0.12)')},transparent 70%)`;
+  if(boxEl)boxEl.style.background=trophy.bg;
+
   const countEl=document.getElementById('bu-count');
-  if(countEl)countEl.textContent=badgeQueue.length>0?`(+${badgeQueue.length} rozet daha!)`:' ';
+  if(countEl)countEl.textContent=badgeQueue.length>0?`+${badgeQueue.length} başarım daha`:'';
+
   showOv('ov-badge');
 }
 function nextBadge(){
   closeOv('ov-badge');
-  if(badgeQueue.length>0)setTimeout(popBdg,400);
+  if(badgeQueue.length>0)setTimeout(popBdg,350);
   else badgeShowing=false;
 }
 
 function editStreak(){
-  const inp=document.getElementById('ov-streak-inp');
-  const hint=document.getElementById('ov-streak-hint');
-  if(inp)inp.value=S.streak;
-  if(hint)hint.textContent='Mevcut: '+S.streak+' gün'+(S.streakRecord>S.streak?' · Rekor: '+S.streakRecord+' gün (sıfırlandıysa onu gir)':'');
-  showOv('ov-streak');
-  setTimeout(()=>{if(inp)inp.focus();},200);
+  // Artık manuel düzenleme yok — uygulamayı açmak otomatik sayar
+  toast('Seri otomatik! Her gün uygulamayı aç 🔥');
 }
-function saveStreakOv(){
-  const inp=document.getElementById('ov-streak-inp');
-  const n=parseInt(inp?inp.value:'');
-  if(!isNaN(n)&&n>=0){S.streak=n;if(n>S.streakRecord)S.streakRecord=n;S.lastDay=toDS();save();render();toast('Seri '+n+' güne güncellendi! 🔥');}
-  closeOv('ov-streak');
+function saveStreakOv(){}
+
+// Otomatik seri: açılışta ve herhangi bir eylemde güncellenir
+function streakUpd(){
+  const td=toDS();
+  const yest=new Date(Date.now()-864e5).toDateString();
+  if(S.lastDay!==td){
+    if(S.streak>S.streakRecord)S.streakRecord=S.streak;
+    if(S.lastDay===yest){
+      S.streak=(S.streak||0)+1;
+    } else if(!S.lastDay){
+      S.streak=1;
+    } else {
+      S.streak=1;
+    }
+    S.lastDay=td;
+    if(S.streak>S.streakRecord)S.streakRecord=S.streak;
+  }
 }
-function streakUpd(){const td=toDS(),yest=new Date(Date.now()-864e5).toDateString();if(S.lastDay!==td){if(S.streak>S.streakRecord)S.streakRecord=S.streak;S.streak=(S.lastDay===yest)?S.streak+1:1;S.lastDay=td;if(S.streak>S.streakRecord)S.streakRecord=S.streak;}}
 function addWXP(xp){S.weeklyXp[dIdx()]=(S.weeklyXp[dIdx()]||0)+xp;}
 function addDailyLog(xp,questions,mins,sid){
   const td=toDS();
@@ -2677,7 +2834,7 @@ function heroH(){
     <div class="sc"><span class="v">${S.xp}</span><span class="l">Toplam XP</span></div>
     <div class="sc"><span class="v">${S.tasks}</span><span class="l">Görev</span></div>
     <div class="sc"><span class="v">${S.questions}</span><span class="l">Soru</span></div>
-    <div class="sc" onclick="editStreak()" style="cursor:pointer;"><span class="v">${S.streak}🔥</span><span class="l">Seri ✎</span></div>
+    <div class="sc" title="Her gün uygulamayı aç, seri otomatik artar"><span class="v">${S.streak}🔥</span><span class="l">Gün Serisi</span></div>
     <div class="sc" onclick="showWeeklyReport()" style="cursor:pointer;">
       <span class="v" style="color:var(--gr)">${(()=>{
         const ws=getWeekStartDate();
@@ -12807,8 +12964,10 @@ function obNext(){
 
 function obSetExam(t){
   S.denMode=t;save();
+  // HTML element id haritası — ob-ex-both TYT+AYT için
+  const idMap={'TYT':'ob-ex-tyt','AYT':'ob-ex-ayt','TYT+AYT':'ob-ex-both','YDT':'ob-ex-ydt','TYT+YDT':'ob-ex-tyt-ydt'};
   ['TYT','AYT','TYT+AYT','YDT','TYT+YDT'].forEach(k=>{
-    const el=document.getElementById('ob-ex-'+k.toLowerCase().replace(/\+/g,'-'));
+    const el=document.getElementById(idMap[k]);
     if(el)el.classList.toggle('on',k===t);
   });
 }
@@ -13131,81 +13290,218 @@ renderStats=function(){
 };
 
 // ══════════════════════════════════════════════════
-// 5. ROZETLER SEKMESİ
+// 5. ROZETLER SEKMESİ — PlayStation Trophy Tarzı
 // ══════════════════════════════════════════════════
+function getTrophyMeta(b){
+  if(['b_legend','b_efsanevi','b_allboss_banka','b_net_master','b_xp100000','b_q5000','b_str365','b_tum_100','b_all_topics_full'].includes(b.id))
+    return{tier:'PLATİN',tierEn:'platinum',color:'#d4b4ff',glow:'rgba(180,100,255,0.35)',bg:'linear-gradient(135deg,rgba(100,0,180,0.18),rgba(160,80,255,0.06))',border:'rgba(160,80,255,0.35)',cup:'🏆'};
+  if(['b_lv30','b_lv25','b_lv20','b_str180','b_str120','b_str90','b_xp50000','b_xp25000','b_q3000','b_q2000','b_boss12','b_tyt_net110','b_ayt_net75','b_yks_savasci'].includes(b.id)||b.id.includes('_king')||b.id.endsWith('_efsane')||b.id.endsWith('_efsanesi'))
+    return{tier:'ALTIN',tierEn:'gold',color:'#ffd97d',glow:'rgba(245,166,35,0.3)',bg:'linear-gradient(135deg,rgba(80,50,0,0.2),rgba(245,166,35,0.06))',border:'rgba(245,166,35,0.35)',cup:'🥇'};
+  if(['b_lv15','b_lv12','b_str60','b_str45','b_str30','b_xp10000','b_xp7500','b_q1000','b_q750','b_boss10','b_boss8','b_tyt_net100','b_ayt_net65'].includes(b.id)||b.id.includes('_usta')||b.id.includes('_uzman'))
+    return{tier:'GÜMÜŞ',tierEn:'silver',color:'#b8d0e8',glow:'rgba(160,200,230,0.25)',bg:'linear-gradient(135deg,rgba(20,50,80,0.2),rgba(100,160,210,0.06))',border:'rgba(120,170,210,0.3)',cup:'🥈'};
+  return{tier:'BRONZ',tierEn:'bronze',color:'#d4956a',glow:'rgba(180,120,80,0.2)',bg:'linear-gradient(135deg,rgba(60,30,10,0.15),rgba(180,120,80,0.05))',border:'rgba(160,100,60,0.25)',cup:'🥉'};
+}
+
 function renderBadges(){
-  const earnedS=BDGS_S.filter(b=>S.badges.includes(b.id));
-  const earnedL=BDGS_L.filter(b=>S.badges.includes(b.id));
-  const totalEarned=earnedS.length+earnedL.length;
-  const totalAll=BDGS_S.length+BDGS_L.length;
+  const ALL=[...BDGS_S,...BDGS_L];
+  const earned=ALL.filter(b=>S.badges.includes(b.id));
+  const locked=ALL.filter(b=>!S.badges.includes(b.id));
+  const totalEarned=earned.length;
+  const totalAll=ALL.length;
   const pct=Math.round(totalEarned/totalAll*100);
 
-  const bS=BDGS_S.map(b=>{
+  // Trophy sayıları — kazanılan ve toplam
+  const tCounts={platinum:0,gold:0,silver:0,bronze:0};
+  const tTotals={platinum:0,gold:0,silver:0,bronze:0};
+  earned.forEach(b=>{tCounts[getTrophyMeta(b).tierEn]++;});
+  ALL.forEach(b=>{tTotals[getTrophyMeta(b).tierEn]++;});
+
+  // Filtre durumu
+  if(!window._bdgFilter)window._bdgFilter='all';
+  const curFilter=window._bdgFilter;
+
+  // Filtrelenmiş liste
+  const filtered=curFilter==='earned'?earned:curFilter==='locked'?locked:ALL;
+
+  // Kategoriler — rozet grupları
+  const cats=[
+    {key:'seri',label:'🔥 Seri',ids:b=>b.id.startsWith('b_str')||b.id.includes('streak')||b.id.includes('2ay')||b.id.includes('super_hafta')||b.id.includes('sprint')},
+    {key:'xp',label:'⚡ XP & Seviye',ids:b=>b.id.startsWith('b_xp')||b.id.startsWith('b_lv')},
+    {key:'soru',label:'✏️ Soru',ids:b=>b.id.startsWith('b_q')&&!b.id.startsWith('b_q_mat')&&!b.id.startsWith('b_q_tur')&&!b.id.startsWith('b_q_fiz')&&!b.id.startsWith('b_q_kim')&&!b.id.startsWith('b_q_bio')&&!b.id.startsWith('b_q_geo')&&!b.id.startsWith('b_q_tar')&&!b.id.startsWith('b_q_cog')&&!b.id.startsWith('b_q_fels')&&!b.id.startsWith('b_q_ing')},
+    {key:'ders',label:'📚 Ders',ids:b=>b.id.startsWith('b_q_')||b.id.startsWith('b_min_')||b.id.startsWith('b_topic_')||b.id.startsWith('b_banka_')||b.id.startsWith('b_boss_mat')||b.id.startsWith('b_boss_fiz')||b.id.startsWith('b_boss_kim')||b.id.startsWith('b_boss_bio')||b.id.startsWith('b_boss_tur')||b.id.startsWith('b_boss_tar')||b.id.startsWith('b_boss_cog')||b.id.startsWith('b_boss_fels')||b.id.startsWith('b_boss_geo')||b.id.startsWith('b_boss_ing')||b.id.includes('_ing')||b.id.includes('ydt')},
+    {key:'deneme',label:'📊 Deneme',ids:b=>b.id.startsWith('b_den')||b.id.startsWith('b_tyt')||b.id.startsWith('b_ayt')||b.id.startsWith('b_brans')||b.id.startsWith('b_trend')},
+    {key:'boss',label:'⚔️ Boss',ids:b=>b.id.startsWith('b_boss')&&!b.id.startsWith('b_boss_mat')&&!b.id.startsWith('b_boss_fiz')&&!b.id.startsWith('b_boss_kim')&&!b.id.startsWith('b_boss_bio')&&!b.id.startsWith('b_boss_tur')&&!b.id.startsWith('b_boss_tar')&&!b.id.startsWith('b_boss_cog')&&!b.id.startsWith('b_boss_fels')&&!b.id.startsWith('b_boss_geo')},
+    {key:'zaman',label:'⏱️ Zaman',ids:b=>b.id.startsWith('b_daily')||b.id.startsWith('b_week')||b.id.startsWith('b_timer')||b.id.includes('hafta')||b.id.includes('saat')},
+    {key:'ozel',label:'🌟 Özel',ids:b=>true}, // Geri kalanlar
+  ];
+
+  // Her rozeti bir kategoriye ata (ilk eşleşen)
+  const assigned=new Set();
+  const catBadges={};
+  cats.slice(0,-1).forEach(c=>{
+    catBadges[c.key]=filtered.filter(b=>{if(assigned.has(b.id))return false;if(c.ids(b)){assigned.add(b.id);return true;}return false;});
+  });
+  catBadges['ozel']=filtered.filter(b=>!assigned.has(b.id));
+
+  function trophyCard(b){
     const on=S.badges.includes(b.id);
-    return`<div class="bg-i${on?' on':''}" style="${on?'transform:scale(1.02);':''}">
-      <div class="bg-ico" style="${on?'':'filter:grayscale(1) opacity(.15)'}">${b.icon}</div>
-      <div class="bg-n">${b.name}</div>
-      <div class="bg-d">${b.desc}</div>
-      ${on?`<div style="font-size:7px;color:var(--gold);font-weight:800;margin-top:3px;">✅ Kazanıldı</div>`:`<div style="font-size:7px;color:var(--t3);margin-top:3px;">Kilitli 🔒</div>`}
+    const m=getTrophyMeta(b);
+    return`<div onclick="showBadgeDetail('${b.id}')" style="
+      background:${on?m.bg:'rgba(255,255,255,0.02)'};
+      border:1px solid ${on?m.border:'rgba(255,255,255,0.06)'};
+      border-radius:12px;padding:10px 9px;cursor:pointer;
+      display:flex;align-items:center;gap:10px;
+      transition:transform .15s;margin-bottom:6px;
+      ${on?`box-shadow:0 2px 12px ${m.glow};`:''}
+    " onmousedown="this.style.transform='scale(.98)'" onmouseup="this.style.transform=''" ontouchstart="this.style.transform='scale(.98)'" ontouchend="this.style.transform=''">
+      <!-- Kupa ikonu -->
+      <div style="position:relative;flex-shrink:0;">
+        <div style="width:46px;height:46px;border-radius:11px;
+          background:${on?m.bg:'rgba(255,255,255,0.03)'};
+          border:1.5px solid ${on?m.border:'rgba(255,255,255,0.07)'};
+          display:flex;align-items:center;justify-content:center;
+          font-size:24px;
+          ${on?`box-shadow:0 0 14px ${m.glow};`:'filter:grayscale(1) opacity(0.15);'}
+        ">${b.icon}</div>
+        ${on?`<div style="position:absolute;bottom:-3px;right:-3px;
+          background:${m.color};color:#1a1a2e;border-radius:4px;
+          font-size:7px;font-weight:900;padding:1px 4px;white-space:nowrap;
+          box-shadow:0 1px 4px rgba(0,0,0,0.4);">${m.cup}</div>`:''}
+      </div>
+      <!-- Bilgi -->
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:900;color:${on?'#fff':'rgba(255,255,255,0.3)'};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</div>
+        <div style="font-size:9px;color:${on?'rgba(255,255,255,0.55)':'rgba(255,255,255,0.2)'};line-height:1.3;">${b.desc}</div>
+        ${on?`<div style="font-size:8px;color:${m.color};font-weight:800;margin-top:3px;">${m.tier}</div>`:''}
+      </div>
+      <!-- Sağ ok -->
+      <div style="font-size:10px;color:${on?m.color:'rgba(255,255,255,0.1)'};flex-shrink:0;">${on?'✓':'🔒'}</div>
+    </div>`;
+  }
+
+  // Filtre butonları
+  const filterBtns=['all','earned','locked'].map(f=>`
+    <button onclick="window._bdgFilter='${f}';renderBadges()" style="
+      flex:1;padding:7px 4px;border-radius:8px;border:1px solid ${curFilter===f?'rgba(245,166,35,0.5)':'rgba(255,255,255,0.08)'};
+      background:${curFilter===f?'rgba(245,166,35,0.12)':'transparent'};
+      color:${curFilter===f?'var(--gold)':'var(--t3)'};font-size:9px;font-weight:800;
+      cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;">
+      ${{all:'Tümü',earned:'Kazanıldı',locked:'Kilitli'}[f]}
+      <span style="display:block;font-size:8px;font-weight:700;opacity:.7;">
+        ${{all:totalAll,earned:totalEarned,locked:totalAll-totalEarned}[f]}
+      </span>
+    </button>`).join('');
+
+  // Kategori içerikleri
+  const catSections=cats.map(c=>{
+    const list=catBadges[c.key];
+    if(!list||!list.length)return'';
+    const catEarned=list.filter(b=>S.badges.includes(b.id)).length;
+    return`<div style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:900;color:var(--t2);">${c.label}</div>
+        <div style="font-size:9px;font-weight:800;color:${catEarned===list.length?'var(--gr)':'var(--t3)'};">${catEarned}/${list.length}</div>
+      </div>
+      ${list.map(b=>trophyCard(b)).join('')}
     </div>`;
   }).join('');
 
-  const bL=BDGS_L.map(b=>{
-    const on=S.badges.includes(b.id);
-    return`<div class="bg-i${on?' on':''}" style="${on?'transform:scale(1.02);':''}">
-      <div class="bg-ico" style="${on?'':'filter:grayscale(1) opacity(.15)'}">${b.icon}</div>
-      <div class="bg-n">${b.name}</div>
-      <div class="bg-d">${b.desc}</div>
-      ${on?`<div style="font-size:7px;color:var(--gold);font-weight:800;margin-top:3px;">✅ Kazanıldı</div>`:`<div style="font-size:7px;color:var(--t3);margin-top:3px;">Kilitli 🔒</div>`}
-    </div>`;
-  }).join('');
+  // Sonraki rozet
+  const nextB=ALL.find(b=>!S.badges.includes(b.id));
+  const nextMeta=nextB?getTrophyMeta(nextB):null;
 
-  // Sonraki rozet tahmini
-  const nextBadge=ALL_BDGS.find(b=>!S.badges.includes(b.id));
+  document.getElementById('page').innerHTML=heroH()+`
+  <!-- TROPHY PANEL -->
+  <div style="background:linear-gradient(160deg,#0a0a20,#120830,#0a1020);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;margin-bottom:10px;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:22px 22px;pointer-events:none;"></div>
+    <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(180,100,255,0.1),transparent 70%);pointer-events:none;"></div>
 
-  document.getElementById('page').innerHTML=heroH()+
-    `<!-- ÖZET -->
-    <div class="card" style="background:linear-gradient(135deg,rgba(245,166,35,0.1),rgba(124,77,255,0.06));border-color:rgba(245,166,35,0.25);margin-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:38px;">🏅</div>
-        <div style="flex:1;">
-          <div style="font-size:16px;font-weight:900;color:var(--gold);">${totalEarned} / ${totalAll}</div>
-          <div style="font-size:9px;color:var(--t3);margin-bottom:5px;">Rozet Kazanıldı</div>
-          <div style="height:5px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;">
-            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--pk));border-radius:100px;transition:width .6s;"></div>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:20px;font-weight:900;color:var(--gold);">${pct}%</div>
-          <div style="font-size:8px;color:var(--t3);">tamamlandı</div>
-        </div>
+    <!-- Başlık -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative;">
+      <div style="font-size:28px;">🏆</div>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:900;">Başarımlar</div>
+        <div style="font-size:9px;color:var(--t3);">YKS RPG Trophy Collection</div>
       </div>
-      ${nextBadge?`<div style="margin-top:10px;padding:8px 10px;background:rgba(0,0,0,0.2);border-radius:8px;border:1px dashed rgba(245,166,35,0.2);">
-        <div style="font-size:8px;color:var(--t3);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Sıradaki Rozet</div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="font-size:20px;">${nextBadge.icon}</div>
-          <div><div style="font-size:10px;font-weight:800;">${nextBadge.name}</div><div style="font-size:9px;color:var(--t3);">${nextBadge.desc}</div></div>
-        </div>
-      </div>`:''}
+      <div style="text-align:right;">
+        <div style="font-size:20px;font-weight:900;color:var(--gold);">${pct}%</div>
+        <div style="font-size:8px;color:var(--t3);">tamamlandı</div>
+      </div>
     </div>
 
-    <!-- KISA VADELİ -->
-    <div class="card" style="margin-bottom:8px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-weight:800;font-size:12px;">⚡ Kısa Vadeli</div>
-        <div style="font-size:10px;font-weight:800;color:var(--gold);">${earnedS.length}/${BDGS_S.length}</div>
-      </div>
-      <div class="bg-g">${bS}</div>
+    <!-- XP Bar -->
+    <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;margin-bottom:14px;">
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#7c4dff,var(--gold),#e040fb);border-radius:100px;transition:width .8s;"></div>
     </div>
 
-    <!-- UZUN VADELİ -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-weight:800;font-size:12px;">🏆 Uzun Vadeli</div>
-        <div style="font-size:10px;font-weight:800;color:var(--pu);">${earnedL.length}/${BDGS_L.length}</div>
+    <!-- Trophy sayıları -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;">
+      ${[
+        {cup:'🏆',label:'Platin',key:'platinum',color:'#d4b4ff',bg:'rgba(140,60,255,0.12)',border:'rgba(160,80,255,0.25)'},
+        {cup:'🥇',label:'Altın',key:'gold',color:'#ffd97d',bg:'rgba(245,166,35,0.1)',border:'rgba(245,166,35,0.25)'},
+        {cup:'🥈',label:'Gümüş',key:'silver',color:'#b8d0e8',bg:'rgba(100,160,210,0.1)',border:'rgba(120,170,210,0.2)'},
+        {cup:'🥉',label:'Bronz',key:'bronze',color:'#d4956a',bg:'rgba(180,120,80,0.1)',border:'rgba(160,100,60,0.2)'},
+      ].map(t=>`
+        <div style="background:${t.bg};border:1px solid ${t.border};border-radius:9px;padding:8px 4px;text-align:center;">
+          <div style="font-size:18px;">${t.cup}</div>
+          <div style="font-size:14px;font-weight:900;color:${t.color};">${tCounts[t.key]}</div>
+          <div style="font-size:7px;color:rgba(255,255,255,0.35);font-weight:700;">${t.label}</div>
+          <div style="font-size:7px;color:rgba(255,255,255,0.22);margin-top:1px;">/ ${tTotals[t.key]}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Toplam -->
+    <div style="background:rgba(255,255,255,0.04);border-radius:9px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:10px;color:var(--t3);">Toplam Kazanıldı</div>
+      <div style="font-size:15px;font-weight:900;color:var(--gold);">${totalEarned} <span style="font-size:10px;color:var(--t3);font-weight:700;">/ ${totalAll}</span></div>
+    </div>
+
+    ${nextB?`<!-- Sıradaki -->
+    <div style="margin-top:10px;background:rgba(0,0,0,0.25);border:1px dashed ${nextMeta.border};border-radius:9px;padding:9px 12px;display:flex;align-items:center;gap:10px;">
+      <div style="font-size:8px;font-weight:900;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;">Sıradaki</div>
+      <div style="font-size:20px;opacity:0.4;">${nextB.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.5);">${nextB.name}</div>
+        <div style="font-size:8px;color:var(--t3);">${nextB.desc}</div>
       </div>
-      <div class="bg-g">${bL}</div>
-    </div>`;
+      <div style="font-size:8px;color:${nextMeta.color};font-weight:900;white-space:nowrap;">${nextMeta.cup} ${nextMeta.tier}</div>
+    </div>`:''}
+  </div>
+
+  <!-- Filtreler -->
+  <div style="display:flex;gap:6px;margin-bottom:10px;">${filterBtns}</div>
+
+  <!-- Kategorili rozet listesi -->
+  <div style="background:var(--c1);border:1px solid var(--br);border-radius:14px;padding:14px;">
+    ${catSections||`<div style="text-align:center;padding:20px;color:var(--t3);font-size:11px;">Bu kategoride rozet yok</div>`}
+  </div>`;
+}
+
+// Rozet detay popup
+function showBadgeDetail(id){
+  const b=ALL_BDGS.find(x=>x.id===id);
+  if(!b)return;
+  const on=S.badges.includes(b.id);
+  const m=getTrophyMeta(b);
+  const earnedAt=S.badgeTimes&&S.badgeTimes[id]?new Date(S.badgeTimes[id]).toLocaleDateString('tr-TR'):'';
+
+  // Geçici popup
+  const pop=document.createElement('div');
+  pop.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);';
+  pop.innerHTML=`<div style="background:${on?m.bg:'var(--c1)'};border:2px solid ${on?m.border:'rgba(255,255,255,0.08)'};border-radius:18px;padding:24px 20px;max-width:300px;width:100%;text-align:center;animation:popIn .3s cubic-bezier(.4,0,.2,1);">
+    <div style="font-size:52px;margin-bottom:6px;${on?'':`filter:grayscale(1) opacity(0.2)`}">${b.icon}</div>
+    <div style="font-size:9px;font-weight:900;color:${m.color};letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">${m.cup} ${m.tier}</div>
+    <div style="font-size:18px;font-weight:900;margin-bottom:6px;color:${on?'#fff':'rgba(255,255,255,0.4)'};">${b.name}</div>
+    <div style="font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:14px;">${b.desc}</div>
+    ${on?`<div style="background:rgba(67,160,71,0.15);border:1px solid rgba(67,160,71,0.3);border-radius:8px;padding:8px;margin-bottom:12px;">
+      <div style="font-size:10px;font-weight:800;color:var(--gr);">✅ Kazanıldı${earnedAt?' · '+earnedAt:''}</div>
+    </div>`:`<div style="background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.1);border-radius:8px;padding:8px;margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--t3);">🔒 Henüz kazanılmadı</div>
+    </div>`}
+    <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:11px;border-radius:10px;border:none;background:${on?m.color:'rgba(255,255,255,0.08)'};color:${on?'#1a1a2e':'var(--t2)'};font-size:12px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">Kapat</button>
+  </div>`;
+  pop.addEventListener('click',e=>{if(e.target===pop)pop.remove();});
+  document.body.appendChild(pop);
 }
 
 // ══════════════════════════════════════════════════
@@ -16150,6 +16446,9 @@ function openSkillTree(){
     {key:'deneme',label:'Deneme',icon:'📊',color:'#f5a623',desc:'Deneme sınavı güçlendirmeleri'},
     {key:'boss',label:'Boss',icon:'⚔️',color:'#e53935',desc:'Savaş yetkinlikleri'},
     {key:'streak',label:'Seri',icon:'🔥',color:'#43a047',desc:'Streak koruma ve bonusları'},
+    {key:'konu',label:'Konu',icon:'🗺️',color:'#00bcd4',desc:'Konu tamamlama XP bonusları'},
+    {key:'sosyal',label:'Sosyal',icon:'👥',color:'#e040fb',desc:'Arkadaş ve liderboard bonusları'},
+    {key:'gorev',label:'Görev',icon:'✅',color:'#f39c12',desc:'Görev tamamlama bonusları'},
   ];
 
   // Ağaç dalı render: her skill dikey zincir olarak, aralarında SVG ok çizgisi
