@@ -621,7 +621,8 @@ input::placeholder{color:var(--t3);}
     <div class="ov-lb">Seviye Atladın!</div>
     <div class="ov-big" id="ov-ln">2</div>
     <div class="ov-sub" id="ov-lr"></div>
-    <button class="ov-btn" onclick="closeOv('ov-level')">Harika! 🚀</button>
+    <div id="ov-skillpts" style="font-size:11px;color:var(--gold);font-weight:800;margin:6px 0 2px;text-align:center;"></div>
+    <button class="ov-btn" onclick="closeOv('ov-level');openSkillTree()">Yetenek Ağacı 🌳</button>
   </div>
 </div>
 
@@ -692,6 +693,63 @@ const SUBJ=[
 ];
 const RANKS=[[1,'Çaylak Öğrenci'],[2,'Azimli Talip'],[3,'Bilgi Avcısı'],[4,'Soru Ustası'],[5,'Konu Efendisi'],[7,'YKS Şampiyonu'],[10,'Efsanevi Savaşçı'],[15,'Bilge Büyücü'],[20,'Ölümsüz Dahi'],[25,'YKS Efsanesi'],[30,'Sınav Efsanesi'],[40,'Mutlak Üstün']];
 const XPT=[0,120,280,500,780,1150,1620,2200,2900,3750,4750,6000,7500,9300,11400,13900,16800,20200,24200,28800,34000,40000,47000,55000,64000,74000,85000,97000,110000,125000,141000];
+// ═══════════════════ YETENEK AĞACI ═══════════════════
+const SKILL_TREE=[
+  // ── ÇALIŞMA DALI ──
+  {id:'xp1',name:'XP Yeteneği I',desc:'+15% XP kazan',icon:'⚡',pts:1,req:null,branch:'calisma',bonus:'xp',val:0.15},
+  {id:'xp2',name:'XP Yeteneği II',desc:'+30% XP (toplam)',icon:'⚡',pts:2,req:'xp1',branch:'calisma',bonus:'xp',val:0.30},
+  {id:'xp3',name:'XP Ustası',desc:'+50% XP (toplam)',icon:'🌟',pts:3,req:'xp2',branch:'calisma',bonus:'xp',val:0.50},
+  {id:'study1',name:'Odak Modu',desc:'Çalışma süresi bonusu +20%',icon:'🎯',pts:1,req:null,branch:'calisma',bonus:'study',val:0.20},
+  {id:'study2',name:'Derin Odak',desc:'Günlük 60dk hedefinde +50 bonus XP',icon:'🔮',pts:2,req:'study1',branch:'calisma',bonus:'deepfocus',val:50},
+  {id:'study3',name:'Maraton Çalışan',desc:'Günlük 120dk üstünde +100 bonus XP',icon:'🏃',pts:3,req:'study2',branch:'calisma',bonus:'marathon',val:100},
+  // ── DENEME DALI ──
+  {id:'den1',name:'Deneme Analisti',desc:'Deneme XP +25%',icon:'📊',pts:1,req:null,branch:'deneme',bonus:'denxp',val:0.25},
+  {id:'den2',name:'Net Avcısı',desc:'Her denemede +1 XP/net başına',icon:'📈',pts:2,req:'den1',branch:'deneme',bonus:'netxp',val:1},
+  {id:'den3',name:'Deneme Efsanesi',desc:'Deneme XP +60% (toplam)',icon:'🏆',pts:3,req:'den2',branch:'deneme',bonus:'denxp',val:0.60},
+  {id:'den4',name:'Hatasız Kahraman',desc:'Net ≥ 35 olan denemede +200 bonus XP',icon:'💎',pts:4,req:'den3',branch:'deneme',bonus:'perfectden',val:200},
+  // ── BOSS DALI ──
+  {id:'boss1',name:'Savaşçı Ruhu',desc:'Boss savaşında joker hakkı (+1)',icon:'⚔️',pts:2,req:null,branch:'boss',bonus:'joker',val:1},
+  {id:'boss2',name:'Dragon Slayer',desc:'Boss XP ödülleri +40%',icon:'🐉',pts:2,req:'boss1',branch:'boss',bonus:'bossxp',val:0.40},
+  {id:'boss3',name:'Efsane Savaşçı',desc:'Boss savaşında can +1 ekstra joker',icon:'🗡️',pts:3,req:'boss2',branch:'boss',bonus:'joker2',val:1},
+  // ── SERİ DALI ──
+  {id:'streak1',name:'Seri Kalkanı',desc:'Seri 1 kez kırılmaz (korumalı)',icon:'🛡️',pts:2,req:null,branch:'streak',bonus:'shield',val:1},
+  {id:'streak2',name:'Demir İrade',desc:'Günlük seri bonusu x2',icon:'🔥',pts:3,req:'streak1',branch:'streak',bonus:'streakx2',val:1},
+  {id:'streak3',name:'Efsane Seri',desc:'7+ günlük seride her gün +25 bonus XP',icon:'💫',pts:4,req:'streak2',branch:'streak',bonus:'streakbonus',val:25},
+];
+
+// ═══════════════════ AVATAR CUSTOMIZATION ═══════════════════
+const AVATAR_EMOJIS=[
+  // Başlangıç
+  {e:'🧑‍💻',unlockLvl:1,cat:'Karakter'},{e:'🧑‍🎓',unlockLvl:1,cat:'Karakter'},{e:'📚',unlockLvl:1,cat:'Nesne'},
+  // Seviye 2-5
+  {e:'🧙‍♂️',unlockLvl:2,cat:'Karakter'},{e:'🧙‍♀️',unlockLvl:2,cat:'Karakter'},{e:'🥷',unlockLvl:3,cat:'Karakter'},
+  {e:'🦸',unlockLvl:3,cat:'Karakter'},{e:'🦸‍♀️',unlockLvl:4,cat:'Karakter'},{e:'🧝‍♂️',unlockLvl:4,cat:'Karakter'},
+  {e:'🧝‍♀️',unlockLvl:5,cat:'Karakter'},{e:'🧛',unlockLvl:5,cat:'Karakter'},
+  // Hayvanlar
+  {e:'🦊',unlockLvl:6,cat:'Hayvan'},{e:'🐺',unlockLvl:6,cat:'Hayvan'},{e:'🦁',unlockLvl:7,cat:'Hayvan'},
+  {e:'🐯',unlockLvl:7,cat:'Hayvan'},{e:'🦅',unlockLvl:8,cat:'Hayvan'},{e:'🐉',unlockLvl:8,cat:'Hayvan'},
+  // Nesne/Sembol
+  {e:'⚔️',unlockLvl:5,cat:'Sembol'},{e:'🔮',unlockLvl:8,cat:'Sembol'},{e:'🧿',unlockLvl:9,cat:'Sembol'},
+  {e:'🌙',unlockLvl:9,cat:'Sembol'},{e:'☀️',unlockLvl:10,cat:'Sembol'},{e:'⚡',unlockLvl:10,cat:'Sembol'},
+  // Yüksek Seviye
+  {e:'👑',unlockLvl:12,cat:'Özel'},{e:'💎',unlockLvl:13,cat:'Özel'},{e:'🌟',unlockLvl:15,cat:'Özel'},
+  {e:'🏆',unlockLvl:18,cat:'Özel'},{e:'🔱',unlockLvl:20,cat:'Özel'},{e:'🌈',unlockLvl:25,cat:'Özel'},
+];
+const AVATAR_FRAMES=[
+  {id:'default',name:'Mor Aura',gradient:'linear-gradient(135deg,#7c4dff,#e040fb)',glow:'rgba(124,77,255,.5)',unlockLvl:1},
+  {id:'fire',name:'Ateş',gradient:'linear-gradient(135deg,#f39c12,#e74c3c)',glow:'rgba(243,156,18,.6)',unlockLvl:3},
+  {id:'ocean',name:'Okyanus',gradient:'linear-gradient(135deg,#0288d1,#00bcd4)',glow:'rgba(2,136,209,.5)',unlockLvl:4},
+  {id:'ice',name:'Buz Kristali',gradient:'linear-gradient(135deg,#80d8ff,#1565c0)',glow:'rgba(128,216,255,.5)',unlockLvl:5},
+  {id:'nature',name:'Orman',gradient:'linear-gradient(135deg,#66bb6a,#1b5e20)',glow:'rgba(102,187,106,.5)',unlockLvl:7},
+  {id:'sunset',name:'Gün Batımı',gradient:'linear-gradient(135deg,#ff6f00,#e040fb)',glow:'rgba(255,111,0,.6)',unlockLvl:8},
+  {id:'galaxy',name:'Galaksi',gradient:'linear-gradient(135deg,#7c4dff,#00bcd4,#f5a623)',glow:'rgba(124,77,255,.7)',unlockLvl:10},
+  {id:'neon',name:'Neon',gradient:'linear-gradient(135deg,#00e5ff,#76ff03)',glow:'rgba(0,229,255,.7)',unlockLvl:12},
+  {id:'gold',name:'Altın Kral',gradient:'linear-gradient(135deg,#f5a623,#ffd97d,#f39c12)',glow:'rgba(245,166,35,.8)',unlockLvl:15},
+  {id:'crimson',name:'Kırmızı Ejder',gradient:'linear-gradient(135deg,#b71c1c,#e53935,#ff1744)',glow:'rgba(183,28,28,.8)',unlockLvl:18},
+  {id:'dark',name:'Karanlık Efendi',gradient:'linear-gradient(135deg,#0d0d0d,#37474f,#7c4dff)',glow:'rgba(124,77,255,.4)',unlockLvl:20},
+  {id:'rainbow',name:'Gökkuşağı',gradient:'linear-gradient(135deg,#f44336,#ff9800,#ffeb3b,#4caf50,#2196f3,#9c27b0)',glow:'rgba(255,255,255,.5)',unlockLvl:25},
+];
+
 const DAYS_BASE_SHORT=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt']; // JS getDay sırasına göre
 const DAYS_BASE_FULL=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
 // weekResetDay'e göre sıralı gün listesi döndür (short)
@@ -1945,6 +2003,12 @@ function mkState(){
     weekResetDay:1, // 0=Paz 1=Pzt 2=Sal 3=Çar 4=Per 5=Cum 6=Cmt
     weekHistory:[], // [{wk,wx,totalMins,subjMins,days}] — geçmiş haftalar
     _statsWO:0, // istatistik sekme hafta offset (0=bu hafta)
+    // RPG EXTRAS
+    skillPts:0,       // harcanmamış yetenek puanı
+    skills:{},        // {skillId: seviye}
+    avatarEmoji:'🧑‍💻',  // seçili avatar emojisi
+    avatarFrame:'default', // seçili çerçeve
+    globalLbPushed:0, // son liderlik tablosu push zamanı
   };
 }
 
@@ -2200,7 +2264,41 @@ function closeOv(id){
   if(id==='ov-uni'){setTimeout(function(){if(typeof renderTargets==='function'){renderTargets();}},50);}
 }
 function showOv(id){document.getElementById(id).classList.add('show');}
-function maybeLU(ox){const ol=getLvl(ox),nl=getLvl(S.xp);if(nl>ol)setTimeout(()=>{document.getElementById('ov-ln').textContent=nl;document.getElementById('ov-lr').textContent=getRank(nl);showOv('ov-level');},600);}
+function maybeLU(ox){
+  const ol=getLvl(ox),nl=getLvl(S.xp);
+  if(nl>ol){
+    const gained=nl-ol;
+    S.skillPts=(S.skillPts||0)+gained;
+    save();
+    setTimeout(()=>{
+      document.getElementById('ov-ln').textContent=nl;
+      document.getElementById('ov-lr').textContent=getRank(nl);
+      const spEl=document.getElementById('ov-skillpts');
+      if(spEl)spEl.textContent=`+${gained} Yetenek Puanı kazandın! (Toplam: ${S.skillPts})`;
+      showOv('ov-level');
+    },600);
+  }
+}
+// XP bonus multiplier from skill tree
+function xpBonus(base,type){
+  const sk=S.skills||{};
+  let mul=1;
+  if(type==='xp'||type==='general'){
+    if(sk.xp3)mul+=0.50;else if(sk.xp2)mul+=0.30;else if(sk.xp1)mul+=0.15;
+  }
+  if(type==='den'&&(sk.den3))mul+=0.60;
+  else if(type==='den'&&sk.den2)mul+=0.25;  
+  else if(type==='den'&&sk.den1)mul+=0.25;
+  if(type==='boss'&&sk.boss2)mul+=0.40;
+  return Math.round(base*mul);
+}
+// Check if streak shield should absorb a break
+function consumeStreakShield(){
+  if((S.skills||{}).streak1&&!(S.shieldUsed)){S.shieldUsed=true;save();toast('🛡️ Seri Kalkanı devreye girdi! Seriniz korundu.');return true;}
+  return false;
+}
+// Joker count for boss fights
+function bossJokers(){return (S.skills||{}).boss1?1:0;}
 
 let badgeQueue=[];let badgeShowing=false;
 function chkBdgs(){
@@ -2286,6 +2384,48 @@ function addDailyLog(xp,questions,mins,sid){
     addMins(mins, sid||null);
   }
 }
+
+// ═══ MERKEZİ DAKİKA EKLEME FONKSİYONU — tüm dakika sayaçlarını tek yerden günceller ═══
+function addMins(mins, sid) {
+  if (!mins || mins === 0) return;
+  const td = toDS();
+  
+  // 1. Toplam dakika (negatife düşmesin)
+  if (mins > 0) {
+    S.totalMinutes = (S.totalMinutes || 0) + mins;
+  }
+  
+  // 2. Ders bazlı dakika
+  if (sid) {
+    if (!S.subjectMinutes) S.subjectMinutes = {};
+    S.subjectMinutes[sid] = Math.max(0, (S.subjectMinutes[sid] || 0) + mins);
+  }
+  
+  // 3. Haftalık toplam dakika
+  S.weekTotalMins = Math.max(0, (S.weekTotalMins || 0) + mins);
+  
+  // 4. Günlük log'a ekle
+  if (!S.dailyLog) S.dailyLog = {};
+  if (!S.dailyLog[td]) S.dailyLog[td] = { xp: 0, questions: 0, mins: 0, subjMins: {}, subjXP: {}, subjQ: {} };
+  S.dailyLog[td].mins = Math.max(0, (S.dailyLog[td].mins || 0) + mins);
+  if (sid) {
+    if (!S.dailyLog[td].subjMins) S.dailyLog[td].subjMins = {};
+    S.dailyLog[td].subjMins[sid] = Math.max(0, (S.dailyLog[td].subjMins[sid] || 0) + mins);
+  }
+  
+  // 5. Günlük sayaç (bugün için)
+  if (!S.dailyMinsDay || S.dailyMinsDay !== td) {
+    S.dailyMins = 0;
+    S.dailyMinsDay = td;
+  }
+  S.dailyMins = Math.max(0, (S.dailyMins || 0) + mins);
+  
+  // 6. Haftalık plan yapılan dakika (eğer sid varsa)
+  if (sid && S.weekDone) {
+    S.weekDone[sid] = Math.max(0, (S.weekDone[sid] || 0) + mins);
+  }
+}
+
 function getDayLog(dateKey){
   if(!S.dailyLog)return{xp:0,questions:0,mins:0};
   return S.dailyLog[dateKey]||{xp:0,questions:0,mins:0};
@@ -2475,11 +2615,21 @@ function heroH(){
   const l=getLvl(S.xp);const{cur,need,pct}=getXI(S.xp);const days=daysLeft();
   const urgency=days<=30?'var(--rd)':days<=60?'#f39c12':'var(--gr)';
   const myName=S.myName||'YKS Savaşçısı';
+  const avEmoji=S.avatarEmoji||'⚔️';
+  const frame=AVATAR_FRAMES.find(f=>f.id===(S.avatarFrame||'default'))||AVATAR_FRAMES[0];
+  const spCount=S.skillPts||0;
   return`<div class="hero"><div class="h-row">
-    <div class="av-w"><div class="av">⚔️</div><div class="lv-b">Sv ${l}</div></div>
+    <div class="av-w" onclick="openAvatarOv()" style="cursor:pointer;">
+      <div class="av" style="background:${frame.gradient};box-shadow:0 0 16px ${frame.glow};">${avEmoji}</div>
+      <div class="lv-b">Sv ${l}</div>
+    </div>
     <div class="h-inf"><div class="h-nm">${myName}</div><div class="h-rk">${getRank(l)}</div>
     <div class="xpr"><span>${cur} XP</span><span>${need} XP'e ulaş</span></div>
-    <div class="xpt"><div class="xpf" style="width:${pct}%"></div></div></div>
+    <div class="xpt"><div class="xpf" style="width:${pct}%"></div></div>
+    <div onclick="openSkillTree()" style="margin-top:5px;display:inline-flex;align-items:center;gap:4px;background:${spCount>0?'rgba(245,166,35,0.18)':'rgba(255,255,255,0.06)'};border:1px solid ${spCount>0?'rgba(245,166,35,0.4)':'rgba(255,255,255,0.12)'};border-radius:20px;padding:2px 8px;cursor:pointer;">
+      <span style="font-size:9px;">🌳</span><span style="font-size:9px;font-weight:900;color:${spCount>0?'var(--gold)':'var(--t3)'};">${spCount>0?spCount+' yetenek puanı!':'Yetenek Ağacı'}</span>
+    </div>
+    </div>
     <div style="text-align:right;flex-shrink:0;">
       <div style="font-size:22px;font-weight:900;color:${urgency};line-height:1;">${days}</div>
       <div style="font-size:8px;color:var(--t3);font-weight:700;">GÜN</div>
@@ -2494,7 +2644,6 @@ function heroH(){
     <div class="sc" onclick="editStreak()" style="cursor:pointer;"><span class="v">${S.streak}🔥</span><span class="l">Seri ✎</span></div>
     <div class="sc" onclick="showWeeklyReport()" style="cursor:pointer;">
       <span class="v" style="color:var(--gr)">${(()=>{
-        // dailyLog'dan bu haftanın toplam dakikasını hesapla — en doğru kaynak
         const ws=getWeekStartDate();
         let wm=0;
         for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);const dl=S.dailyLog&&S.dailyLog[d.toDateString()];if(dl)wm+=(dl.mins||0);}
@@ -2654,7 +2803,10 @@ function timerRingSVG(){
 
       <!-- Arkadaş listesi -->
       <div style="flex:1;min-width:0;">
-        <div style="font-size:9px;color:var(--t3);font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;">👥 Arkadaşlar</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;">
+          <div style="font-size:9px;color:var(--t3);font-weight:800;text-transform:uppercase;letter-spacing:.8px;flex:1;">👥 Arkadaşlar</div>
+          <button onclick="openLeaderboard()" style="background:rgba(245,166,35,0.18);border:1px solid rgba(245,166,35,0.35);border-radius:20px;padding:2px 8px;font-size:9px;font-weight:900;color:var(--gold);cursor:pointer;font-family:'Nunito',sans-serif;">🏆 Liderlik</button>
+        </div>
         ${allF.map(f=>`
           <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;padding:5px 8px;background:rgba(255,255,255,0.04);border-radius:8px;">
             <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${f.isMe?'#7c4dff':f.online?'#43a047':'#555'};box-shadow:0 0 5px ${f.isMe?'#7c4dff':f.online?'#43a04766':'transparent'};"></div>
@@ -2906,7 +3058,7 @@ function renderHome(){
           <input type="number" id="m-inp" placeholder="0" min="1" max="600" style="text-align:center;font-size:20px;font-weight:900;color:${s.color};border:1.5px solid ${s.color}55;background:${s.color}0d;border-radius:9px;padding:8px 2px;margin:0;width:100%;"/>
           <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--t3);font-weight:800;pointer-events:none;">dk</span>
         </div>
-        <button onclick="var el=document.getElementById('m-inp');el.value=(parseInt(el.value)||0)+5;" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--br);background:var(--c2);color:var(--t1);font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;">+</button>
+        <button onclick="var el=document.getElementById('m-inp');var v=parseInt(el.value)||0;el.value=v+5;" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--br);background:var(--c2);color:var(--t1);font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">+</button>
       </div>
       <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px 11px;margin-bottom:4px;">
         <div style="font-size:9px;font-weight:800;color:var(--t3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">✏️ Bu sürede soru da çözdüysen (isteğe bağlı)</div>
@@ -3137,7 +3289,7 @@ function addTask(){
   addLog(s.icon,desc,xp,logMeta);chkBdgs();save();toast(`+${xp} XP! 🎯`);maybeLU(ox);
   const goals2=S.goals||[];
   if(goals2.length&&goals2.every(g=>g.done))confetti();
-  renderHome();
+  closeOv('ov-subj');renderHome();
 }
 
 function doCT(id){
@@ -4600,22 +4752,66 @@ function renderDeneme(){
       </button>
     </div>`;
 
-    // Geçmiş
+    // Geçmiş — konu başına gruplandırılmış grafikler
+    // Tüm benzersiz konu adlarını bul
+    const konuGroups={};
+    serbest.forEach(d=>{
+      const k=d.konuAdi||'Konu';
+      if(!konuGroups[k])konuGroups[k]=[];
+      konuGroups[k].push(d);
+    });
+
     const histSection=serbest.length?`
     <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin:12px 0 7px;">📋 Konu Denemesi Geçmişi (${serbest.length})</div>
-    ${serbestRev.map((d,ri)=>{
-      const net=d.totalNet||0;
-      const netColor=net>=0?'var(--gr)':'var(--rd)';
-      return`<div style="background:var(--c1);border:1px solid var(--br);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">
-        <div style="min-width:42px;height:42px;border-radius:9px;background:rgba(0,137,123,0.15);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(0,137,123,0.3);">
-          <div style="font-size:14px;font-weight:900;color:${netColor};line-height:1;">${net>=0?'+':''}${net.toFixed(1)}</div>
-          <div style="font-size:7px;color:var(--t3);font-weight:700;">net</div>
+    ${Object.entries(konuGroups).map(([konuAdi,items])=>{
+      const sorted=[...items].sort((a,b)=>(a.id||0)-(b.id||0));
+      const nets=sorted.map(d=>d.totalNet||0);
+      const labels=sorted.map((_,i)=>`#${i+1}`);
+      const tooltips=sorted.map(d=>`${d.date||''} ${d.dogru||0}D/${d.yanlis||0}Y`);
+      const last=nets[nets.length-1];
+      const best=Math.max(...nets);
+      const avg=nets.reduce((a,v)=>a+v,0)/nets.length;
+      const trend=nets.length>=2?(nets[nets.length-1]-nets[0]>=0?'📈':'📉'):'';
+      const chartId='konu-'+konuAdi.replace(/[^a-z0-9]/gi,'_').slice(0,20)+'-'+items[0].id;
+      const color=nets[nets.length-1]>=0?'#00897b':'#e53935';
+      const ds=[{data:nets,color,tooltips}];
+      return`<div style="background:var(--c1);border:1px solid var(--br);border-radius:12px;padding:12px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:900;">${konuAdi} ${trend}</div>
+            <div style="font-size:9px;color:var(--t3);margin-top:1px;">${items.length} deneme</div>
+          </div>
+          <div style="display:flex;gap:5px;">
+            <div style="text-align:center;background:rgba(0,137,123,0.12);border-radius:7px;padding:4px 8px;">
+              <div style="font-size:11px;font-weight:900;color:#00897b;">${avg.toFixed(1)}</div>
+              <div style="font-size:7px;color:var(--t3);">Ort</div>
+            </div>
+            <div style="text-align:center;background:rgba(67,160,71,0.12);border-radius:7px;padding:4px 8px;">
+              <div style="font-size:11px;font-weight:900;color:var(--gr);">${best.toFixed(1)}</div>
+              <div style="font-size:7px;color:var(--t3);">En İyi</div>
+            </div>
+            <div style="text-align:center;background:rgba(245,166,35,0.12);border-radius:7px;padding:4px 8px;">
+              <div style="font-size:11px;font-weight:900;color:var(--gold);">${last>=0?'+':''}${last.toFixed(1)}</div>
+              <div style="font-size:7px;color:var(--t3);">Son</div>
+            </div>
+          </div>
         </div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.konuAdi||'Konu'}</div>
-          <div style="font-size:9px;color:var(--t3);margin-top:1px;">${d.dogru||0}D · ${d.yanlis||0}Y · ${d.bos||0}B · ${d.date||''}</div>
+        ${nets.length>=2
+          ?makeInteractiveChart(ds,labels,90,chartId)
+          :`<div style="font-size:9px;color:var(--t3);text-align:center;padding:6px;">2+ deneme ekle → grafik görünür</div>`}
+        <!-- Mini kayıt listesi -->
+        <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.06);padding-top:7px;display:flex;flex-direction:column;gap:4px;">
+          ${[...sorted].reverse().slice(0,3).map(d=>{
+            const n=d.totalNet||0;
+            return`<div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-size:10px;font-weight:900;color:${n>=0?'var(--gr)':'var(--rd)'};min-width:36px;">${n>=0?'+':''}${n.toFixed(1)}</div>
+              <div style="font-size:9px;color:var(--t3);flex:1;">${d.dogru||0}D · ${d.yanlis||0}Y · ${d.bos||0}B</div>
+              <div style="font-size:9px;color:var(--t3);">${d.date||''}</div>
+              <button onclick="delDeneme(${d.id})" style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;font-size:12px;padding:0;">🗑</button>
+            </div>`;
+          }).join('')}
+          ${sorted.length>3?`<div style="font-size:9px;color:var(--t3);text-align:center;">+${sorted.length-3} daha...</div>`:''}
         </div>
-        <button onclick="delDeneme(${d.id})" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:2px;flex-shrink:0;">🗑</button>
       </div>`;
     }).join('')}`
     :'';
@@ -4642,18 +4838,22 @@ function renderDeneme(){
     const bRev=[...bList].reverse();
     const bLabels=bList.map((_,i)=>`#${i+1}`);
 
-    // Charts per sub-subject
-    const bCharts=brans.subjs.map(ss=>{
-      const ds={data:bList.map(d=>d.nets&&d.nets[ss.id]!=null?d.nets[ss.id]:0),color:brans.color,name:ss.name};
-      const avg=ds.data.length?ds.data.reduce((a,v)=>a+v,0)/ds.data.length:0;
-      const best=ds.data.length?Math.max(...ds.data):0;
+    // Charts per sub-subject (interactive with tooltips)
+    const bCharts=brans.subjs.map((ss,ssi)=>{
+      const nets=bList.map(d=>d.nets&&d.nets[ss.id]!=null?d.nets[ss.id]:0);
+      const tooltips=bList.map(d=>`${d.note||d.date||('#'+(bList.indexOf(d)+1))} · ${(d.nets[ss.id]||0).toFixed(1)} net`);
+      const ds={data:nets,color:brans.color,name:ss.name,tooltips};
+      const avg=nets.length?nets.reduce((a,v)=>a+v,0)/nets.length:0;
+      const best=nets.length?Math.max(...nets):0;
+      const chartId=`brans-${brans.id}-${ss.id}`;
       return`<div style="margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:800;color:${brans.color};margin-bottom:6px;">${ss.name}</div>
         <div style="display:flex;gap:8px;margin-bottom:6px;">
           <div class="bs" style="flex:1;"><span class="bs-v" style="color:var(--gold)">${avg.toFixed(1)}</span><span class="bs-l">Ort.</span></div>
           <div class="bs" style="flex:1;"><span class="bs-v" style="color:var(--gr)">${best.toFixed(1)}</span><span class="bs-l">En İyi</span></div>
-          <div class="bs" style="flex:1;"><span class="bs-v" style="color:${brans.color}">${ds.data.length?ds.data[ds.data.length-1].toFixed(1):'—'}</span><span class="bs-l">Son</span></div>
+          <div class="bs" style="flex:1;"><span class="bs-v" style="color:${brans.color}">${nets.length?nets[nets.length-1].toFixed(1):'—'}</span><span class="bs-l">Son</span></div>
         </div>
-        ${bList.length>=2?makeSVGChart([ds],bLabels,100):'<div style="font-size:9px;color:var(--t3);text-align:center;padding:8px;">2+ deneme ekle grafik görünür</div>'}
+        ${bList.length>=2?makeInteractiveChart([ds],bLabels,100,chartId):'<div style="font-size:9px;color:var(--t3);text-align:center;padding:8px;">2+ deneme ekle grafik görünür</div>'}
       </div>`;
     }).join('');
 
@@ -4699,22 +4899,23 @@ function renderDeneme(){
   const trendArrow=prev===null?'—':trendUp?'📈 +'+( last-prev).toFixed(1):trendDown?'📉 '+(last-prev).toFixed(1):'➡️ =';
   const trendColor=trendUp?'var(--gr)':trendDown?'var(--rd)':'var(--t3)';
   const totalColor=tur==='TYT'?'var(--pu)':'var(--pk)';
-  const totalDs={data:list.map(d=>d.totalNet||0),color:totalColor,name:'Toplam Net'};
-  const branchDs=curSubjs.map(s=>({data:list.map(d=>d.nets&&d.nets[s.id]!=null?d.nets[s.id]:0),color:s.color,name:s.name,id:s.id}));
-  const totalChart=list.length>=2?makeSVGChart([totalDs],labels,130):'';
+  const totalTooltips=list.map(d=>`${d.note||d.date||''} · ${(d.totalNet||0).toFixed(1)} net`);
+  const totalDs={data:list.map(d=>d.totalNet||0),color:totalColor,name:'Toplam Net',tooltips:totalTooltips};
+  const branchDs=curSubjs.map(s=>({data:list.map(d=>d.nets&&d.nets[s.id]!=null?d.nets[s.id]:0),color:s.color,name:s.name,id:s.id,tooltips:list.map(d=>`${d.note||d.date||''} · ${(d.nets&&d.nets[s.id]||0).toFixed(1)}`)}));
+  const totalChart=list.length>=2?makeInteractiveChart([totalDs],labels,130,`tytayt-${tur}-total`):'';
   // Performance bar for last deneme
   const maxNet=tur==='TYT'?120:80;
   const lastPct=Math.min(100,Math.round((last/maxNet)*100));
   const avgPct=Math.min(100,Math.round((avg/maxNet)*100));
   const perfColor=lastPct>=80?'var(--gr)':lastPct>=55?'var(--gold)':'var(--rd)';
 
-  const branchCharts=branchDs.filter(ds=>ds.data.some(v=>v!==0)).map(ds=>`
+  const branchCharts=branchDs.filter(ds=>ds.data.some(v=>v!==0)).map((ds,di)=>`
     <div style="margin-bottom:8px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         <div style="font-size:10px;font-weight:800;color:${ds.color};">${ds.name}</div>
         <div style="font-size:9px;color:var(--t3);">ort: ${ds.data.length?(ds.data.reduce((a,v)=>a+v,0)/ds.data.length).toFixed(1):'—'}</div>
       </div>
-      ${list.length>=2?makeSVGChart([ds],labels,75):'<div style="font-size:9px;color:var(--t3);text-align:center;padding:4px;">2+ deneme ekle</div>'}
+      ${list.length>=2?makeInteractiveChart([ds],labels,75,`tytayt-${tur}-br-${di}`):'<div style="font-size:9px;color:var(--t3);text-align:center;padding:4px;">2+ deneme ekle</div>'}
     </div>`).join('');
 
   document.getElementById('page').innerHTML=heroH()+tabs+
@@ -5742,7 +5943,8 @@ function startDrag(sid,e){
     let finalMins=wantMins;
     if(delta>0){
       // Artırıyoruz: toplam dailyMins'i geçemesin
-      const maxAllowed=dailyMins-othersTotal;
+      // maxAllowed'ı da 5'in katına indir (floor), yoksa sonraki round taşırır
+      const maxAllowed=Math.floor((dailyMins-othersTotal)/5)*5;
       finalMins=Math.min(wantMins,Math.max(0,maxAllowed));
     } else {
       // Azaltıyoruz: serbest, sıfırın altına inmesin
@@ -5817,45 +6019,49 @@ function resetDailyDist(){const td=toDS();S.dailyDist={};S.dailyDistDay=td;SUBJ.
 function setPlan(sid,val){S.weekPlan[sid]=Math.max(0,parseFloat(val)||0);save();}
 
 // ═══ MERKEZİ DAKİKA FONKSİYONU — tüm dakika sayaçlarını tek yerden günceller ═══
-function addMins(delta, sid){
-  if(delta===0)return;
-  const td=toDS();
-  // 1. S.dailyMins — bugünkü toplam (kronemetre ekranı)
-  if(S.dailyMinsDay!==td){S.dailyMins=0;S.dailyMinsDay=td;}
-  S.dailyMins=Math.max(0,(S.dailyMins||0)+delta);
-  // 2. S.totalMinutes — tüm zamanlar kümülatif
-  S.totalMinutes=Math.max(0,(S.totalMinutes||0)+delta);
-  // 3. S.weekTotalMins — bu haftanın toplamı
-  checkWeekReset();
-  S.weekTotalMins=Math.max(0,(S.weekTotalMins||0)+delta);
-  // 4. dailyLog — grafik ve istatistik için kaynak gerçek
-  if(!S.dailyLog)S.dailyLog={};
-  if(!S.dailyLog[td])S.dailyLog[td]={xp:0,questions:0,mins:0,subjMins:{}};
-  if(!S.dailyLog[td].subjMins)S.dailyLog[td].subjMins={};
-  S.dailyLog[td].mins=Math.max(0,(S.dailyLog[td].mins||0)+delta);
-  // 5. dailyLog.subjMins — ders bazlı dağılım
-  if(sid&&delta!==0){
-    S.dailyLog[td].subjMins[sid]=Math.max(0,(S.dailyLog[td].subjMins[sid]||0)+delta);
-    if(!S.subjectMinutes)S.subjectMinutes={};
-    S.subjectMinutes[sid]=Math.max(0,(S.subjectMinutes[sid]||0)+delta);
-  }
-}
+let _addDailyMinsLock = false;
+function addDailyMins(delta) {
+  if (!delta || delta === 0) return;
+  if (_addDailyMinsLock) return;
+  _addDailyMinsLock = true;
+  setTimeout(() => { _addDailyMinsLock = false; }, 500);
+  const dist = S.dailyDist || {};
+  // Sadece süresi 0'dan büyük olan dersleri filtreleyelim ki boşuna dönmesin
+  const activeSubjs = SUBJ.filter(s => (dist[s.id] || 0) > 0);
+  const distTotal = activeSubjs.reduce((a, s) => a + (dist[s.id] || 0), 0);
 
-function addDailyMins(delta){
-  // Ders dağılımı: eğer dailyDist doluysa orantılı dağıt, yoksa genel ekle
-  const dist=S.dailyDist||{};
-  const distTotal=SUBJ.reduce((a,s)=>a+(dist[s.id]||0),0);
-  if(distTotal>0){
-    // Hem artı hem eksi için orantılı dağıt
-    SUBJ.forEach(s=>{
-      const ratio=(dist[s.id]||0)/distTotal;
-      const portion=Math.round(delta*ratio);
-      if(portion!==0)addMins(portion,s.id);
+  if (distTotal > 0 && activeSubjs.length > 0) {
+    const absDelta = Math.abs(delta);
+    const sign = delta > 0 ? 1 : -1;
+    let plannedPortions = [];
+    let currentTotal = 0;
+
+    // 1. Her dersin payını hesapla (aşağı yuvarlayarak, mutlak değer üzerinden)
+    activeSubjs.forEach(s => {
+      const ratio = dist[s.id] / distTotal;
+      const portion = Math.floor(absDelta * ratio);
+      plannedPortions.push({ id: s.id, portion: portion * sign });
+      currentTotal += portion;
     });
+
+    // 2. Yuvarlamadan dolayı eksik kalan dakikaları dağıt
+    let remaining = absDelta - currentTotal;
+    for (let i = 0; i < remaining; i++) {
+      plannedPortions[i % plannedPortions.length].portion += sign;
+    }
+
+    // 3. Şimdi merkezi fonksiyona gönder
+    plannedPortions.forEach(p => {
+      if (p.portion !== 0) addMins(p.portion, p.id);
+    });
+
   } else {
+    // Eğer ders dağılımı yoksa direkt genel ekle/çıkar
     addMins(delta, null);
   }
-  save();renderPlan();
+  
+  save();
+  renderPlan();
 }
 
 function setDailyGoal(h){
@@ -5985,19 +6191,28 @@ function renderStats(){
     }
   }
 
-  const mwXp=Math.max(...viewWX,1);
+  // viewWX ile dailyLog xp'sini merge et — hangisi büyükse onu kullan (sıfırlanma koruması)
+  const mergedWX=viewWX.map((v,i)=>{
+    const dlXp=(viewDayData[i]&&viewDayData[i].xp)||0;
+    return Math.max(v||0, dlXp);
+  });
+  // Bar yüksekliği için mins'i de değerlendir (XP sıfır ama mins varsa bar çiz)
+  const maxMins=Math.max(...viewDayData.map(dd=>dd.mins||0),1);
+  const mwXp=Math.max(...mergedWX,1);
   const maxSubjM=Math.max(...SUBJ.map(s=>viewSubjMins[s.id]||0),1);
   const hasSubj=SUBJ.some(s=>(viewSubjMins[s.id]||0)>0);
   const wH=Math.floor(viewTotalMins/60),wM=viewTotalMins%60;
 
   // Zengin bar: XP bar + zaman etiketi + ders şeritleri
-  const bars=viewWX.map((v,i)=>{
-    const h=Math.round(v/mwXp*100);
+  const bars=mergedWX.map((v,i)=>{
     const dd=viewDayData[i]||{};
+    // Bar yüksekliği: XP varsa XP'den, yoksa dakikadan normalize et
+    const h=v>0?Math.round(v/mwXp*100):((dd.mins||0)>0?Math.round((dd.mins||0)/maxMins*70):0);
     const mh=Math.floor((dd.mins||0)/60),mm=(dd.mins||0)%60;
     const tLabel=dd.mins>0?(mh>0?`${mh}s${mm?mm+'d':''}`:`${mm}d`):'';
     const strips=SUBJ.map(s=>{const sm=dd.sm&&dd.sm[s.id]||0;return sm?`<div style="height:3px;background:${s.color};border-radius:1px;margin-bottom:1px;"></div>`:''}).join('');
-    return`<div class="bw"><div class="bv" style="color:${dd.isToday?'var(--pu)':''}">${v||''}</div><div class="bb"><div class="bf" style="height:${h}%;background:${dd.isToday?'var(--pu)':cols[i]}"></div></div><div class="bd" style="color:${dd.isToday?'var(--pu)':''}">${DAYS[i]}</div><div style="font-size:7px;font-weight:800;color:${dd.isToday?'var(--pu)':'var(--gl)'};text-align:center;min-height:10px;margin-top:1px;">${tLabel}</div>${strips?`<div style="width:100%;margin-top:2px;">${strips}</div>`:''}</div>`;
+    const dispVal=v>0?v:'';
+    return`<div class="bw"><div class="bv" style="color:${dd.isToday?'var(--pu)':''}">${dispVal}</div><div class="bb"><div class="bf" style="height:${h}%;background:${dd.isToday?'var(--pu)':cols[i]}"></div></div><div class="bd" style="color:${dd.isToday?'var(--pu)':''}">${DAYS[i]}</div><div style="font-size:7px;font-weight:800;color:${dd.isToday?'var(--pu)':'var(--gl)'};text-align:center;min-height:10px;margin-top:1px;">${tLabel}</div>${strips?`<div style="width:100%;margin-top:2px;">${strips}</div>`:''}</div>`;
   }).join('');
 
   const subjRows=hasSubj?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">${SUBJ.map(s=>{const m=viewSubjMins[s.id]||0;if(!m)return'';const hh=Math.floor(m/60),mm=m%60;const pct=Math.round(m/maxSubjM*100);return`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;"><div style="font-size:12px;width:18px;text-align:center;flex-shrink:0;">${s.icon}</div><div style="font-size:9px;font-weight:700;color:var(--t2);width:56px;flex-shrink:0;white-space:nowrap;overflow:hidden;">${s.name}</div><div style="flex:1;height:7px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${s.color};border-radius:100px;"></div></div><div style="font-size:9px;font-weight:900;color:${s.color};min-width:46px;text-align:right;">${hh>0?hh+'s ':''} ${mm}dk</div></div>`;}).filter(Boolean).join('')}</div>`:'';
@@ -6195,12 +6410,12 @@ function renderStats(){
     <!-- HAFTALIK XP KARTI — YENİ TASARIM v2 -->
     ${(()=>{
       const dayNames=getDaysArr();
-      const totalWeekXP=viewWX.reduce((a,v)=>a+(v||0),0)||viewDayData.reduce((a,dd)=>a+(dd.xp||0),0);
+      const totalWeekXP=mergedWX.reduce((a,v)=>a+(v||0),0)||viewDayData.reduce((a,dd)=>a+(dd.xp||0),0);
       const totalWeekMins=viewDayData.reduce((a,d)=>a+(d.mins||0),0);
       const wH2=Math.floor(totalWeekMins/60),wM2=totalWeekMins%60;
       // Bar yüksekliği: XP yoksa dakikayı da değerlendir (manuel ekleme/çıkarma yansısın)
-      const maxXPval=Math.max(...viewWX,...viewDayData.map(d=>d.mins||0),1);
-      const activeDays=viewWX.filter(v=>v>0).length||viewDayData.filter(d=>(d.mins||0)>0).length;
+      const maxXPval=Math.max(...mergedWX,...viewDayData.map(d=>d.mins||0),1);
+      const activeDays=mergedWX.filter(v=>v>0).length||viewDayData.filter(d=>(d.mins||0)>0).length;
 
       // Haftalık özet — 3 büyük kart
       const summaryRow=`
@@ -6220,7 +6435,7 @@ function renderStats(){
         </div>`;
 
       // Günlük XP bar'ları — güne tıklayınca ders dağılımı göster
-      const combinedBars=viewWX.map((v,i)=>{
+      const combinedBars=mergedWX.map((v,i)=>{
         const dd=viewDayData[i]||{};
         const isToday=dd.isToday;
         const m=dd.mins||0;
@@ -12404,6 +12619,7 @@ if(!S.myName)S.myName='YKS Savaşçısı';
   if(fixed)save();
 })();
 chkBdgsSilent(); // mevcut verilerle rozetleri sessizce aç
+streakUpd(); // uygulama açılışında seriyi güncelle / sıfırla
 save();
 buildNav();
 nav(S.curTab||'home');
@@ -14531,10 +14747,7 @@ async function searchDept(uid){
         ? `<span style="font-size:7px;background:rgba(30,136,229,0.15);color:var(--bl);border-radius:4px;padding:2px 5px;font-weight:800;">🤖 AI</span>`
         : `<span style="font-size:7px;background:rgba(255,255,255,0.08);color:var(--t3);border-radius:4px;padding:2px 5px;font-weight:800;">DB</span>`;
 
-    return`<div style="background:var(--c2);border-radius:11px;padding:12px;margin-bottom:7px;
-      border:1px solid ${isFromYok?'rgba(67,160,71,0.25)':isFromClaude?'rgba(30,136,229,0.2)':'rgba(255,255,255,0.06)'};transition:border-color .2s;"
-      onmouseenter="this.style.borderColor='rgba(124,77,255,0.4)'"
-      onmouseleave="this.style.borderColor='${isFromYok?'rgba(67,160,71,0.25)':isFromClaude?'rgba(30,136,229,0.2)':'rgba(255,255,255,0.06)'}'">
+    return`<div style="background:var(--c2);border-radius:11px;padding:12px;margin-bottom:7px;border:1px solid ${isFromYok?'rgba(67,160,71,0.25)':isFromClaude?'rgba(30,136,229,0.2)':'rgba(255,255,255,0.06)'};transition:border-color .2s;" onmouseenter="this.style.borderColor='rgba(124,77,255,0.4)'" onmouseleave="this.style.borderColor='${isFromYok?'rgba(67,160,71,0.25)':isFromClaude?'rgba(30,136,229,0.2)':'rgba(255,255,255,0.06)}'"">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
         <div style="font-size:12px;font-weight:900;flex:1;line-height:1.3;">${d.name}</div>
         <div style="display:flex;gap:3px;flex-shrink:0;margin-left:6px;">
@@ -15842,5 +16055,425 @@ onAuthStateChanged(auth, async user => {
 });
 </script>
 
+<!-- ═══ YETENEK AĞACI OVERLAY ═══ -->
+<div class="ov" id="ov-skill" style="align-items:flex-end;padding:0;">
+  <div id="ov-skill-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:18px 16px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto;"></div>
+</div>
+
+<!-- ═══ AVATAR OVERLAY ═══ -->
+<div class="ov" id="ov-avatar" style="align-items:flex-end;padding:0;">
+  <div id="ov-avatar-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:18px 16px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:85vh;overflow-y:auto;"></div>
+</div>
+
+<!-- ═══ LİDERLİK TABLOSU OVERLAY ═══ -->
+<div class="ov" id="ov-lb" style="align-items:flex-end;padding:0;">
+  <div id="ov-lb-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:18px 16px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:88vh;overflow-y:auto;"></div>
+</div>
+
+<script>
+// ═══════════════════ YETENEK AĞACI ═══════════════════
+function openSkillTree(){
+  const inner=document.getElementById('ov-skill-inner');
+  const sk=S.skills||{};
+  const pts=S.skillPts||0;
+  const totalOwned=Object.keys(sk).length;
+  const totalSkills=SKILL_TREE.length;
+
+  const branches=[
+    {key:'calisma',label:'Çalışma',icon:'📚',color:'#7c4dff',desc:'XP ve çalışma bonusları'},
+    {key:'deneme',label:'Deneme',icon:'📊',color:'#f5a623',desc:'Deneme sınavı güçlendirmeleri'},
+    {key:'boss',label:'Boss',icon:'⚔️',color:'#e53935',desc:'Savaş yetkinlikleri'},
+    {key:'streak',label:'Seri',icon:'🔥',color:'#43a047',desc:'Streak koruma ve bonusları'},
+  ];
+
+  // Ağaç dalı render: her skill dikey zincir olarak, aralarında SVG ok çizgisi
+  function renderBranch(b){
+    const skills=SKILL_TREE.filter(s=>s.branch===b.key);
+    const ownedCount=skills.filter(s=>!!sk[s.id]).length;
+    const nodes=skills.map((s,i)=>{
+      const owned=!!sk[s.id];
+      const reqOk=!s.req||!!sk[s.req];
+      const canBuy=!owned&&reqOk&&pts>=s.pts;
+      const locked=!owned&&(!reqOk||(pts<s.pts&&reqOk));
+      const notEnoughPts=!owned&&reqOk&&pts<s.pts;
+
+      const nodeBg=owned
+        ?`linear-gradient(135deg,${b.color}33,${b.color}18)`
+        :canBuy?'rgba(255,255,255,0.06)':'rgba(255,255,255,0.02)';
+      const nodeBorder=owned
+        ?`${b.color}88`
+        :canBuy?`${b.color}66`:'rgba(255,255,255,0.07)';
+      const connector=i>0?`<div style="display:flex;justify-content:center;align-items:center;height:20px;position:relative;">
+        <div style="width:2px;height:100%;background:${owned||!!sk[skills[i-1].id]?b.color+'88':'rgba(255,255,255,0.1)'};position:absolute;"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:${!!sk[skills[i-1].id]?b.color:'rgba(255,255,255,0.15)'};border:1px solid ${!!sk[skills[i-1].id]?b.color+'bb':'rgba(255,255,255,0.1)'};z-index:1;"></div>
+      </div>`:'';
+
+      const badge=owned
+        ?`<div style="background:${b.color};border-radius:20px;padding:2px 8px;font-size:8px;font-weight:900;color:#fff;white-space:nowrap;">✓ Aktif</div>`
+        :canBuy
+          ?`<button onclick="buySkill('${s.id}')" style="background:linear-gradient(135deg,${b.color},${b.color}cc);border:none;border-radius:8px;padding:5px 11px;font-size:10px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif;white-space:nowrap;">${s.pts} 🌟</button>`
+          :notEnoughPts
+            ?`<div style="font-size:8px;color:var(--t3);font-weight:700;text-align:right;white-space:nowrap;">${s.pts}🌟<br><span style="color:var(--rd)">yetmez</span></div>`
+            :`<div style="font-size:18px;text-align:center;opacity:0.25;">🔒</div>`;
+
+      return`${connector}<div style="background:${nodeBg};border:1.5px solid ${nodeBorder};border-radius:13px;padding:10px 12px;display:flex;align-items:center;gap:10px;transition:all .2s;position:relative;overflow:hidden;">
+        ${owned?`<div style="position:absolute;top:0;left:0;right:0;height:2px;background:${b.color};opacity:0.6;border-radius:13px 13px 0 0;"></div>`:''}
+        <div style="width:38px;height:38px;border-radius:10px;background:${owned?b.color+'33':'rgba(255,255,255,0.05)'};border:1px solid ${owned?b.color+'55':'rgba(255,255,255,0.07)'};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;opacity:${!reqOk?0.3:1};">${s.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-weight:900;color:${owned?b.color:!reqOk?'var(--t3)':'var(--t1)'};">${s.name}</div>
+          <div style="font-size:9px;color:var(--t3);margin-top:2px;line-height:1.35;">${s.desc}</div>
+          ${!reqOk?`<div style="font-size:8px;color:var(--rd);margin-top:3px;display:flex;align-items:center;gap:3px;"><span>🔒</span> Önce: <b>${SKILL_TREE.find(x=>x.id===s.req)?.name||''}</b></div>`:''}
+        </div>
+        <div style="flex-shrink:0;">${badge}</div>
+      </div>`;
+    }).join('');
+
+    const progress=skills.length>0?Math.round(ownedCount/skills.length*100):0;
+    return`<div style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="width:32px;height:32px;border-radius:9px;background:${b.color}22;border:1px solid ${b.color}44;display:flex;align-items:center;justify-content:center;font-size:16px;">${b.icon}</div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:900;color:${b.color};">${b.label}</div>
+          <div style="font-size:8px;color:var(--t3);">${b.desc}</div>
+        </div>
+        <div style="text-align:right;font-size:9px;font-weight:800;color:${ownedCount===skills.length?'var(--gr)':b.color};">${ownedCount}/${skills.length}</div>
+      </div>
+      <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:100px;margin-bottom:10px;overflow:hidden;">
+        <div style="height:100%;width:${progress}%;background:${b.color};border-radius:100px;transition:width .5s;"></div>
+      </div>
+      ${nodes}
+    </div>`;
+  }
+
+  inner.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div style="font-size:16px;font-weight:900;">🌳 Yetenek Ağacı</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:1px;">${totalOwned}/${totalSkills} yetenek açık</div>
+      </div>
+      <button onclick="closeOv('ov-skill')" style="background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--t2);font-size:15px;cursor:pointer;font-family:'Nunito',sans-serif;">✕</button>
+    </div>
+
+    <!-- Puan banner -->
+    <div style="background:linear-gradient(135deg,rgba(245,166,35,0.18),rgba(245,166,35,0.06));border:1px solid rgba(245,166,35,0.35);border-radius:13px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">
+      <div style="font-size:28px;">🌟</div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:900;color:var(--gold);">${pts} Yetenek Puanı</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:1px;">Her level atladığında +1 puan kazanırsın</div>
+      </div>
+      ${pts>0?`<div style="background:var(--gold);color:#1a1a2e;border-radius:20px;padding:3px 10px;font-size:9px;font-weight:900;">Harca!</div>`:''}
+    </div>
+
+    <!-- Dallar -->
+    ${branches.map(b=>renderBranch(b)).join('<div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0 18px;"></div>')}
+  `;
+  showOv('ov-skill');
+}
+
+function buySkill(id){
+  const s=SKILL_TREE.find(x=>x.id===id);
+  if(!s)return;
+  const pts=S.skillPts||0;
+  if(pts<s.pts){toast('Yeterli yetenek puanı yok! 🌟');return;}
+  if(!S.skills)S.skills={};
+  S.skills[id]=1;
+  S.skillPts=pts-s.pts;
+  save();
+  toast(`${s.icon} ${s.name} aktifleşti!`);
+  openSkillTree();
+  renderHome();
+}
+
+// ═══════════════════ AVATAR OVERLAY ═══════════════════
+function openAvatarOv(catFilter){
+  const inner=document.getElementById('ov-avatar-inner');
+  const l=getLvl(S.xp);
+  const curEmoji=S.avatarEmoji||'⚔️';
+  const curFrame=S.avatarFrame||'default';
+  const curName=S.myName||'YKS Savaşçısı';
+  const cat=catFilter||S._avCat||'Karakter';
+  S._avCat=cat;
+
+  const frame=AVATAR_FRAMES.find(f=>f.id===curFrame)||AVATAR_FRAMES[0];
+  const cats=[...new Set(AVATAR_EMOJIS.map(a=>a.cat))];
+
+  const emojiGrid=AVATAR_EMOJIS.filter(a=>a.cat===cat).map(a=>{
+    const unlocked=l>=a.unlockLvl;
+    const sel=a.e===curEmoji;
+    return`<button onclick="${unlocked?`selectEmoji('${a.e}')`:`toast('Seviye ${a.unlockLvl} gerekli! 🔒')`}"
+      style="aspect-ratio:1;border-radius:12px;border:2px solid ${sel?'var(--gold)':'rgba(255,255,255,0.07)'};
+      background:${sel?'rgba(245,166,35,0.2)':'rgba(255,255,255,0.04)'};font-size:26px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;position:relative;
+      opacity:${unlocked?1:0.35};transition:all .15s;${sel?'box-shadow:0 0 10px rgba(245,166,35,0.4);':''}">
+      ${a.e}
+      ${!unlocked?`<div style="position:absolute;bottom:2px;right:3px;font-size:6px;color:var(--gold);font-weight:900;background:rgba(0,0,0,0.6);border-radius:3px;padding:0 2px;">${a.unlockLvl}</div>`:''}
+      ${sel?`<div style="position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--gold);"></div>`:''}
+    </button>`;
+  }).join('');
+
+  const frameGrid=AVATAR_FRAMES.map(f=>{
+    const unlocked=l>=f.unlockLvl;
+    const sel=f.id===curFrame;
+    return`<button onclick="${unlocked?`selectFrame('${f.id}')`:`toast('Seviye ${f.unlockLvl} gerekli! 🔒')`}"
+      style="padding:8px 10px;border-radius:11px;border:2px solid ${sel?'var(--gold)':'rgba(255,255,255,0.07)'};
+      background:${sel?'rgba(245,166,35,0.1)':'rgba(255,255,255,0.03)'};cursor:pointer;opacity:${unlocked?1:0.35};
+      display:flex;align-items:center;gap:9px;text-align:left;transition:all .15s;${sel?'box-shadow:0 0 10px rgba(245,166,35,0.3);':''}">
+      <div style="width:30px;height:30px;border-radius:50%;background:${f.gradient};flex-shrink:0;box-shadow:0 2px 8px ${f.glow};"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10px;font-weight:900;color:${sel?'var(--gold)':'var(--t1)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+        <div style="font-size:8px;color:var(--t3);">${unlocked?'Seviye '+f.unlockLvl:'🔒 Sv '+f.unlockLvl}</div>
+      </div>
+      ${sel?`<div style="font-size:9px;color:var(--gold);font-weight:900;flex-shrink:0;">✓</div>`:''}
+    </button>`;
+  }).join('');
+
+  inner.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div style="font-size:16px;font-weight:900;">🎭 Karakter</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:1px;">Seviye ${l} · Avatar düzenle</div>
+      </div>
+      <button onclick="closeOv('ov-avatar');renderHome();" style="background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--t2);font-size:15px;cursor:pointer;font-family:'Nunito',sans-serif;">✕</button>
+    </div>
+
+    <!-- Önizleme kartı -->
+    <div style="background:linear-gradient(135deg,rgba(124,77,255,0.15),rgba(224,64,251,0.1));border:1px solid rgba(124,77,255,0.25);border-radius:16px;padding:16px;margin-bottom:18px;display:flex;align-items:center;gap:16px;">
+      <div style="position:relative;flex-shrink:0;">
+        <div id="av-preview-frame" style="width:76px;height:76px;border-radius:50%;background:${frame.gradient};display:flex;align-items:center;justify-content:center;font-size:38px;border:3px solid rgba(255,255,255,0.2);box-shadow:0 0 22px ${frame.glow},0 4px 16px rgba(0,0,0,0.4);">
+          <span id="av-preview">${curEmoji}</span>
+        </div>
+        <div style="position:absolute;bottom:-2px;right:-2px;background:var(--gold);color:#1a1a2e;font-size:8px;font-weight:900;border-radius:20px;padding:2px 6px;">Sv ${l}</div>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div id="av-name-display" style="font-size:15px;font-weight:900;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${curName}</div>
+        <div style="font-size:9px;color:var(--t3);margin-bottom:8px;">${frame.name} çerçevesi</div>
+        <button onclick="editAvatarName()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:5px 12px;font-size:9px;font-weight:800;color:var(--t2);cursor:pointer;font-family:'Nunito',sans-serif;">✏️ İsim Değiştir</button>
+      </div>
+    </div>
+
+    <!-- Emoji seçimi -->
+    <div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">👤 Avatar Seç</div>
+    <div style="display:flex;gap:5px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;">
+      ${cats.map(c=>`<button onclick="openAvatarOv('${c}')" style="flex-shrink:0;padding:5px 12px;border-radius:20px;border:1.5px solid ${c===cat?'var(--pu)':'rgba(255,255,255,0.1)'};background:${c===cat?'rgba(124,77,255,0.2)':'transparent'};color:${c===cat?'var(--pu)':'var(--t3)'};font-size:9px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">${c}</button>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:18px;">
+      ${emojiGrid}
+    </div>
+
+    <!-- Çerçeve seçimi -->
+    <div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:9px;">🖼 Çerçeve Seç</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      ${frameGrid}
+    </div>
+  `;
+  showOv('ov-avatar');
+}
+
+function editAvatarName(){
+  const cur=S.myName||'YKS Savaşçısı';
+  // Inline input göster
+  const display=document.getElementById('av-name-display');
+  if(!display)return;
+  display.innerHTML=`<div style="display:flex;gap:6px;align-items:center;">
+    <input id="av-name-inp" value="${cur}" maxlength="24" style="flex:1;padding:5px 8px;border-radius:7px;border:1px solid var(--pu);background:var(--c2);color:var(--t1);font-size:13px;font-family:'Nunito',sans-serif;font-weight:800;outline:none;"/>
+    <button onclick="saveAvatarName()" style="background:var(--pu);border:none;border-radius:7px;padding:5px 10px;font-size:10px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif;">✓</button>
+  </div>`;
+  const inp=document.getElementById('av-name-inp');
+  if(inp){inp.focus();inp.select();}
+}
+
+function saveAvatarName(){
+  const inp=document.getElementById('av-name-inp');
+  if(!inp)return;
+  const v=inp.value.trim();
+  if(!v){toast('İsim boş olamaz!');return;}
+  S.myName=v;save();
+  toast('İsim güncellendi! ✅');
+  openAvatarOv(S._avCat);
+}
+
+function selectEmoji(e){
+  S.avatarEmoji=e;save();
+  const prev=document.getElementById('av-preview');
+  if(prev)prev.textContent=e;
+  // Tam yeniden render yerine sadece önizlemeyi güncelle
+  renderHome();
+}
+function selectFrame(id){
+  S.avatarFrame=id;save();
+  openAvatarOv(S._avCat);
+  renderHome();
+}
+
+// ═══════════════════ LİDERLİK TABLOSU ═══════════════════
+async function openLeaderboard(){
+  const inner=document.getElementById('ov-lb-inner');
+  inner.innerHTML=`<div style="text-align:center;padding:30px;color:var(--t3);font-size:12px;">⏳ Yükleniyor...</div>`;
+  showOv('ov-lb');
+
+  // Push kendi verimizi
+  await pushLbEntry();
+
+  // Tüm verileri çek
+  const entries=await fetchLbEntries();
+
+  const myCode=S.friendCode||'???';
+  const l=getLvl(S.xp);
+  const sorted=[...entries].sort((a,b)=>b.xp-a.xp);
+  const myRank=sorted.findIndex(e=>e.code===myCode)+1;
+
+  function medal(rank){return rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank+'.';}
+
+  inner.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-size:15px;font-weight:900;">🏆 Liderlik Tablosu</div>
+      <button onclick="closeOv('ov-lb')" style="background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:28px;height:28px;color:var(--t2);font-size:14px;cursor:pointer;font-family:'Nunito',sans-serif;">✕</button>
+    </div>
+    <div style="background:rgba(124,77,255,0.1);border:1px solid rgba(124,77,255,0.25);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:10px;color:var(--t3);">
+      💡 Arkadaşlarınla paylaşmak için kodunu kopyala: <span onclick="navigator.clipboard&&navigator.clipboard.writeText('${myCode}').then(()=>toast('Kod kopyalandı!'))" style="color:var(--gold);font-weight:900;cursor:pointer;">${myCode} 📋</span>
+    </div>
+    ${sorted.length===0?`<div style="text-align:center;padding:30px;color:var(--t3);">Henüz veri yok. Arkadaşlarını ekle!</div>`:''}
+    ${sorted.map((e,i)=>{
+      const rank=i+1;
+      const isMe=e.code===myCode;
+      return`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:${isMe?'rgba(124,77,255,0.15)':'rgba(255,255,255,0.03)'};border:1px solid ${isMe?'rgba(124,77,255,0.4)':'rgba(255,255,255,0.06)'};margin-bottom:5px;">
+        <div style="font-size:${rank<=3?'18':'13'}px;width:24px;text-align:center;flex-shrink:0;font-weight:900;">${medal(rank)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:900;${isMe?'color:var(--pu);':''}">${e.name||'YKS Savaşçısı'}${isMe?' (Sen)':''}</div>
+          <div style="font-size:9px;color:var(--t3);">Sv ${getLvl(e.xp)} · ${e.streak||0}🔥 · ${e.xp} XP</div>
+        </div>
+        <div style="font-size:13px;font-weight:900;color:var(--gold);">${e.xp}</div>
+      </div>`;
+    }).join('')}
+    <div style="margin-top:10px;font-size:9px;color:var(--t3);text-align:center;">Veriler ${new Date().toLocaleTimeString('tr-TR')} itibarıyla güncellendi</div>
+  `;
+}
+
+async function pushLbEntry(){
+  try{
+    const binId=await getMyBinId();
+    if(!binId)return;
+    const data={
+      code:S.friendCode,name:S.myName||'YKS Savaşçısı',
+      xp:S.xp,streak:S.streak,ts:Date.now()
+    };
+    await fetch(`${JB_BASE}/b/${binId}`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY,'X-Bin-Versioning':'false'},
+      body:JSON.stringify(data)
+    });
+  }catch(e){}
+}
+
+async function fetchLbEntries(){
+  try{
+    // Kendi verimiz
+    const me={code:S.friendCode,name:S.myName||'YKS Savaşçısı',xp:S.xp,streak:S.streak};
+    const friends=S.friendScores||[];
+    // friendScores'dan gelen arkadaşları da dahil et
+    const all=[me,...friends.map(f=>({code:f.code,name:f.name,xp:f.xp,streak:f.streak||0}))];
+    // Duplicate'leri kaldır
+    const seen=new Set();
+    return all.filter(e=>{if(seen.has(e.code))return false;seen.add(e.code);return true;});
+  }catch(e){return[{code:S.friendCode,name:S.myName||'Sen',xp:S.xp,streak:S.streak}];}
+}
+
+// ═══════════════════ KONU BAZLI GRAFİK (interaktif) ═══════════════════
+function makeInteractiveChart(datasets,labels,height=140,chartId='chart'){
+  const W=320,H=height,PAD={t:16,r:14,b:30,l:34};
+  const cW=W-PAD.l-PAD.r,cH=H-PAD.t-PAD.b;
+  if(!labels.length)return'';
+  const allVals=datasets.flatMap(d=>d.data);
+  const minV=Math.min(0,...allVals);
+  const maxV=Math.max(...allVals,1);
+  const range=maxV-minV||1;
+  const xStep=labels.length>1?cW/(labels.length-1):cW;
+  const toX=i=>PAD.l+(labels.length>1?i*xStep:cW/2);
+  const toY=v=>PAD.t+cH-(((v-minV)/range)*cH);
+  const gridCount=4;
+  let grid='';
+  for(let i=0;i<=gridCount;i++){
+    const y=PAD.t+(cH/gridCount)*i;
+    const val=(maxV-(range/gridCount)*i).toFixed(0);
+    grid+=`<line x1="${PAD.l}" y1="${y}" x2="${W-PAD.r}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    <text x="${PAD.l-4}" y="${y+4}" text-anchor="end" font-size="8" fill="rgba(255,255,255,0.3)" font-family="Nunito">${val}</text>`;
+  }
+  let xLabels='';
+  labels.forEach((l,i)=>{
+    if(labels.length<=8||i%(Math.ceil(labels.length/6))===0||i===labels.length-1)
+      xLabels+=`<text x="${toX(i)}" y="${H-6}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.35)" font-family="Nunito">${l}</text>`;
+  });
+  let paths='';
+  let dots=''; // dots ayrı, üstte kalacak
+  // Tooltip veri alanı
+  const tooltipData=[];
+  datasets.forEach((ds,di)=>{
+    if(ds.data.length<2){
+      if(ds.data.length===1){
+        const tt=ds.tooltips?.[0]||labels[0];
+        dots+=`<circle cx="${toX(0)}" cy="${toY(ds.data[0])}" r="5" fill="${ds.color}" stroke="#12122a" stroke-width="2"
+          onmouseenter="showChartTip('${chartId}',${toX(0)},${toY(ds.data[0])},'${tt.replace(/'/g,'&#39;')}',${ds.data[0]})"
+          onmouseleave="hideChartTip('${chartId}')"
+          ontouchstart="showChartTip('${chartId}',${toX(0)},${toY(ds.data[0])},'${tt.replace(/'/g,'&#39;')}',${ds.data[0]});event.preventDefault()"
+          style="cursor:pointer;"/>`;
+      }
+      return;
+    }
+    let d=`M ${toX(0)} ${toY(ds.data[0])}`;
+    for(let i=1;i<ds.data.length;i++){
+      const cx=(toX(i-1)+toX(i))/2;
+      d+=` Q ${cx} ${toY(ds.data[i-1])} ${toX(i)} ${toY(ds.data[i])}`;
+    }
+    paths+=`<path d="${d}" fill="none" stroke="${ds.color}" stroke-width="2.5" stroke-linecap="round"/>`;
+    const areaD=d+` L ${toX(ds.data.length-1)} ${PAD.t+cH} L ${toX(0)} ${PAD.t+cH} Z`;
+    paths+=`<path d="${areaD}" fill="${ds.color}" opacity="0.08"/>`;
+    ds.data.forEach((v,i)=>{
+      const tt=ds.tooltips?.[i]||labels[i];
+      dots+=`<circle cx="${toX(i)}" cy="${toY(v)}" r="5" fill="${ds.color}" stroke="#12122a" stroke-width="2"
+        onmouseenter="showChartTip('${chartId}',${toX(i)},${toY(v)},'${tt.replace(/'/g,'&#39;')}',${v})"
+        onmouseleave="hideChartTip('${chartId}')"
+        ontouchstart="showChartTip('${chartId}',${toX(i)},${toY(v)},'${tt.replace(/'/g,'&#39;')}',${v});event.preventDefault()"
+        style="cursor:pointer;"/>`;
+    });
+    const last=ds.data[ds.data.length-1];
+    paths+=`<text x="${Math.min(toX(ds.data.length-1)+7,W-10)}" y="${toY(last)+4}" font-size="9" fill="${ds.color}" font-family="Nunito" font-weight="800">${last.toFixed(1)}</text>`;
+  });
+
+  // Tooltip box (hidden by default)
+  const tipRect=`
+    <g id="${chartId}-tip" style="display:none;pointer-events:none;">
+      <rect id="${chartId}-tip-bg" x="0" y="0" width="90" height="32" rx="6" fill="#1a1a35" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+      <text id="${chartId}-tip-val" x="45" y="13" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="Nunito"></text>
+      <text id="${chartId}-tip-lbl" x="45" y="26" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.6)" font-family="Nunito"></text>
+    </g>`;
+
+  return`<div style="position:relative;">
+    <svg id="${chartId}-svg" viewBox="0 0 ${W} ${H}" width="100%" style="overflow:visible;">${grid}${xLabels}${paths}${dots}${tipRect}</svg>
+  </div>`;
+}
+
+function showChartTip(chartId,cx,cy,label,val){
+  const g=document.getElementById(chartId+'-tip');
+  const bg=document.getElementById(chartId+'-tip-bg');
+  const tv=document.getElementById(chartId+'-tip-val');
+  const tl=document.getElementById(chartId+'-tip-lbl');
+  if(!g)return;
+  const svg=document.getElementById(chartId+'-svg');
+  const vb=svg?svg.viewBox.baseVal:{width:320,height:140};
+  const bw=Math.min(label.length*6+20,130);
+  const tx=Math.max(4,Math.min(cx-bw/2,vb.width-bw-4));
+  const ty=cy>30?cy-40:cy+10;
+  bg.setAttribute('x',tx);bg.setAttribute('y',ty);bg.setAttribute('width',bw);bg.setAttribute('height',32);
+  tv.setAttribute('x',tx+bw/2);tv.setAttribute('y',ty+13);tv.textContent=typeof val==='number'?(val>=0?'+':'')+val.toFixed(1)+' net':val;
+  tl.setAttribute('x',tx+bw/2);tl.setAttribute('y',ty+26);
+  // Etiketi kısalt
+  tl.textContent=label.length>18?label.slice(0,17)+'…':label;
+  g.style.display='';
+}
+function hideChartTip(chartId){
+  const g=document.getElementById(chartId+'-tip');
+  if(g)g.style.display='none';
+}
+</script>
 </body>
 </html>
