@@ -2726,6 +2726,19 @@ const DEPT_DB=[
   {name:'Eğitim Bilimleri',type:'SÖZ',scores:{'Ankara':'474.0','Hacettepe':'471.0','Gazi':'468.0','Marmara':'463.0'},rankBase:13000,kontenjan:100,note:'Öğretim yöntemleri'},
   {name:'Matematik Öğretmenliği',type:'SAY',scores:{'Boğaziçi':'490.0','ODTÜ':'488.0','Hacettepe':'480.0','Gazi':'473.0'},rankBase:9000,kontenjan:80,note:'Matematik eğitimi'},
   {name:'Fen Bilgisi Öğretmenliği',type:'SAY',scores:{'Boğaziçi':'485.0','ODTÜ':'483.0','Hacettepe':'475.0','Gazi':'468.0'},rankBase:11000,kontenjan:80,note:'Fen bilimleri eğitimi'},
+  // ÖN LİSANS BÖLÜMLERI
+  {name:'Bilgisayar Programcılığı (ÖL)',type:'ÖL',scores:{'ODTÜ':'420.0','İTÜ':'418.0','Ankara':'395.0'},rankBase:3500,kontenjan:120,note:'2 yıllık bilgisayar'},
+  {name:'Elektrik Teknolojileri (ÖL)',type:'ÖL',scores:{'İTÜ':'410.0','Yıldız':'395.0','Ankara':'385.0'},rankBase:4500,kontenjan:100,note:'2 yıllık elektrik'},
+  {name:'Muhasebe (ÖL)',type:'ÖL',scores:{'Ankara':'385.0','Marmara':'380.0','Gazi':'375.0'},rankBase:7500,kontenjan:150,note:'2 yıllık muhasebe'},
+  {name:'Pazarlama (ÖL)',type:'ÖL',scores:{'Ankara':'390.0','Marmara':'385.0','İstanbul':'382.0'},rankBase:8000,kontenjan:100,note:'2 yıllık pazarlama'},
+  {name:'Hemşirelik (ÖL)',type:'ÖL',scores:{'Hacettepe':'425.0','İstanbul':'420.0','Ankara':'415.0'},rankBase:4000,kontenjan:200,note:'2 yıllık hemşirelik'},
+  {name:'Tıbbi Sekreterlik (ÖL)',type:'ÖL',scores:{'Hacettepe':'415.0','İstanbul':'410.0','Ankara':'400.0'},rankBase:5500,kontenjan:80,note:'2 yıllık tıbbi sekreter'},
+  {name:'Makine Teknolojileri (ÖL)',type:'ÖL',scores:{'İTÜ':'405.0','Yıldız':'390.0','Ankara':'380.0'},rankBase:5000,kontenjan:110,note:'2 yıllık makine'},
+  {name:'İnşaat Teknolojileri (ÖL)',type:'ÖL',scores:{'İTÜ':'400.0','Ankara':'385.0','Yıldız':'378.0'},rankBase:5500,kontenjan:90,note:'2 yıllık inşaat'},
+  {name:'Aşçılık (ÖL)',type:'ÖL',scores:{'Ankara':'370.0','Gazi':'365.0','İstanbul':'360.0'},rankBase:9500,kontenjan:80,note:'2 yıllık aşçılık'},
+  {name:'Otel Yönetimi (ÖL)',type:'ÖL',scores:{'Ankara':'375.0','Marmara':'370.0','İstanbul':'365.0'},rankBase:10000,kontenjan:70,note:'2 yıllık otel yönetimi'},
+  {name:'Turizm Rehberliği (ÖL)',type:'ÖL',scores:{'Ankara':'378.0','Gazi':'372.0','Marmara':'368.0'},rankBase:9800,kontenjan:60,note:'2 yıllık turizm rehberliği'},
+  {name:'Grafik Tasarım (ÖL)',type:'ÖL',scores:{'Ankara':'400.0','Gazi':'395.0','Marmara':'390.0'},rankBase:8500,kontenjan:75,note:'2 yıllık grafik tasarım'},
 ];
 
 // ═══ DEPT_NETS: YÖK Atlas 2024 gerçek son yerleşen netleri ═══
@@ -8703,8 +8716,8 @@ function uniDept(u){
 function renderTargets(){
   const allUnis=S.unis||[];
   const hedefUni=allUnis.find(u=>u.hedefDept!=null);
-  const typeColor={'SAY':'#ef4444','EA':'#f59e0b','SÖZ':'#3b82f6','DİL':'#a855f7'};
-  const typeBg={'SAY':'rgba(239,68,68,0.12)','EA':'rgba(245,158,11,0.12)','SÖZ':'rgba(59,130,246,0.12)','DİL':'rgba(168,85,247,0.12)'};
+  const typeColor={'SAY':'#ef4444','EA':'#f59e0b','SÖZ':'#3b82f6','DİL':'#a855f7','ÖL':'#16a34a'};
+  const typeBg={'SAY':'rgba(239,68,68,0.12)','EA':'rgba(245,158,11,0.12)','SÖZ':'rgba(59,130,246,0.12)','DİL':'rgba(168,85,247,0.12)','ÖL':'rgba(22,163,74,0.12)'};
 
   // ── Atlas tarzı yatay liste kartı ──
   const uniRow=(u,featured=false)=>{
@@ -8844,8 +8857,8 @@ function renderTargets(){
 function showUniDet(id){
   const u=S.unis.find(x=>x.id===id);if(!u)return;
   window._currentUniDet=id;
-  const typeColor={'SAY':'#ef4444','EA':'#f59e0b','SÖZ':'#3b82f6','DİL':'#a855f7'};
-  const typeBg={'SAY':'rgba(239,68,68,0.14)','EA':'rgba(245,158,11,0.14)','SÖZ':'rgba(59,130,246,0.14)','DİL':'rgba(168,85,247,0.14)'};
+  const typeColor={'SAY':'#ef4444','EA':'#f59e0b','SÖZ':'#3b82f6','DİL':'#a855f7','ÖL':'#16a34a'};
+  const typeBg={'SAY':'rgba(239,68,68,0.14)','EA':'rgba(245,158,11,0.14)','SÖZ':'rgba(59,130,246,0.14)','DİL':'rgba(168,85,247,0.14)','ÖL':'rgba(22,163,74,0.14)'};
   const isDefault=!!['odtu','boun','itu','hac','ankara','bilkent','gsu','marmara','koc','sabanci','istanbul','gazi','yildiz','ege'].find(x=>x===id);
   const isHedef=u.hedefDept!=null;
   const si=u.selDept>=0?u.selDept:0;
@@ -9049,7 +9062,7 @@ async function loadUniNetData(uid){
   const u=S.unis.find(x=>x.id===uid);if(!u)return;
   const si=u.selDept>=0?u.selDept:0;
   const dept=(u.depts||[])[si];if(!dept)return;
-  const typeColor={'SAY':'#e53935','EA':'#f39c12','SÖZ':'#1e88e5','DİL':'#8e24aa'};
+  const typeColor={'SAY':'#e53935','EA':'#f39c12','SÖZ':'#1e88e5','DİL':'#8e24aa','ÖL':'#16a34a'};
   const tc=typeColor[dept.type]||'#7c4dff';
   const uniName=u.fullName||u.name;
   const deptName=dept.name;
@@ -10740,7 +10753,7 @@ async function searchDept(uid){
     return;
   }
 
-  const typeColor={'SAY':'#e53935','EA':'#f39c12','SÖZ':'#1e88e5','DİL':'#8e24aa'};
+  const typeColor={'SAY':'#e53935','EA':'#f39c12','SÖZ':'#1e88e5','DİL':'#8e24aa','ÖL':'#16a34a'};
   window._deptMatches=scored.slice(0,5);
   res.innerHTML=window._deptMatches.map((d,mi)=>{
     const uniName=u.fullName||u.name;
@@ -13730,6 +13743,15 @@ function renderSettings(){
     </div>
   `);
 
+  // ── HESAP YÖNETİMİ ──
+  const isLoggedIn = window._fbAuth && window._fbAuth.currentUser;
+  html += sCard('🔐','Hesap Yönetimi',
+    (isLoggedIn ? 
+      sRow('👤 Giriş yapıldı',`Google: <b>${window._fbAuth.currentUser.email}</b>`, actionBtn('Çıkış Yap','rgba(229,57,53,0.85)','googleSignOut()')) :
+      sRow('🔓 Giriş yapılmadı','Verilerinizi buluta kaydetmek için giriş yapın', actionBtn('Google ile Giriş','linear-gradient(135deg,#4285f4,#34a853)','googleSignIn()')) 
+    )
+  );
+
   // ── TEHLİKELİ BÖLGE ──
   html += sCard('⚠️','Sıfırlama',
     sRow('XP & Seviye Sıfırla','Ders ilerlemeni koru, sadece XP\'yi sıfırla', actionBtn('Sıfırla','rgba(229,57,53,0.85)','resetXpOnly()')) +
@@ -13744,6 +13766,32 @@ function renderSettings(){
 }
 
 // ═══ AYARLAR FONKSİYONLARI ═══
+
+// Google Sign In
+async function googleSignIn(){
+  if(!window._fbAuth2){toast('Firebase henüz hazır değil!');return;}
+  try{
+    const provider=new window._fbAuth2.GoogleAuthProvider();
+    const result=await window._fbAuth2.signInWithPopup(window._fbAuth,provider);
+    toast(`Hoşgeldin ${result.user.email}! 👋`);
+    renderSettings();
+  }catch(err){
+    toast(`Giriş hatası: ${err.message}`);
+  }
+}
+
+// Google Sign Out
+async function googleSignOut(){
+  if(!window._fbAuth2){toast('Firebase henüz hazır değil!');return;}
+  try{
+    await window._fbAuth2.signOut(window._fbAuth);
+    toast('Çıkış yapıldı! 👋');
+    renderSettings();
+  }catch(err){
+    toast(`Çıkış hatası: ${err.message}`);
+  }
+}
+
 function exportData(){
   try{
     const payload = JSON.stringify(S, null, 2);
@@ -16074,7 +16122,7 @@ async function searchDept(uid){
   const res=document.getElementById('ai-result');
   const uniName=u.fullName||u.name;
 
-  const typeColor={'SAY':'#e53935','EA':'#f39c12','SÖZ':'#1e88e5','DİL':'#8e24aa'};
+  const typeColor={'SAY':'#e53935','EA':'#f39c12','SÖZ':'#1e88e5','DİL':'#8e24aa','ÖL':'#16a34a'};
 
   // Yükleniyor göster
   res.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:11px 13px;
@@ -16698,11 +16746,24 @@ const _BD = [
   {n:'Almanca Öğretmenliği',t:'DİL',i:'🇩🇪',c:'Öğretmenlik'},
   {n:'Fransızca Öğretmenliği',t:'DİL',i:'🇫🇷',c:'Öğretmenlik'},
   {n:'Arapça Öğretmenliği',t:'DİL',i:'🇸🇦',c:'Öğretmenlik'},
+  // ÖN LİSANS
+  {n:'Bilgisayar Programcılığı',t:'ÖL',i:'💻',c:'Teknoloji',d:'2 yıl'},
+  {n:'Elektrik Teknolojileri',t:'ÖL',i:'⚡',c:'Teknoloji',d:'2 yıl'},
+  {n:'Muhasebe',t:'ÖL',i:'📊',c:'İşletme',d:'2 yıl'},
+  {n:'Pazarlama',t:'ÖL',i:'📢',c:'İşletme',d:'2 yıl'},
+  {n:'Hemşirelik',t:'ÖL',i:'💉',c:'Sağlık',d:'2 yıl'},
+  {n:'Tıbbi Sekreterlik',t:'ÖL',i:'📋',c:'Sağlık',d:'2 yıl'},
+  {n:'Makine Teknolojileri',t:'ÖL',i:'⚙️',c:'Teknoloji',d:'2 yıl'},
+  {n:'İnşaat Teknolojileri',t:'ÖL',i:'🏗️',c:'Teknoloji',d:'2 yıl'},
+  {n:'Aşçılık',t:'ÖL',i:'👨‍🍳',c:'Hizmetler',d:'2 yıl'},
+  {n:'Otel Yönetimi',t:'ÖL',i:'🏨',c:'Hizmetler',d:'2 yıl'},
+  {n:'Turizm Rehberliği',t:'ÖL',i:'🗺️',c:'Hizmetler',d:'2 yıl'},
+  {n:'Grafik Tasarım',t:'ÖL',i:'🎨',c:'Tasarım',d:'2 yıl'},
 ];
 
 // ─── Renkler ─────────────────────────────────────────────────────
-const TC = {SAY:'#ef4444',EA:'#f59e0b','SÖZ':'#3b82f6','DİL':'#a855f7'};
-const TBG = {SAY:'rgba(239,68,68,.12)',EA:'rgba(245,158,11,.12)','SÖZ':'rgba(59,130,246,.12)','DİL':'rgba(168,85,247,.12)'};
+const TC = {SAY:'#ef4444',EA:'#f59e0b','SÖZ':'#3b82f6','DİL':'#a855f7','ÖL':'#16a34a'};
+const TBG = {SAY:'rgba(239,68,68,.12)',EA:'rgba(245,158,11,.12)','SÖZ':'rgba(59,130,246,.12)','DİL':'rgba(168,85,247,.12)','ÖL':'rgba(22,163,74,.12)'};
 const DEFAULT_IDS = new Set(['odtu','boun','itu','hac','ankara','bilkent','gsu','marmara','koc','sabanci','istanbul','gazi','yildiz','ege']);
 
 // ─── Helpers ──────────────────────────────────────────────────────
@@ -16926,7 +16987,7 @@ window.showUniDet = function(id) {
   const detQ         = (window._uA.detQ || '').toLowerCase().trim();
 
   // ── dept tab bar ──
-  const tabBar = ['Tümü','SAY','EA','SÖZ','DİL'].map(t=>{
+  const tabBar = ['Tümü','SAY','EA','SÖZ','DİL','ÖL'].map(t=>{
     const a = detTab===t;
     const c = TC[t]||'#fff';
     return `<button onclick="_uDT('${t}')" style="padding:6px 13px;border-radius:100px;border:1.5px solid ${a?(TC[t]||'rgba(255,255,255,.25)'):'rgba(255,255,255,.07)'};background:${a?TBG[t]||'rgba(255,255,255,.1)':'transparent'};color:${a?(TC[t]||'#fff'):'var(--t3)'};font-size:9px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;transition:all .15s;">${t}</button>`;
