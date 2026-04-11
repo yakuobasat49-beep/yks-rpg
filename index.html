@@ -14583,8 +14583,9 @@ async function fetchFeed(){
         if(!item.uid){ shouldDelete=true; }
         // Aynı UID'den birden fazla welcome → eskisini sil
         else if(seenWelcome.has(item.uid)){ shouldDelete=true; }
-        // Leaderboard'da bu UID yoksa hesap silinmiş/sıfırlanmış → sil
-        else if(Object.keys(lbMap).length>0 && !lbMap[item.uid]){ shouldDelete=true; }
+        // Leaderboard'da bu UID hiç yoksa VE XP'si 0 ise sıfırlanmış hesap → sil
+        // (lbMap boşsa internet sorunu olabilir, o zaman silme)
+        else if(Object.keys(lbMap).length > 5 && !lbMap[item.uid]){ shouldDelete=true; }
         else { seenWelcome.add(item.uid); }
       }
 
@@ -14606,17 +14607,19 @@ async function fetchFeed(){
         continue;
       }
 
-      // İsim ve avatar'ı leaderboard'dan güncelle (kendi kaydımız hariç — anlık S kullanılır)
-      if(item.uid && lbMap[item.uid] && (!_fbUser || item.uid!==_fbUser.uid)){
-        if(lbMap[item.uid].name) item.name=lbMap[item.uid].name;
-        if(lbMap[item.uid].avatar) item.avatar=lbMap[item.uid].avatar;
-        if(lbMap[item.uid].frame) item.frame=lbMap[item.uid].frame;
-      }
-      // Kendi kaydımız için de anlık frame uygula
-      if(item.uid && _fbUser && item.uid===_fbUser.uid){
-        item.name=S.myName||item.name||'YKS Savaşçısı';
-        item.avatar=S.avatarEmoji||item.avatar||'⚔️';
-        item.frame=S.avatarFrame||item.frame||'default';
+      // Tüm itemlar için isim/avatar/frame güncelle:
+      // Kendi kaydımız → anlık S'ten al
+      // Diğerleri → leaderboard'dan al
+      if(item.uid){
+        if(_fbUser && item.uid===_fbUser.uid){
+          item.name=S.myName||item.name||'YKS Savaşçısı';
+          item.avatar=S.avatarEmoji||item.avatar||'⚔️';
+          item.frame=S.avatarFrame||item.frame||'default';
+        } else if(lbMap[item.uid]){
+          if(lbMap[item.uid].name) item.name=lbMap[item.uid].name;
+          if(lbMap[item.uid].avatar) item.avatar=lbMap[item.uid].avatar;
+          if(lbMap[item.uid].frame) item.frame=lbMap[item.uid].frame;
+        }
       }
 
       cleaned.push(item);
@@ -14650,9 +14653,7 @@ function renderFeed(items){
     else if(item.type==="levelup")
       msg=`${nm} <span style="color:var(--pu);">⬆️ <b>${item.level||"?"}. seviye</b>ye ulaştı!</span>`;
     else if(item.type==="welcome"){
-      const _wName=(item.uid&&typeof _fbUser!=='undefined'&&_fbUser&&item.uid===_fbUser.uid)?(S.myName||item.name||'Birisi'):(item.name||'Birisi');
-      const _wnm=`<b>${_wName}</b>`;
-      msg=`${_wnm} <span style="color:var(--gr);">🎉 YKS RPG'ye katıldı! Hoş geldin!</span>`;
+      msg=`${nm} <span style="color:var(--gr);">🎉 YKS RPG'ye katıldı! Hoş geldin!</span>`;
     }
     else return "";
     const _isPlat = item.type==="badge" && item.badgeTier==="platinum";
