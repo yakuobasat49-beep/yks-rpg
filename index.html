@@ -42,10 +42,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .page{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 12px 76px;-webkit-overflow-scrolling:touch;}
 .page::-webkit-scrollbar{display:none;}
 .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:500px;background:var(--c1);border-top:1px solid var(--br);display:flex;z-index:100;}
-.ni{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 2px 6px;cursor:pointer;border:none;background:none;color:var(--t3);font-family:'Nunito',sans-serif;transition:color .2s;}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 2px 6px;cursor:pointer;border:none;background:none;color:var(--t3);font-family:'Nunito',sans-serif;transition:color .2s;position:relative;}
 .ni.on{color:var(--pu);}
-.ni-ico{font-size:19px;margin-bottom:1px;}
+.ni-ico{font-size:19px;margin-bottom:1px;position:relative;}
 .ni-lbl{font-size:7px;font-weight:800;}
+.ni-dot{position:absolute;top:-2px;right:-4px;width:8px;height:8px;background:#e53935;border-radius:50%;border:1.5px solid var(--c1);display:none;}
+.ni-dot.show{display:block;}
 /* HERO */
 .hero{background:linear-gradient(135deg,#0e0e28,#1a0d40,#0d2050);border-radius:15px;padding:13px;margin-bottom:10px;border:1px solid rgba(124,77,255,0.22);position:relative;overflow:hidden;}
 .hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:26px 26px;pointer-events:none;}
@@ -505,7 +507,7 @@ input::placeholder{color:var(--t3);}
 }
 @keyframes candleFlicker{0%,100%{transform:rotate(-2deg) scaleY(1);}25%{transform:rotate(3deg) scaleY(.96);}50%{transform:rotate(-1deg) scaleY(1.04);}75%{transform:rotate(2.5deg) scaleY(.97);}}
 @keyframes ambientGlow{0%,100%{opacity:.4;}50%{opacity:.75;}}
-.lib-candles{display:flex;gap:10px;position:absolute;top:8px;right:10px;align-items:flex-end;}
+.lib-candles{display:flex;gap:8px;position:absolute;bottom:10px;right:14px;align-items:flex-end;}
 @keyframes libPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,169,110,.0),0 2px 20px rgba(0,0,0,.4);}50%{box-shadow:0 0 0 3px rgba(201,169,110,.12),0 2px 20px rgba(0,0,0,.4);}}
 @keyframes onlinePing{0%{transform:scale(1);opacity:.8;}100%{transform:scale(2.8);opacity:0;}}
 @keyframes studyTick{0%,100%{opacity:1;}50%{opacity:.4;}}
@@ -3403,6 +3405,9 @@ const DEPT_NETS={
 
 const SKEYS=['yksrpg5','yksrpg4','yksrpg3'];
 const SKEY='yksrpg5';
+// UID bazlı localStorage key — her Google hesabı için ayrı veri
+function getSkey(){ const uid=localStorage.getItem('yks_activeUid'); return uid?('yksrpg5_u_'+uid):SKEY; }
+function getAllSkeyVariants(){ const uid=localStorage.getItem('yks_activeUid'); const base=[...SKEYS]; if(uid)base.unshift('yksrpg5_u_'+uid); return base; }
 
 // ── UNI_DB + UNI_NETS çapraz zenginleştirme ──
 // UNI_DB.yokAtlasByDept'te tytNet yoksa UNI_NETS'ten doldur (sayfa yüklenince çalışır)
@@ -3534,13 +3539,14 @@ function _restorePhotos(){
 
 function save(){
   _extractPhotos(); // fotoğrafları S'ten çıkar, ayrı anahtarlara yaz
+  const sk=getSkey();
   try{
-    localStorage.setItem(SKEY,JSON.stringify(S));
+    localStorage.setItem(sk,JSON.stringify(S));
   }catch(e){
     // Quota aşıldı → netCache temizle ve tekrar dene
     try{
       if(S.unis)S.unis.forEach(u=>{if(u.netCache&&Object.keys(u.netCache).length>3)u.netCache={};});
-      localStorage.setItem(SKEY,JSON.stringify(S));
+      localStorage.setItem(sk,JSON.stringify(S));
     }catch(e2){
       console.error('[SAVE] Kritik hata, veri kaydedilemedi:',e2);
       toast('⚠️ Depolama doldu! Eski verileri temizle.');
@@ -3551,7 +3557,7 @@ function save(){
 function load(){
   try{
     let raw=null;
-    for(const k of SKEYS){raw=localStorage.getItem(k);if(raw)break;}
+    for(const k of getAllSkeyVariants()){raw=localStorage.getItem(k);if(raw)break;}
     if(!raw)return;
     const p=JSON.parse(raw);
     // Merge carefully — never lose subject data
@@ -3639,7 +3645,7 @@ function load(){
     // bossesBeaten'ı her zaman bossHp'den yeniden hesapla (sadece genel bosslar id 0-11)
     S.bossesBeaten=BOSSES.filter(b=>typeof b.id==='number'&&b.id<=11&&(S.bossHp[b.id]!=null)&&S.bossHp[b.id]<=0).length;
     // Re-save under current key
-    localStorage.setItem(SKEY,JSON.stringify(S));
+    localStorage.setItem(getSkey(),JSON.stringify(S));
   }catch(e){console.warn('load error',e);}
 }
 
@@ -7841,7 +7847,9 @@ async function loadFriendRequests(){
     snap.forEach(d=>reqs.push({id:d.id,...d.data()}));
     S.friendRequests=reqs;
     save();
-    // Plan sekmesindeyse request panelini güncelle
+    // Nav badge güncelle
+    if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
+    // Plan/ranking sekmesindeyse request panelini güncelle
     const panel=document.getElementById('friend-reqs-panel');
     if(panel) panel.innerHTML=buildFriendReqsHTML();
   }catch(e){}
@@ -7876,10 +7884,14 @@ async function acceptFriendRequest(reqUid,name,xp,level,streak,code,binId){
     }
     S.friendRequests=(S.friendRequests||[]).filter(r=>r.id!==reqUid);
     save();
+    if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
     pullFriends().then(()=>{
       const panel=document.getElementById('friend-reqs-panel');
       if(panel) panel.innerHTML=buildFriendReqsHTML();
+      const rpanel=document.getElementById('ranking-req-panel');
+      if(rpanel) rpanel.innerHTML=buildFriendReqsHTML();
       if(S.curTab==='plan') renderPlan();
+      if(S.curTab==='ranking') renderRanking();
     });
     toast('🎉 Arkadaş eklendi: '+name+'!');
     chkBdgs();
@@ -7905,8 +7917,11 @@ async function rejectFriendRequest(reqUid){
     await deleteDoc(doc(window._fbDb,'friendRequests',_fbUser.uid,'requests',reqUid));
     S.friendRequests=(S.friendRequests||[]).filter(r=>r.id!==reqUid);
     save();
+    if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
     const panel=document.getElementById('friend-reqs-panel');
     if(panel) panel.innerHTML=buildFriendReqsHTML();
+    const rpanel=document.getElementById('ranking-req-panel');
+    if(rpanel) rpanel.innerHTML=buildFriendReqsHTML();
     toast('İstek reddedildi.');
   }catch(e){}
 }
@@ -14193,7 +14208,7 @@ function renderKutuphane(){
     <!-- Mumlar -->
     <div class="lib-candles">
   <!-- SVG Mumlar — 3 farklı boy, gerçekçi alev animasyonu -->
-  <svg width="70" height="60" viewBox="0 0 70 60" style="overflow:visible;" xmlns="http://www.w3.org/2000/svg">
+  <svg width="76" height="72" viewBox="-2 -12 76 72" style="overflow:visible;" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <radialGradient id="wax1" cx="40%" cy="50%" r="60%"><stop offset="0%" stop-color="#fff8ee"/><stop offset="100%" stop-color="#c8a87a"/></radialGradient>
       <radialGradient id="wax2" cx="40%" cy="50%" r="60%"><stop offset="0%" stop-color="#fff5e6"/><stop offset="100%" stop-color="#c09060"/></radialGradient>
@@ -14385,9 +14400,17 @@ function nav(tab){
   document.getElementById('nav-'+tab).classList.add('on');
   document.getElementById('page').scrollTop=0;
   ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings})[tab]?.();
+  if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
 }
 function buildNav(){
-  document.getElementById('bnav').innerHTML=TABS.map(t=>`<button class="ni" id="nav-${t.id}" onclick="nav('${t.id}')"><span class="ni-ico">${t.ico}</span><span class="ni-lbl">${t.lbl}</span></button>`).join('');
+  document.getElementById('bnav').innerHTML=TABS.map(t=>`<button class="ni" id="nav-${t.id}" onclick="nav('${t.id}')"><span class="ni-ico">${t.ico}<span class="ni-dot" id="dot-${t.id}"></span></span><span class="ni-lbl">${t.lbl}</span></button>`).join('');
+}
+function updateFriendReqBadge(){
+  const count=(S.friendRequests||[]).length;
+  const dot=document.getElementById('dot-ranking');
+  if(dot){if(count>0)dot.classList.add('show');else dot.classList.remove('show');}
+  const dotP=document.getElementById('dot-plan');
+  if(dotP){if(count>0)dotP.classList.add('show');else dotP.classList.remove('show');}
 }
 
 // ═══════════════════ KÜRESEL SIRALAMA ═══════════════════
@@ -14441,7 +14464,18 @@ async function fetchFeed(){
 function renderFeed(items){
   if(!items||!items.length) return `<div style="text-align:center;padding:20px;color:var(--t3);font-size:11px;">Henüz etkinlik yok 📭</div>`;
   const timeAgo=ts=>{const d=Math.floor((Date.now()-ts)/1000);if(d<60)return d+"sn önce";if(d<3600)return Math.floor(d/60)+"dk önce";if(d<86400)return Math.floor(d/3600)+"sa önce";return Math.floor(d/86400)+"g önce";};
-  return items.map(item=>{let msg="";if(item.type==="badge")msg=`<b>${item.name||"Birisi"}</b> <span style="color:var(--t2);">${item.badgeIcon||"🏅"} <b>${item.badgeName||"rozet"}</b> rozetini kazandı!</span>`;else if(item.type==="levelup")msg=`<b>${item.name||"Birisi"}</b> <span style="color:var(--pu);">⬆️ <b>${item.level||"?"}. seviye</b>ye ulaştı!</span>`;else return "";return `<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--c2);border-radius:10px;margin-bottom:5px;border:1px solid var(--br);"><div style="font-size:20px;flex-shrink:0;">${item.avatar||"⚔️"}</div><div style="flex:1;font-size:11px;line-height:1.4;">${msg}</div><div style="font-size:9px;color:var(--t3);flex-shrink:0;white-space:nowrap;">${timeAgo(item.ts)}</div></div>`;}).join("");
+  return items.map(item=>{
+    let msg="";
+    const nm=`<b>${item.name||"Birisi"}</b>`;
+    if(item.type==="badge")
+      msg=`${nm} <span style="color:var(--gold);">${item.badgeIcon||"🏅"} <b>${item.badgeName||"rozet"}</b> rozetini kazandı!</span>`;
+    else if(item.type==="levelup")
+      msg=`${nm} <span style="color:var(--pu);">⬆️ <b>${item.level||"?"}. seviye</b>ye ulaştı!</span>`;
+    else if(item.type==="welcome")
+      msg=`${nm} <span style="color:var(--gr);">🎉 YKS RPG'ye katıldı! Hoş geldin!</span>`;
+    else return "";
+    return `<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--c2);border-radius:10px;margin-bottom:5px;border:1px solid var(--br);"><div style="font-size:20px;flex-shrink:0;">${item.avatar||"⚔️"}</div><div style="flex:1;font-size:11px;line-height:1.4;">${msg}</div><div style="font-size:9px;color:var(--t3);flex-shrink:0;white-space:nowrap;">${timeAgo(item.ts)}</div></div>`;
+  }).filter(Boolean).join("");
 }
 
 let _rankingRefreshTimer=null;
@@ -14451,7 +14485,7 @@ async function fetchGlobalLb(){
   if(!window._fbDb)return[];
   try{
     // Firestore'dan tüm leaderboard verilerini çek
-    const {collection,getDocs,query,orderBy,limit}=window._fbFirestoreExtra||{};
+    const {collection,getDocs,query,orderBy,limit,deleteDoc,doc}=window._fbFirestoreExtra||{};
     if(!collection){
       // Temel SDK ile manual fetch
       const res=await fetch(
@@ -14470,7 +14504,30 @@ async function fetchGlobalLb(){
     }
     const q=query(collection(window._fbDb,'leaderboard'),orderBy('xp','desc'),limit(100));
     const snap=await getDocs(q);
-    return snap.docs.map(d=>({...d.data(),uid:d.id}));
+    const entries=snap.docs.map(d=>({...d.data(),uid:d.id}));
+
+    // Aynı isimde birden fazla kayıt varsa — düşük XP'liyi Firebase'den sil
+    // (Hesap değişiminden kaynaklanan eski çift kayıtları temizler)
+    if(_fbUser && deleteDoc && doc){
+      const nameMap={};
+      entries.forEach(e=>{
+        const key=(e.name||'').trim().toLowerCase();
+        if(!key)return;
+        if(!nameMap[key]){nameMap[key]=e;}
+        else{
+          // İkisi de var — düşük XP'liyi sil
+          const winner=nameMap[key].xp>=e.xp?nameMap[key]:e;
+          const loser=nameMap[key].xp>=e.xp?e:nameMap[key];
+          nameMap[key]=winner;
+          // Sadece kendi UID'mize ait loser kaydını siliyoruz (başkasının kaydına dokunmuyoruz)
+          if(loser.uid===_fbUser.uid){
+            deleteDoc(doc(window._fbDb,'leaderboard',loser.uid)).catch(()=>{});
+          }
+        }
+      });
+    }
+
+    return entries;
   }catch(e){console.warn('[GlobalLb fetch]',e);return[];}
 }
 
@@ -14512,6 +14569,14 @@ async function renderRanking(){
   const myEntry={name:S.myName||'YKS Savaşçısı',xp:S.xp||0,level:getLvl(S.xp),streak:S.streak||0,avatar:S.avatarEmoji||'⚔️',uid:me,isMe:true};
   let all=[...entries];
   if(!all.some(e=>e.uid===me&&me))all.push(myEntry);
+  // Duplicate temizleme: uid bazında (aynı kişinin iki farklı kaydı)
+  const seenUids=new Set();
+  all=all.filter(e=>{
+    const uid=e.uid||('_nouid_'+Math.random());
+    if(e.uid&&seenUids.has(e.uid))return false;
+    if(e.uid)seenUids.add(e.uid);
+    return true;
+  });
   all.sort((a,b)=>b.xp-a.xp);
 
   function medal(r){return r===1?'🥇':r===2?'🥈':r===3?'🥉':null;}
@@ -14582,14 +14647,41 @@ async function renderRanking(){
       💡 <b>Sıralamaya katılmak için</b> Ayarlar sekmesinden Google ile giriş yapmalısın.
     </div>`:''}
     <div style="margin-top:12px;font-size:9px;color:var(--t3);text-align:center;">${new Date().toLocaleTimeString('tr-TR')} itibarıyla güncellendi · ${all.length} oyuncu · 60sn'de bir yenilenir</div>
-  <div style="margin-top:18px;"><div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">🔔 Son Etkinlikler</div><div id="feed-body"><div style="text-align:center;padding:14px;color:var(--t3);font-size:11px;">⏳ Yükleniyor...</div></div></div>
+  ${_fbUser?`
+  <div style="margin-top:18px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1px;text-transform:uppercase;">📬 Arkadaş İstekleri</div>
+      <button onclick="loadFriendRequests().then(()=>{const rp=document.getElementById('ranking-req-panel');if(rp)rp.innerHTML=buildFriendReqsHTML();});this.textContent='⏳...';setTimeout(()=>this.textContent='🔄 Yenile',2000)" style="background:rgba(124,77,255,0.15);border:1px solid rgba(124,77,255,0.3);border-radius:7px;color:var(--pu);padding:5px 9px;font-size:9px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">🔄 Yenile</button>
+    </div>
+    <div id="ranking-req-panel" style="background:var(--c1);border:1px solid var(--br);border-radius:11px;padding:12px;">
+      <div style="color:var(--t3);font-size:10px;text-align:center;padding:8px;">⏳ Yükleniyor...</div>
+    </div>
+  </div>`:''}
+  <div style="margin-top:18px;">
+    <div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">🔔 Son Etkinlikler</div>
+    <div id="feed-body">
+      ${_fbUser
+        ? `<div style="text-align:center;padding:14px;color:var(--t3);font-size:11px;">⏳ Yükleniyor...</div>`
+        : `<div style="text-align:center;padding:14px;color:var(--t3);font-size:11px;">🔒 Etkinlikleri görmek için Google ile giriş yapmalısın</div>`
+      }
+    </div>
+  </div>
   `;
 
-  // Feed yükle
-  fetchFeed().then(items=>{
-    const fb=document.getElementById("feed-body");
-    if(fb)fb.innerHTML=renderFeed(items);
-  });
+  // Feed yükle (sadece giriş yapılmışsa)
+  if(_fbUser){
+    fetchFeed().then(items=>{
+      const fb=document.getElementById("feed-body");
+      if(fb)fb.innerHTML=renderFeed(items);
+    });
+  }
+  // Arkadaş isteklerini yükle ve badge güncelle
+  if(_fbUser&&window._fbDb){
+    loadFriendRequests().then(()=>{
+      const rp=document.getElementById('ranking-req-panel');
+      if(rp)rp.innerHTML=buildFriendReqsHTML();
+    });
+  }
   startRankingAutoRefresh();
 }
 
@@ -14879,6 +14971,7 @@ chkBdgsSilent(); // mevcut verilerle rozetleri sessizce aç
 streakUpd(); // uygulama açılışında seriyi güncelle / sıfırla
 save();
 buildNav();
+updateFriendReqBadge();
 nav(S.curTab||'home');
 startFBSync();
 checkRivalAlert();
@@ -16083,6 +16176,13 @@ window.addEventListener('resize',()=>{
 const _origObFinish=obFinish;
 obFinish=function(){
   _origObFinish();
+  // Yeni kullanıcı welcome event'i — sadece Google girişi varsa ve bir kez gönder
+  if(!S.welcomeSent){
+    S.welcomeSent=true; save();
+    setTimeout(()=>{
+      if(typeof pushFeedEvent==='function' && _fbUser) pushFeedEvent('welcome',{});
+    },3500);
+  }
   setTimeout(()=>{
     if(!S.guideSeen){
       S.guideSeen=true;save();
@@ -18993,6 +19093,8 @@ window.fbSkipLogin = function(){
   const o = document.getElementById('fb-login-overlay');
   if(o) o.style.display = 'none';
   localStorage.setItem('yks_guestMode', '1');
+  // Misafir olarak oynuyor — ileride Google girişi yapınca verileri aktarılsın
+  localStorage.setItem('yks_wasGuest', '1');
 };
 
 window.fbShowUserMenu = function(){
@@ -19012,7 +19114,7 @@ setInterval(()=>{ cloudSave(); pushGlobalLb&&pushGlobalLb(); }, 30000); // 30sn'
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, addDoc, collection, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
@@ -19022,7 +19124,7 @@ window._fbAuth = auth;
 window._fbDb   = db;
 window._fbAuth2    = { signInWithPopup, signOut, GoogleAuthProvider };
 window._fbFirestore = { doc, setDoc, getDoc };
-window._fbFirestoreExtra = { collection, getDocs, query, orderBy, limit, deleteDoc };
+window._fbFirestoreExtra = { collection, getDocs, query, orderBy, limit, deleteDoc, doc, addDoc };
 
 const overlay = document.getElementById('fb-login-overlay');
 
@@ -19035,12 +19137,72 @@ onAuthStateChanged(auth, async user => {
     const avatar = document.getElementById('fb-user-avatar');
     if(badge)  badge.style.display = 'block';
     if(avatar && user.photoURL) avatar.src = user.photoURL;
+
+    const savedUid = localStorage.getItem('yks_activeUid');
+    const isAccountSwitch = !!(savedUid && savedUid !== user.uid);
+    // Gerçek misafir→Google geçişi: daha önce hiç Google girişi yapılmamış VE misafir flag'i var
+    const isGuestToGoogle = !savedUid && localStorage.getItem('yks_wasGuest') === '1';
+
+    if(isAccountSwitch){
+      // ── HESAP DEĞİŞİMİ ──
+      // 1. Mevcut hesabın verisini kendi UID key'ine kaydet (getSkey() hâlâ eski UID'yi döner)
+      save();
+      // 2. UID'yi yeni hesaba güncelle
+      localStorage.setItem('yks_activeUid', user.uid);
+      // 3. Yeni hesabın local verisini yükle (daha önce bu cihazda giriş yaptıysa vardır)
+      S = mkState();
+      load();
+      // 4. Sosyal veriler hesaba özel — temizle
+      S.friendScores = [];
+      S.friendRequests = [];
+      save();
+      if(typeof renderAll==='function') renderAll();
+      if(typeof updateFriendReqBadge === 'function') updateFriendReqBadge();
+    } else if(!savedUid){
+      // ── İLK GİRİŞ (misafir ya da sıfırdan) ──
+      localStorage.setItem('yks_activeUid', user.uid);
+    }
+    // Misafir flag'ini temizle — artık Google hesabındayız
+    localStorage.removeItem('yks_wasGuest');
+
+    // Firebase'den cloud veri yükle
     const loaded = await cloudLoad();
-    if(loaded){ if(typeof renderAll==='function') renderAll(); if(typeof toast==='function') toast('☁️ ' + (user.displayName||'') + ', hoş geldin!'); }
-    else { if(typeof toast==='function') toast('✅ ' + (user.displayName||'Hoş geldin') + '!'); }
+
+    if(loaded){
+      // Cloud'da bu hesabın verisi vardı → yüklendi
+      if(typeof renderAll==='function') renderAll();
+      if(typeof toast==='function') toast('☁️ ' + (user.displayName||'') + ', tekrar hoş geldin!');
+    } else {
+      // Cloud'da bu hesaba ait veri yok
+      if(isGuestToGoogle && (S.xp||0) > 0){
+        // Misafir olarak kazanılan veriler var → bu Google hesabına aktar
+        S.friendScores = [];
+        S.friendRequests = [];
+        save();
+        cloudSave(); // cloud'a yaz
+        if(typeof renderAll==='function') renderAll();
+        if(typeof toast==='function') toast('✅ Misafir verilen Google hesabına aktarıldı! ☁️');
+        // Welcome feed event'i gönder (misafirden ilk kez giriş yapınca)
+        if(!S.welcomeSent){
+          S.welcomeSent=true; save();
+          setTimeout(()=>{ if(typeof pushFeedEvent==='function') pushFeedEvent('welcome',{}); },2000);
+        }
+      } else if(isAccountSwitch){
+        // Başka bir hesaptan geçiş — cloud'da bu hesapta veri yoksa local veri kullanılır
+        cloudSave(); // local'deki veriyi cloud'a yaz
+        if(typeof toast==='function') toast('✅ ' + (user.displayName||'Hoş geldin') + '!');
+      } else {
+        if(typeof toast==='function') toast('✅ ' + (user.displayName||'Hoş geldin') + '!');
+      }
+    }
+    if(typeof updateFriendReqBadge === 'function') updateFriendReqBadge();
   } else {
+    // ── ÇIKIŞ YAPILDI ──
     const badge = document.getElementById('fb-user-badge');
     if(badge) badge.style.display = 'none';
+    // Mevcut veriyi UID key'ine kaydet (UID silinmeden önce)
+    save();
+    localStorage.removeItem('yks_activeUid');
     if(overlay && !localStorage.getItem('yks_guestMode')) overlay.style.display = 'flex';
   }
 });
