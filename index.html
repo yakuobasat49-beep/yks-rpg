@@ -14507,24 +14507,37 @@ async function fetchGlobalLb(){
     const entries=snap.docs.map(d=>({...d.data(),uid:d.id}));
 
     // Aynı isimde birden fazla kayıt varsa — düşük XP'liyi Firebase'den sil
-    // (Hesap değişiminden kaynaklanan eski çift kayıtları temizler)
     if(_fbUser && deleteDoc && doc){
-      const nameMap={};
-      entries.forEach(e=>{
-        const key=(e.name||'').trim().toLowerCase();
-        if(!key)return;
-        if(!nameMap[key]){nameMap[key]=e;}
-        else{
-          // İkisi de var — düşük XP'liyi sil
-          const winner=nameMap[key].xp>=e.xp?nameMap[key]:e;
-          const loser=nameMap[key].xp>=e.xp?e:nameMap[key];
-          nameMap[key]=winner;
-          // Sadece kendi UID'mize ait loser kaydını siliyoruz (başkasının kaydına dokunmuyoruz)
-          if(loser.uid===_fbUser.uid){
-            deleteDoc(doc(window._fbDb,'leaderboard',loser.uid)).catch(()=>{});
+      const myName = (S.myName||'').trim().toLowerCase();
+      const nameMap = {};
+      const toDelete = [];
+
+      entries.forEach(e => {
+        const key = (e.name||'').trim().toLowerCase();
+        if(!key) return;
+        if(!nameMap[key]){
+          nameMap[key] = e;
+        } else {
+          const prev = nameMap[key];
+          const winner = prev.xp >= e.xp ? prev : e;
+          const loser  = prev.xp >= e.xp ? e : prev;
+          nameMap[key] = winner;
+          // Sil: kendi adımızdaki çift kayıt (UID fark etmez — bizden kalmıştır)
+          // VEYA kendi UID'miz loserse
+          if(loser.uid && (key === myName || loser.uid === _fbUser.uid)){
+            toDelete.push(loser.uid);
           }
         }
       });
+
+      // Toplu sil
+      toDelete.forEach(uid => {
+        deleteDoc(doc(window._fbDb,'leaderboard',uid)).catch(()=>{});
+      });
+
+      // Silinen kayıtları entries'den çıkar (UI'da çift görünmesin)
+      const deletedSet = new Set(toDelete);
+      return entries.filter(e => !deletedSet.has(e.uid));
     }
 
     return entries;
@@ -19128,80 +19141,275 @@ window._fbFirestoreExtra = { collection, getDocs, query, orderBy, limit, deleteD
 
 const overlay = document.getElementById('fb-login-overlay');
 
+// ══════════════════════════════════════════════════════════════
+// 🔐 HESAP GEÇİŞ SİSTEMİ — her Google hesabı tamamen izole
+// ══════════════════════════════════════════════════════════════
+
+// Bekleyen auth geçişini tutan değişken
+let _pendingAuthUser = null;
+
+// Bilgilendirme modalını göster
+function _showAccountModal(html, btns){
+  // Var olan modalı kaldır
+  const old = document.getElementById('_acct-modal');
+  if(old) old.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = '_acct-modal';
+  wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  wrap.innerHTML = `<div style="background:#1a1a35;border:1px solid rgba(124,77,255,0.4);border-radius:18px;padding:24px 20px;max-width:340px;width:100%;font-family:Nunito,sans-serif;">
+    ${html}
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;">
+      ${btns.map((b,i)=>`<button onclick="_acctBtn(${i})" style="padding:11px;border-radius:10px;border:none;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;background:${b.bg||'rgba(124,77,255,0.2)'};color:${b.color||'#fff'};border:1px solid ${b.border||'rgba(124,77,255,0.4)'};">${b.label}</button>`).join('')}
+    </div>
+  </div>`;
+  document.body.appendChild(wrap);
+  window._acctBtns = btns;
+}
+
+window._acctBtn = function(i){
+  const btn = window._acctBtns && window._acctBtns[i];
+  const old = document.getElementById('_acct-modal');
+  if(old) old.remove();
+  if(btn && btn.action) btn.action();
+};
+
+// Leaderboard kaydını sil (yardımcı)
+async function _deleteLbEntry(uid){
+  try{
+    const{doc:_d,deleteDoc:_del}=window._fbFirestoreExtra||{};
+    if(_d&&_del&&window._fbDb&&uid) await _del(_d(window._fbDb,'leaderboard',uid));
+  }catch(e){}
+}
+
+// Mevcut kullanıcının verilerini kendi UID key'ine güvenle kaydet ve LB'den çık
+async function _saveCurrentAndClearLb(){
+  save(); // localStorage'a yazar
+  const curUid = localStorage.getItem('yks_activeUid');
+  if(curUid) await _deleteLbEntry(curUid);
+}
+
+// Yeni hesabı tamamen izole yükle
+async function _loadIsolatedAccount(user){
+  // UID güncelle
+  localStorage.setItem('yks_activeUid', user.uid);
+  // Bu hesabın local verisini yükle (bu cihazda daha önce giriş yaptıysa vardır)
+  S = mkState();
+  load();
+  // Sosyal veriler hesaba özel — her zaman temizle
+  S.friendScores = [];
+  S.friendRequests = [];
+  save();
+  if(typeof renderAll==='function') renderAll();
+  if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
+
+  // Firebase'den cloud yükle
+  const loaded = await cloudLoad();
+  if(loaded){
+    if(typeof renderAll==='function') renderAll();
+    toast('☁️ ' + (user.displayName||'') + ', tekrar hoş geldin!');
+  } else {
+    // Cloud'da veri yok — local veriyi koru, sadece UI güncelle
+    // (internet sorunu olabilir, local veriyi SİLME)
+    if(typeof renderAll==='function') renderAll();
+    cloudSave(); // local'deki veriyi cloud'a yaz
+    toast('✅ ' + (user.displayName||'Hoş geldin') + '!');
+    if(!S.welcomeSent){
+      S.welcomeSent=true; save();
+      setTimeout(()=>{ if(typeof pushFeedEvent==='function'&&_fbUser) pushFeedEvent('welcome',{}); },2000);
+    }
+  }
+  if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
+}
+
 onAuthStateChanged(auth, async user => {
   _fbUser = user;
+
   if(user){
     if(overlay) overlay.style.display = 'none';
     localStorage.removeItem('yks_guestMode');
+    localStorage.removeItem('yks_wasGuest');
     const badge  = document.getElementById('fb-user-badge');
     const avatar = document.getElementById('fb-user-avatar');
     if(badge)  badge.style.display = 'block';
     if(avatar && user.photoURL) avatar.src = user.photoURL;
 
     const savedUid = localStorage.getItem('yks_activeUid');
-    const isAccountSwitch = !!(savedUid && savedUid !== user.uid);
-    // Gerçek misafir→Google geçişi: daha önce hiç Google girişi yapılmamış VE misafir flag'i var
-    const isGuestToGoogle = !savedUid && localStorage.getItem('yks_wasGuest') === '1';
+    const isGuest  = !savedUid; // daha önce hiç UID kaydedilmemiş = misafir/yeni
+    const isSameAccount = savedUid === user.uid;
+    const isSwitch = !!(savedUid && !isSameAccount);
 
-    if(isAccountSwitch){
-      // ── HESAP DEĞİŞİMİ ──
-      // 1. Mevcut hesabın verisini kendi UID key'ine kaydet (getSkey() hâlâ eski UID'yi döner)
-      save();
-      // 2. UID'yi yeni hesaba güncelle
-      localStorage.setItem('yks_activeUid', user.uid);
-      // 3. Yeni hesabın local verisini yükle (daha önce bu cihazda giriş yaptıysa vardır)
-      S = mkState();
-      load();
-      // 4. Sosyal veriler hesaba özel — temizle
-      S.friendScores = [];
-      S.friendRequests = [];
-      save();
-      if(typeof renderAll==='function') renderAll();
-      if(typeof updateFriendReqBadge === 'function') updateFriendReqBadge();
-    } else if(!savedUid){
-      // ── İLK GİRİŞ (misafir ya da sıfırdan) ──
-      localStorage.setItem('yks_activeUid', user.uid);
+    // ── AYNI HESAP — normal giriş / sayfa yenileme ──
+    if(isSameAccount){
+      const loaded = await cloudLoad();
+      if(loaded){ if(typeof renderAll==='function') renderAll(); toast('☁️ Tekrar hoş geldin!'); }
+      else { toast('✅ Hoş geldin!'); }
+      if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
+      return;
     }
-    // Misafir flag'ini temizle — artık Google hesabındayız
-    localStorage.removeItem('yks_wasGuest');
 
-    // Firebase'den cloud veri yükle
-    const loaded = await cloudLoad();
+    // ── MİSAFİR → GOOGLE ──
+    if(isGuest){
+      const guestXp = S.xp || 0;
 
-    if(loaded){
-      // Cloud'da bu hesabın verisi vardı → yüklendi
-      if(typeof renderAll==='function') renderAll();
-      if(typeof toast==='function') toast('☁️ ' + (user.displayName||'') + ', tekrar hoş geldin!');
-    } else {
-      // Cloud'da bu hesaba ait veri yok
-      if(isGuestToGoogle && (S.xp||0) > 0){
-        // Misafir olarak kazanılan veriler var → bu Google hesabına aktar
-        S.friendScores = [];
-        S.friendRequests = [];
-        save();
-        cloudSave(); // cloud'a yaz
-        if(typeof renderAll==='function') renderAll();
-        if(typeof toast==='function') toast('✅ Misafir verilen Google hesabına aktarıldı! ☁️');
-        // Welcome feed event'i gönder (misafirden ilk kez giriş yapınca)
-        if(!S.welcomeSent){
-          S.welcomeSent=true; save();
-          setTimeout(()=>{ if(typeof pushFeedEvent==='function') pushFeedEvent('welcome',{}); },2000);
+      // Firebase'de bu hesapta veri var mı kontrol et
+      let cloudHasData = false;
+      try{
+        const{doc:_d,getDoc:_g}=window._fbFirestore||{};
+        if(_d&&_g){
+          const snap = await _g(_d(window._fbDb,'users',user.uid,'data','state'));
+          cloudHasData = snap.exists() && !!(snap.data()?.state?.xp);
         }
-      } else if(isAccountSwitch){
-        // Başka bir hesaptan geçiş — cloud'da bu hesapta veri yoksa local veri kullanılır
-        cloudSave(); // local'deki veriyi cloud'a yaz
-        if(typeof toast==='function') toast('✅ ' + (user.displayName||'Hoş geldin') + '!');
+      }catch(e){}
+
+      if(cloudHasData){
+        // Senaryо: Misafir → içinde veri olan hesap
+        _pendingAuthUser = user;
+        _fbUser = null; // işlemi beklet
+        await _deleteLbEntry(null); // LB yok henüz
+        _showAccountModal(
+          `<div style="font-size:28px;text-align:center;margin-bottom:10px;">☁️</div>
+           <div style="font-size:14px;font-weight:900;text-align:center;margin-bottom:8px;">Bu hesapta veri var!</div>
+           <div style="font-size:11px;color:rgba(255,255,255,0.6);text-align:center;line-height:1.6;">
+             <b>${user.displayName||user.email}</b> hesabında kayıtlı veriler bulunuyor.<br><br>
+             ${guestXp>0?`Mevcut misafir verileriniz (${guestXp.toLocaleString('tr')} XP) <b>kaydedilmeyecek</b>.`:''}
+             Hesabınızdaki veriler yüklenecek.
+           </div>`,
+          [
+            { label:'☁️ Hesabımı Yükle (Misafir veri kaybolur)', bg:'rgba(124,77,255,0.3)', border:'rgba(124,77,255,0.5)',
+              action: async ()=>{
+                _fbUser = _pendingAuthUser; _pendingAuthUser = null;
+                localStorage.setItem('yks_activeUid', _fbUser.uid);
+                S = mkState(); load();
+                S.friendScores=[]; S.friendRequests=[]; save();
+                if(typeof renderAll==='function') renderAll();
+                const loaded2 = await cloudLoad();
+                if(loaded2){ if(typeof renderAll==='function') renderAll(); }
+                toast('☁️ ' + (_fbUser.displayName||'') + ', hoş geldin!');
+                if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
+              }
+            },
+            { label:'✖ İptal', bg:'transparent', border:'rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.5)',
+              action: async ()=>{
+                _fbUser = null; _pendingAuthUser = null;
+                await window._fbAuth2.signOut(window._fbAuth);
+                if(overlay) overlay.style.display = 'flex';
+              }
+            }
+          ]
+        );
       } else {
-        if(typeof toast==='function') toast('✅ ' + (user.displayName||'Hoş geldin') + '!');
+        // Senaryo: Misafir → boş/yeni hesap
+        if(guestXp > 0){
+          _pendingAuthUser = user;
+          _fbUser = null;
+          _showAccountModal(
+            `<div style="font-size:28px;text-align:center;margin-bottom:10px;">💾</div>
+             <div style="font-size:14px;font-weight:900;text-align:center;margin-bottom:8px;">Verilerinizi kaydedin!</div>
+             <div style="font-size:11px;color:rgba(255,255,255,0.6);text-align:center;line-height:1.6;">
+               <b>${user.displayName||user.email}</b> hesabı sıfırdan başlayacak.<br><br>
+               Misafir verilerinizi (${guestXp.toLocaleString('tr')} XP) korumak için önce
+               <b>Ayarlar → Veri Dışa Aktar</b> ile yedekleyebilirsiniz.
+             </div>`,
+            [
+              { label:'🚀 Yeni Hesapla Devam Et', bg:'rgba(124,77,255,0.3)', border:'rgba(124,77,255,0.5)',
+                action: async ()=>{
+                  _fbUser = _pendingAuthUser; _pendingAuthUser = null;
+                  localStorage.setItem('yks_activeUid', _fbUser.uid);
+                  S = mkState();
+                  S.friendScores=[]; S.friendRequests=[]; save();
+                  cloudSave();
+                  if(typeof renderAll==='function') renderAll();
+                  toast('✅ ' + (_fbUser.displayName||'Hoş geldin') + '!');
+                  if(!S.welcomeSent){ S.welcomeSent=true; save(); setTimeout(()=>{ if(typeof pushFeedEvent==='function') pushFeedEvent('welcome',{}); },2000); }
+                  if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
+                }
+              },
+              { label:'✖ İptal (Misafir olarak kal)', bg:'transparent', border:'rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.5)',
+                action: async ()=>{
+                  _fbUser = null; _pendingAuthUser = null;
+                  await window._fbAuth2.signOut(window._fbAuth);
+                  if(overlay) overlay.style.display = 'none';
+                  localStorage.setItem('yks_guestMode','1');
+                }
+              }
+            ]
+          );
+        } else {
+          // Misafir veri yok → direkt bağlan
+          _fbUser = user;
+          await _loadIsolatedAccount(user);
+        }
       }
+      return;
     }
-    if(typeof updateFriendReqBadge === 'function') updateFriendReqBadge();
+
+    // ── HESAP GEÇİŞİ (A → B) ──
+    if(isSwitch){
+      const switchingFromName = S.myName || 'Önceki hesap';
+      const switchingFromXp   = S.xp || 0;
+
+      // B hesabında cloud veri var mı?
+      let bHasCloud = false;
+      try{
+        const{doc:_d,getDoc:_g}=window._fbFirestore||{};
+        if(_d&&_g){
+          const snap = await _g(_d(window._fbDb,'users',user.uid,'data','state'));
+          bHasCloud = snap.exists() && !!(snap.data()?.state?.xp);
+        }
+      }catch(e){}
+
+      _pendingAuthUser = user;
+      _fbUser = null;
+
+      const aInfo = `<span style="color:rgba(255,255,255,0.5);font-size:10px;">(${switchingFromXp.toLocaleString('tr')} XP)</span>`;
+      const bLabel = user.displayName || user.email || 'Yeni hesap';
+
+      _showAccountModal(
+        `<div style="font-size:28px;text-align:center;margin-bottom:10px;">🔄</div>
+         <div style="font-size:14px;font-weight:900;text-align:center;margin-bottom:12px;">Hesap Geçişi</div>
+         <div style="font-size:11px;color:rgba(255,255,255,0.6);line-height:1.7;text-align:center;">
+           <b>${switchingFromName}</b> ${aInfo} hesabındaki verileriniz<br>
+           <span style="color:rgba(245,166,35,0.9);">güvenle kaydedilecek ✅</span><br><br>
+           <b>${bLabel}</b> hesabına geçilecek.<br>
+           ${bHasCloud
+             ? `Bu hesapta <span style="color:#7c4dff;font-weight:900;">kayıtlı veriler</span> bulunuyor, yüklenecek.`
+             : `Bu hesap <span style="color:rgba(255,255,255,0.4);">bu cihazda yeni</span> görünüyor.`}
+         </div>`,
+        [
+          { label: `✅ Geçişi Onayla → ${bLabel}`, bg:'rgba(67,160,71,0.25)', border:'rgba(67,160,71,0.5)',
+            action: async ()=>{
+              const switchUser = _pendingAuthUser; _pendingAuthUser = null;
+              _fbUser = switchUser;
+              // A'nın verisini kaydet (LB kaydı kalır — A farklı kullanıcı)
+              save();
+              // B'yi izole yükle
+              await _loadIsolatedAccount(switchUser);
+            }
+          },
+          { label:'✖ İptal', bg:'transparent', border:'rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.5)',
+            action: async ()=>{
+              _fbUser = null; _pendingAuthUser = null;
+              await window._fbAuth2.signOut(window._fbAuth);
+              // A hesabına geri dön
+              localStorage.setItem('yks_activeUid', savedUid);
+              _fbUser = { uid: savedUid }; // geçici — sayfa yenilenince düzelir
+              if(typeof renderAll==='function') renderAll();
+              toast('Hesap geçişi iptal edildi.');
+            }
+          }
+        ]
+      );
+      return;
+    }
+
   } else {
     // ── ÇIKIŞ YAPILDI ──
     const badge = document.getElementById('fb-user-badge');
     if(badge) badge.style.display = 'none';
-    // Mevcut veriyi UID key'ine kaydet (UID silinmeden önce)
+    // Mevcut veriyi kaydet (UID silinmeden önce)
     save();
+    // NOT: Leaderboard kaydı silinmez — kullanıcı sıralamada görünmeye devam eder
     localStorage.removeItem('yks_activeUid');
     if(overlay && !localStorage.getItem('yks_guestMode')) overlay.style.display = 'flex';
   }
