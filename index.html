@@ -7795,9 +7795,25 @@ function copyCode(){
     navigator.clipboard.writeText(shareCode).then(()=>toast('Kod kopyalandı! 📋')).catch(()=>_fallbackCopy(shareCode));
   } else { _fallbackCopy(shareCode); }
 }
-function showNameEdit(){
+async function showNameEdit(){
   const n=prompt('İsmini gir:',S.myName||'YKS Savaşçısı');
-  if(n&&n.trim()){S.myName=n.trim();save();pushPresence();renderPlan();toast('İsim güncellendi! ✅');}
+  if(!n||!n.trim())return;
+  const v=n.trim();
+  if(v===S.myName)return;
+  if(_fbUser&&window._fbDb&&window._fbFirestoreExtra){
+    const{collection,getDocs,query:_q,orderBy:_o,limit:_l}=window._fbFirestoreExtra;
+    try{
+      const snap=await getDocs(_q(collection(window._fbDb,'leaderboard'),_o('xp','desc'),_l(300)));
+      const taken=snap.docs.some(d=>{
+        if(d.id===_fbUser.uid)return false;
+        return (d.data().name||'').trim().toLowerCase()===v.toLowerCase();
+      });
+      if(taken){toast('❌ Bu kullanıcı adı alınmış, başka bir isim dene!');return;}
+    }catch(e){}
+  }
+  S.myName=v;save();pushPresence();renderPlan();
+  if(typeof pushGlobalLb==='function')pushGlobalLb();
+  toast('İsim güncellendi! ✅');
 }
 function addFriend(){
   const raw=(document.getElementById('fr-code')?.value||'').trim();
@@ -8517,7 +8533,19 @@ function resetSection(what){
     // Keep friend code and unis
     const fc=S.friendCode;const unis=S.unis;
     S=mkState();S.friendCode=fc;S.unis=unis;
+    // localStorage temizle (UID'li key dahil)
+    getAllSkeyVariants().forEach(k=>localStorage.removeItem(k));
     SKEYS.forEach(k=>localStorage.removeItem(k));
+    // Firebase cloud verisini de sil — sonraki girişte "Bu hesapta veri var!" çıkmasın
+    (async()=>{
+      try{
+        const uid=_fbUser&&_fbUser.uid;
+        if(uid&&window._fbDb&&window._fbFirestoreExtra){
+          const{doc:_d,deleteDoc:_del}=window._fbFirestoreExtra;
+          if(_d&&_del) await _del(_d(window._fbDb,'users',uid,'data','state'));
+        }
+      }catch(e){ console.warn('[Reset] Cloud silinemedi:',e.message); }
+    })();
     toast('Tüm veriler silindi. Yeni başlangıç! 🚀');
   }
   save();renderStats();
@@ -14417,8 +14445,64 @@ function updateFriendReqBadge(){
 async function pushGlobalLb(){
   if(!_fbUser||!window._fbDb)return;
   try{
-    const{doc,setDoc}=window._fbFirestore;
-    const ref=doc(window._fbDb,'leaderboard',_fbUser.uid);
+    const{doc,setDoc,deleteDoc}=window._fbFirestore;
+    const{deleteDoc:delDoc2,doc:doc2,collection,getDocs,query,orderBy,limit}=window._fbFirestoreExtra||{};
+    const _del = delDoc2||deleteDoc;
+    const _doc = doc2||doc;
+
+    // 1. Önceki UID listesinden kalan eski kayıtları sil
+    const prevUidsRaw = localStorage.getItem('yks_prevUids');
+    if(prevUidsRaw && _del && _doc){
+      try{
+        const prevUids = JSON.parse(prevUidsRaw);
+        for(const oldUid of prevUids){
+          if(oldUid && oldUid !== _fbUser.uid){
+            await _del(_doc(window._fbDb,'leaderboard',oldUid)).catch(()=>{});
+          }
+        }
+        localStorage.removeItem('yks_prevUids');
+      }catch(e){}
+    }
+
+    // 2. İlk girişte: leaderboard'da aynı isim + aynı XP + aynı level ile
+    //    farklı UID'li kayıt varsa bu kesinlikle bizim eski hesabımız — sil
+    const _selfDedupDone = localStorage.getItem('yks_selfDedup_' + _fbUser.uid);
+    if(!_selfDedupDone && collection && getDocs && _del && _doc){
+      try{
+        const snap = await getDocs(query(collection(window._fbDb,'leaderboard'), orderBy('xp','desc'), limit(200)));
+        const myXp    = S.xp||0;
+        const myLevel = getLvl(S.xp);
+        const myName  = (S.myName||'').trim().toLowerCase();
+        // Aynı isimde kaç kayıt var? (kendi hariç)
+        const sameNameDocs = snap.docs.filter(d=>{
+          if(d.id === _fbUser.uid) return false;
+          return (d.data().name||'').trim().toLowerCase() === myName;
+        });
+        sameNameDocs.forEach(d=>{
+          const e = d.data();
+          const sameXp    = e.xp === myXp;
+          const sameLevel = (e.level||1) === myLevel;
+          // XP ve level birebir aynıysa → kesinlikle biziz, sil
+          if(sameXp && sameLevel){
+            _del(_doc(window._fbDb,'leaderboard',d.id)).catch(()=>{});
+          }
+        });
+        // Aynı isimde birden fazla FARKLI kullanıcı varsa (duplikat isim):
+        // en düşük XP'li olanları işaretle — bunlar muhtemelen eskimiş kayıtlar
+        // (farklı kişilerin aynı adı alması artık engelleniyor, eski kayıtlar temizlenir)
+        if(sameNameDocs.length > 1){
+          // XP'ye göre sırala, en yüksek XP'li kalsın, diğerlerini sil
+          const sorted = [...sameNameDocs].sort((a,b)=>(b.data().xp||0)-(a.data().xp||0));
+          sorted.slice(1).forEach(d=>{
+            _del(_doc(window._fbDb,'leaderboard',d.id)).catch(()=>{});
+          });
+        }
+        localStorage.setItem('yks_selfDedup_' + _fbUser.uid, '1');
+      }catch(e){}
+    }
+
+    // 3. Kendi kaydımızı yaz
+    const ref = doc(window._fbDb,'leaderboard',_fbUser.uid);
     await setDoc(ref,{
       name:S.myName||'YKS Savaşçısı',
       xp:S.xp||0,
@@ -14506,39 +14590,8 @@ async function fetchGlobalLb(){
     const snap=await getDocs(q);
     const entries=snap.docs.map(d=>({...d.data(),uid:d.id}));
 
-    // Aynı isimde birden fazla kayıt varsa — düşük XP'liyi Firebase'den sil
-    if(_fbUser && deleteDoc && doc){
-      const myName = (S.myName||'').trim().toLowerCase();
-      const nameMap = {};
-      const toDelete = [];
-
-      entries.forEach(e => {
-        const key = (e.name||'').trim().toLowerCase();
-        if(!key) return;
-        if(!nameMap[key]){
-          nameMap[key] = e;
-        } else {
-          const prev = nameMap[key];
-          const winner = prev.xp >= e.xp ? prev : e;
-          const loser  = prev.xp >= e.xp ? e : prev;
-          nameMap[key] = winner;
-          // Sil: kendi adımızdaki çift kayıt (UID fark etmez — bizden kalmıştır)
-          // VEYA kendi UID'miz loserse
-          if(loser.uid && (key === myName || loser.uid === _fbUser.uid)){
-            toDelete.push(loser.uid);
-          }
-        }
-      });
-
-      // Toplu sil
-      toDelete.forEach(uid => {
-        deleteDoc(doc(window._fbDb,'leaderboard',uid)).catch(()=>{});
-      });
-
-      // Silinen kayıtları entries'den çıkar (UI'da çift görünmesin)
-      const deletedSet = new Set(toDelete);
-      return entries.filter(e => !deletedSet.has(e.uid));
-    }
+    // Aynı UID'den birden fazla kayıt olamaz (Firestore'da doküman ID = UID)
+    // İsim bazlı deduplicate YAPILMIYOR — farklı kişiler aynı ismi kullanabilir
 
     return entries;
   }catch(e){console.warn('[GlobalLb fetch]',e);return[];}
@@ -19050,7 +19103,7 @@ function cloudSave(){
   }, 3000);
 }
 
-async function cloudLoad(){
+async function cloudLoad({ forceLoad = false } = {}){
   if(!_fbUser || !window._fbDb) return false;
   if(sessionStorage.getItem("yks_justImported")){
     sessionStorage.removeItem("yks_justImported");
@@ -19064,7 +19117,8 @@ async function cloudLoad(){
     if(!snap.exists()) return false;
     const remote = snap.data()?.state;
     if(!remote) return false;
-    if((remote.xp||0) >= (S.xp||0)){
+    // forceLoad=true ise (hesap geçişi) XP kıyaslaması yapma — cloud her zaman kazanır
+    if(forceLoad || (remote.xp||0) >= (S.xp||0)){
       const p = remote;
       const ms = {};
       SUBJ.forEach(sb => {
@@ -19194,8 +19248,14 @@ async function _loadIsolatedAccount(user){
   // UID güncelle
   localStorage.setItem('yks_activeUid', user.uid);
   // Bu hesabın local verisini yükle (bu cihazda daha önce giriş yaptıysa vardır)
+  // NOT: load() önce 'yksrpg5_u_<uid>' key'ine bakar. Yoksa eski genel key'e düşmesin
+  // diye S'i temiz başlatıyoruz; load() yalnızca bu hesaba ait veri bulursa doldurur.
   S = mkState();
-  load();
+  const uidKey = 'yksrpg5_u_' + user.uid;
+  if(localStorage.getItem(uidKey)){
+    // Sadece bu hesabın kendi key'i varsa yükle — genel key'e düşme
+    load();
+  }
   // Sosyal veriler hesaba özel — her zaman temizle
   S.friendScores = [];
   S.friendRequests = [];
@@ -19203,8 +19263,8 @@ async function _loadIsolatedAccount(user){
   if(typeof renderAll==='function') renderAll();
   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
 
-  // Firebase'den cloud yükle
-  const loaded = await cloudLoad();
+  // Firebase'den cloud yükle — hesap geçişinde forceLoad=true ile XP kıyaslaması atlanır
+  const loaded = await cloudLoad({ forceLoad: true });
   if(loaded){
     if(typeof renderAll==='function') renderAll();
     toast('☁️ ' + (user.displayName||'') + ', tekrar hoş geldin!');
@@ -19283,7 +19343,7 @@ onAuthStateChanged(auth, async user => {
                 S = mkState(); load();
                 S.friendScores=[]; S.friendRequests=[]; save();
                 if(typeof renderAll==='function') renderAll();
-                const loaded2 = await cloudLoad();
+                const loaded2 = await cloudLoad({ forceLoad: true });
                 if(loaded2){ if(typeof renderAll==='function') renderAll(); }
                 toast('☁️ ' + (_fbUser.displayName||'') + ', hoş geldin!');
                 if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
@@ -19380,9 +19440,17 @@ onAuthStateChanged(auth, async user => {
           { label: `✅ Geçişi Onayla → ${bLabel}`, bg:'rgba(67,160,71,0.25)', border:'rgba(67,160,71,0.5)',
             action: async ()=>{
               const switchUser = _pendingAuthUser; _pendingAuthUser = null;
-              _fbUser = switchUser;
-              // A'nın verisini kaydet (LB kaydı kalır — A farklı kullanıcı)
+              // ÖNEMLİ: A'nın verisini, UID hâlâ A'dayken kaydet
+              // (save() getSkey() ile yks_activeUid'e bakıyor — henüz A'nın UID'i)
               save();
+              // Eski UID'yi prevUids listesine ekle — pushGlobalLb sileyecek
+              try{
+                const prev = JSON.parse(localStorage.getItem('yks_prevUids')||'[]');
+                if(savedUid && !prev.includes(savedUid)) prev.push(savedUid);
+                localStorage.setItem('yks_prevUids', JSON.stringify(prev));
+              }catch(e){}
+              // Artık _fbUser'ı B'ye geçir
+              _fbUser = switchUser;
               // B'yi izole yükle
               await _loadIsolatedAccount(switchUser);
             }
@@ -19646,12 +19714,29 @@ function editAvatarName(){
   if(inp){inp.focus();inp.select();}
 }
 
-function saveAvatarName(){
+async function saveAvatarName(){
   const inp=document.getElementById('av-name-inp');
   if(!inp)return;
   const v=inp.value.trim();
   if(!v){toast('İsim boş olamaz!');return;}
+  if(v===S.myName){openAvatarOv(S._avCat);return;}
+  // Firebase leaderboard'da aynı isim var mı kontrol et
+  if(_fbUser&&window._fbDb&&window._fbFirestoreExtra){
+    const{collection,getDocs,query:_q,orderBy:_o,limit:_l}=window._fbFirestoreExtra;
+    try{
+      const btn=document.querySelector('#ov-avatar-inner button[onclick="saveAvatarName()"]');
+      if(btn){btn.textContent='⏳';btn.disabled=true;}
+      const snap=await getDocs(_q(collection(window._fbDb,'leaderboard'),_o('xp','desc'),_l(300)));
+      const taken=snap.docs.some(d=>{
+        if(d.id===_fbUser.uid)return false;
+        return (d.data().name||'').trim().toLowerCase()===v.toLowerCase();
+      });
+      if(btn){btn.textContent='✓';btn.disabled=false;}
+      if(taken){toast('❌ Bu kullanıcı adı alınmış, başka bir isim dene!');return;}
+    }catch(e){/* internet yoksa kontrolü atla */}
+  }
   S.myName=v;save();
+  if(typeof pushGlobalLb==='function')pushGlobalLb();
   toast('İsim güncellendi! ✅');
   openAvatarOv(S._avCat);
 }
