@@ -3970,7 +3970,13 @@ function chkBdgs(){
   });
   if(newOnes.length){
     const fresh=newOnes.filter(b=>!S.badgeTimes||!S.badgeTimes[b.id]||(now-S.badgeTimes[b.id])<10000);
-    fresh.forEach(b=>{badgeQueue.push({...b,_queuedAt:Date.now()});if(typeof pushFeedEvent==="function")pushFeedEvent("badge",{badgeId:b.id,badgeName:b.name,badgeIcon:b.icon});});
+    fresh.forEach(b=>{
+      badgeQueue.push({...b,_queuedAt:Date.now()});
+      if(typeof pushFeedEvent==="function"){
+        const _tm=(typeof getTrophyMeta==='function')?getTrophyMeta(b):{tier:'BRONZ',tierEn:'bronze'};
+        pushFeedEvent("badge",{badgeId:b.id,badgeName:b.name,badgeIcon:b.icon,badgeTier:_tm.tierEn,badgeTierLabel:_tm.tier});
+      }
+    });
     // Hemen göster — başka overlay açıksa kısa bekle, yoksa anında
     if(!badgeShowing&&badgeQueue.length){
       const delay=document.querySelector('.ov.show:not(#ov-badge)')?1200:300;
@@ -8530,22 +8536,36 @@ function resetSection(what){
   else if(what==='konular'){SUBJ.forEach(s=>{S.subjects[s.id].topics={};});toast('Konu haritası sıfırlandı 🗺️');}
   else if(what==='hedefler'){S.goals=[{id:1,text:'10 soru çöz',done:false,xp:30},{id:2,text:'1 konu işle',done:false,xp:20}];S.goalId=10;toast('Hedefler sıfırlandı 📋');}
   else if(what==='tumu'){
-    // Keep friend code and unis
-    const fc=S.friendCode;const unis=S.unis;
-    S=mkState();S.friendCode=fc;S.unis=unis;
-    // localStorage temizle (UID'li key dahil)
+    const fc=S.friendCode; const unis=S.unis;
+    const wasLoggedIn = !!(_fbUser && _fbUser.uid);
+    const activeUid   = wasLoggedIn ? _fbUser.uid : null;
+    S=mkState(); S.friendCode=fc; S.unis=unis;
+    // localStorage temizle
     getAllSkeyVariants().forEach(k=>localStorage.removeItem(k));
     SKEYS.forEach(k=>localStorage.removeItem(k));
-    // Firebase cloud verisini de sil — sonraki girişte "Bu hesapta veri var!" çıkmasın
+    // Google hesabındaysa UID'i koru — overlay açılmasın
+    if(activeUid){
+      localStorage.setItem('yks_activeUid', activeUid);
+      // Yeni boş state'i hemen kaydet (UID'li key'e)
+      save();
+    }
+    // Firebase cloud verisini de sil — bir sonraki girişte "Bu hesapta veri var!" çıkmasın
     (async()=>{
       try{
-        const uid=_fbUser&&_fbUser.uid;
-        if(uid&&window._fbDb&&window._fbFirestoreExtra){
+        if(activeUid&&window._fbDb&&window._fbFirestoreExtra){
           const{doc:_d,deleteDoc:_del}=window._fbFirestoreExtra;
-          if(_d&&_del) await _del(_d(window._fbDb,'users',uid,'data','state'));
+          if(_d&&_del) await _del(_d(window._fbDb,'users',activeUid,'data','state'));
         }
       }catch(e){ console.warn('[Reset] Cloud silinemedi:',e.message); }
     })();
+    // Eğer Google hesabındaysa yeni isimle welcome event'i tekrar gönder
+    if(activeUid && typeof pushFeedEvent==='function' && _fbUser){
+      setTimeout(()=>{
+        // Feed'deki eski bu UID'e ait welcome'ları fetchFeed zaten temizleyecek
+        // Yeni (sıfırlanmış) welcome ekle — artık kullanıcı ismini girince güncellenecek
+        pushFeedEvent('welcome',{});
+      }, 1500);
+    }
     toast('Tüm veriler silindi. Yeni başlangıç! 🚀');
   }
   save();renderStats();
@@ -14537,11 +14557,27 @@ async function pushFeedEvent(type, data){
 async function fetchFeed(){
   if(!window._fbDb)return[];
   try{
-    const{collection,getDocs,query,orderBy,limit}=window._fbFirestoreExtra||{};
+    const{collection,getDocs,query,orderBy,limit,deleteDoc,doc}=window._fbFirestoreExtra||{};
     if(!collection)return[];
-    const q=query(collection(window._fbDb,"feed"),orderBy("ts","desc"),limit(30));
+    const q=query(collection(window._fbDb,"feed"),orderBy("ts","desc"),limit(50));
     const snap=await getDocs(q);
-    return snap.docs.map(d=>({id:d.id,...d.data()}));
+    const items=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Sıfırlanmış hesapların eski "YKS Savaşçısı" welcome event'lerini filtrele
+    // (aynı UID'den birden fazla welcome varsa en yenisi kalsın)
+    const seenWelcome=new Set();
+    const cleaned=[];
+    for(const item of items){
+      if(item.type==='welcome'){
+        if(seenWelcome.has(item.uid)){
+          // Eski welcome — feed'den sil
+          if(deleteDoc&&doc) deleteDoc(doc(window._fbDb,'feed',item.id)).catch(()=>{});
+          continue;
+        }
+        seenWelcome.add(item.uid);
+      }
+      cleaned.push(item);
+    }
+    return cleaned.slice(0,30);
   }catch(e){return[];}
 }
 
@@ -14551,14 +14587,35 @@ function renderFeed(items){
   return items.map(item=>{
     let msg="";
     const nm=`<b>${item.name||"Birisi"}</b>`;
-    if(item.type==="badge")
-      msg=`${nm} <span style="color:var(--gold);">${item.badgeIcon||"🏅"} <b>${item.badgeName||"rozet"}</b> rozetini kazandı!</span>`;
+    if(item.type==="badge"){
+      const _tierColors={platinum:'#d4b4ff',gold:'#ffd97d',silver:'#b8d0e8',bronze:'#d4956a'};
+      const _tierFrames={
+        platinum:'🏆',gold:'🥇',silver:'🥈',bronze:'🥉'
+      };
+      const _t=item.badgeTier||'bronze';
+      const _tc=_tierColors[_t]||'#ffd97d';
+      const _cup=_tierFrames[_t]||'';
+      const _isPlatinum=_t==='platinum';
+      const _label=item.badgeTierLabel||'';
+      if(_isPlatinum){
+        msg=`${nm} <span style="color:#d4b4ff;">🏆 <b style="background:linear-gradient(90deg,#d4b4ff,#fff,#d4b4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${item.badgeName||"rozet"}</b> <span style="font-size:9px;background:linear-gradient(90deg,rgba(180,100,255,0.3),rgba(220,160,255,0.2));border:1px solid rgba(180,100,255,0.5);border-radius:4px;padding:1px 5px;color:#d4b4ff;-webkit-text-fill-color:#d4b4ff;">PLATİN</span> rozetini kazandı! ✨</span>`;
+      } else {
+        msg=`${nm} <span style="color:${_tc};">${_cup} ${item.badgeIcon||"🏅"} <b>${item.badgeName||"rozet"}</b>${_label?' <span style="font-size:9px;opacity:0.7;">('+_label+')</span>':''} rozetini kazandı!</span>`;
+      }
+    }
     else if(item.type==="levelup")
       msg=`${nm} <span style="color:var(--pu);">⬆️ <b>${item.level||"?"}. seviye</b>ye ulaştı!</span>`;
-    else if(item.type==="welcome")
-      msg=`${nm} <span style="color:var(--gr);">🎉 YKS RPG'ye katıldı! Hoş geldin!</span>`;
+    else if(item.type==="welcome"){
+      const _wName=(item.uid&&typeof _fbUser!=='undefined'&&_fbUser&&item.uid===_fbUser.uid)?(S.myName||item.name||'Birisi'):(item.name||'Birisi');
+      const _wnm=`<b>${_wName}</b>`;
+      msg=`${_wnm} <span style="color:var(--gr);">🎉 YKS RPG'ye katıldı! Hoş geldin!</span>`;
+    }
     else return "";
-    return `<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--c2);border-radius:10px;margin-bottom:5px;border:1px solid var(--br);"><div style="font-size:20px;flex-shrink:0;">${item.avatar||"⚔️"}</div><div style="flex:1;font-size:11px;line-height:1.4;">${msg}</div><div style="font-size:9px;color:var(--t3);flex-shrink:0;white-space:nowrap;">${timeAgo(item.ts)}</div></div>`;
+    const _isPlat = item.type==="badge" && item.badgeTier==="platinum";
+    const _cardBg = _isPlat ? 'linear-gradient(135deg,rgba(100,0,180,0.18),rgba(30,10,50,0.95))' : 'var(--c2)';
+    const _cardBorder = _isPlat ? '1px solid rgba(180,100,255,0.55)' : '1px solid var(--br)';
+    const _cardShadow = _isPlat ? '0 0 14px rgba(180,100,255,0.22)' : 'none';
+    return `<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:${_cardBg};border-radius:10px;margin-bottom:5px;border:${_cardBorder};box-shadow:${_cardShadow};position:relative;overflow:hidden;">${_isPlat?'<div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(180,100,255,0.03) 8px,rgba(180,100,255,0.03) 16px);pointer-events:none;"></div>':''}<div style="font-size:20px;flex-shrink:0;position:relative;">${item.avatar||"⚔️"}</div><div style="flex:1;font-size:11px;line-height:1.4;position:relative;">${msg}</div><div style="font-size:9px;color:var(--t3);flex-shrink:0;white-space:nowrap;position:relative;">${timeAgo(item.ts)}</div></div>`;
   }).filter(Boolean).join("");
 }
 
