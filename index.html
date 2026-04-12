@@ -191,6 +191,7 @@ input::placeholder{color:var(--t3);}
 @keyframes atkPulse{0%{transform:scale(1);}50%{transform:scale(0.95);}100%{transform:scale(1);}}
 @keyframes scanline{0%{transform:translateY(-100%);}100%{transform:translateY(100vh);}}
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes platShimmer{0%{left:-100%;}60%{left:150%;}100%{left:150%;}}
 .boss-arena{position:relative;border-radius:16px;overflow:hidden;margin-bottom:0;}
 .boss-arena::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.012) 3px,rgba(255,255,255,0.012) 4px);pointer-events:none;border-radius:16px;}
 .boss-c{background:linear-gradient(160deg,#080818,#110830,#080818);border:1.5px solid var(--boss-col,#7c4dff);border-radius:16px;padding:16px 14px 14px;text-align:center;position:relative;overflow:hidden;animation:bossGlow 3s ease-in-out infinite;}
@@ -837,15 +838,15 @@ input::placeholder{color:var(--t3);}
 
 <!-- BADGE — PlayStation Trophy Style -->
 <div class="ov" id="ov-badge" style="align-items:flex-end;padding:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);">
-  <div id="bdg-trophy-box" style="width:100%;max-width:500px;animation:trophySlideUp .45s cubic-bezier(.4,0,.2,1);background:linear-gradient(160deg,#0a0a1a,#12082e,#0a1020);border-top:2px solid;border-image:linear-gradient(90deg,transparent,var(--gold),var(--pu),var(--gold),transparent) 1;padding:20px 20px 32px;position:relative;overflow:hidden;">
+  <div id="bdg-trophy-box" style="width:100%;max-width:500px;animation:trophySlideUp .45s cubic-bezier(.4,0,.2,1);background:linear-gradient(160deg,#0a0a1a,#12082e,#0a1020);border-top:2px solid;border-top-color:#e0a878;border-top-style:solid;border-top-width:2px;padding:20px 20px 32px;position:relative;overflow:hidden;">
     <!-- Arka fon efekti -->
     <div id="bdg-bg-glow" style="position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(245,166,35,0.15),transparent 70%);pointer-events:none;"></div>
     <div style="position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:20px 20px;pointer-events:none;"></div>
     <!-- Trophy tip etiketi -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative;">
       <div style="display:flex;align-items:center;gap:7px;">
-        <div id="bdg-trophy-icon" style="width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#1a1a2e;background:var(--gold);">🥉</div>
-        <div id="bdg-trophy-type" style="font-size:9px;font-weight:900;color:var(--gold);letter-spacing:2px;text-transform:uppercase;">BRONZ BAŞARIM</div>
+        <div id="bdg-trophy-icon" style="width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#1a1a2e;background:#c87a3a;">🥉</div>
+        <div id="bdg-trophy-type" style="font-size:9px;font-weight:900;color:#e0a878;letter-spacing:2px;text-transform:uppercase;">BRONZ BAŞARIM</div>
       </div>
       <div id="bu-count" style="font-size:9px;color:var(--t3);font-weight:700;"></div>
     </div>
@@ -3701,9 +3702,23 @@ function repairWeekData(){
       const dl=S.dailyLog[d.toDateString()];
       if(dl)totalMins+=(dl.mins||0);
     }
-    // Sadece weekTotalMins sıfırsa ama dailyLog'da veri varsa düzelt
-    if(!(S.weekTotalMins>0)&&totalMins>0){
-      S.weekTotalMins=totalMins;
+    // Her zaman dailyLog'dan hesaplanan değeri kullan — 0 ise de yaz
+    // Ama eğer weekTotalMins > hesaplanan ise (manuel ekleme vs.) büyüğü koru
+    if(totalMins>0){
+      S.weekTotalMins=Math.max(S.weekTotalMins||0, totalMins);
+    }
+    // Bugünün dailyMins'ini de dailyLog ile sync et
+    const today=now.toDateString();
+    const todayLog=S.dailyLog[today];
+    if(todayLog&&todayLog.mins>0){
+      if(S.dailyMinsDay!==today){
+        // Farklı günde kalmış — bugünkü log değerini yaz
+        S.dailyMins=todayLog.mins;
+        S.dailyMinsDay=today;
+      } else {
+        // Aynı gün — büyük olanı koru
+        S.dailyMins=Math.max(S.dailyMins||0, todayLog.mins);
+      }
     }
   }catch(e){console.warn('repairWeekData error',e);}
 }
@@ -3815,17 +3830,23 @@ const BADGE_QUEUE_TTL=12000; // 12 saniyeden eski kuyruk girişlerini atla
 
 // Rozet tipini belirle (PlayStation trophy sistemi gibi)
 function getBadgeTrophy(b){
-  // Platinum — en nadirler
-  if(['b_legend','b_efsanevi','b_allboss_banka','b_net_master','b_xp100000','b_q5000','b_str365','b_tum_100','b_all_topics_full'].includes(b.id))
-    return{type:'PLATİN',icon:'🏆',color:'#e8d5ff',glow:'rgba(200,150,255,0.4)',bg:'linear-gradient(135deg,#2a0050,#4a0080,#1a003a)'};
-  // Gold — büyük başarımlar
-  if(['b_lv30','b_lv25','b_lv20','b_str180','b_str120','b_str90','b_xp50000','b_xp25000','b_q3000','b_q2000','b_boss12','b_tyt_net110','b_ayt_net75','b_yks_savasci'].includes(b.id)||b.id.includes('_king')||b.id.includes('_efsane'))
-    return{type:'ALTIN',icon:'🥇',color:'#ffd97d',glow:'rgba(245,166,35,0.4)',bg:'linear-gradient(135deg,#2a1800,#4a2c00,#1a1000)'};
-  // Silver — orta seviye
-  if(['b_lv15','b_lv12','b_str60','b_str45','b_str30','b_xp10000','b_xp7500','b_q1000','b_q750','b_boss11','b_boss10','b_boss9','b_boss8','b_tyt_net100','b_ayt_net65'].includes(b.id)||b.id.includes('_usta')||b.id.includes('_uzman'))
-    return{type:'GÜMÜŞ',icon:'🥈',color:'#c8d8e8',glow:'rgba(180,200,220,0.4)',bg:'linear-gradient(135deg,#0a1520,#152535,#080e18)'};
-  // Bronze — standart
-  return{type:'BRONZ',icon:'🥉',color:'var(--gold)',glow:'rgba(245,166,35,0.2)',bg:'linear-gradient(160deg,#0a0a1a,#12082e,#0a1020)'};
+  // getTrophyMeta ile tutarlı — aynı tier mantığı
+  const m=(typeof getTrophyMeta==='function')?getTrophyMeta(b):{tierEn:'bronze',tier:'BRONZ',color:'#e0a878',glow:'rgba(200,140,90,0.3)'};
+  const tierEn=m.tierEn||'bronze';
+  const bgMap={
+    platinum:'linear-gradient(135deg,#1a0035,#3a0068,#0d0020)',
+    gold:'linear-gradient(135deg,#1a0e00,#352000,#0d0900)',
+    silver:'linear-gradient(135deg,#080e18,#101e30,#060a12)',
+    bronze:'linear-gradient(160deg,#0a0a1a,#16090a,#0a0a12)',
+  };
+  const iconMap={platinum:'🏆',gold:'🥇',silver:'🥈',bronze:'🥉'};
+  return{
+    type:m.tier||'BRONZ',
+    icon:iconMap[tierEn]||'🥉',
+    color:m.color||'#e0a878',
+    glow:m.glow||'rgba(200,140,90,0.3)',
+    bg:bgMap[tierEn]||bgMap.bronze,
+  };
 }
 
 // ═══ ORTAM SESİ MOTORU (Gerçek MP3, 10s döngü) ═══
@@ -4061,18 +4082,28 @@ function popBdg(){
   const bgGlowEl=document.getElementById('bdg-bg-glow');
   const boxEl=document.getElementById('bdg-trophy-box');
 
-  if(typeEl)typeEl.textContent=trophy.type+' BAŞARIM';
-  if(typeEl)typeEl.style.color=trophy.color;
+  if(typeEl){typeEl.textContent=trophy.type+' BAŞARIM';typeEl.style.color=trophy.color;}
   if(iconEl){iconEl.textContent=trophy.icon;iconEl.style.background=trophy.color;iconEl.style.color='#1a1a2e';}
   if(cupEl){
-    cupEl.style.borderColor=trophy.color.replace('var(--gold)','#f5a623')+'88';
-    cupEl.style.background=`linear-gradient(135deg,${trophy.glow.replace('rgba','rgba').replace(/[\d.]+\)$/,'0.2)')},${trophy.glow.replace(/[\d.]+\)$/,'0.05)')})`;
-    cupEl.style.boxShadow=`0 0 24px ${trophy.glow}`;
+    cupEl.style.borderColor=trophy.color+'88';
+    cupEl.style.background=`linear-gradient(135deg,${trophy.glow.replace(/[\d.]+\)$/,'0.22)')},${trophy.glow.replace(/[\d.]+\)$/,'0.06)')})`;
+    cupEl.style.boxShadow=`0 0 28px ${trophy.glow}`;
     cupEl.style.animation='trophyPulse 2s ease-in-out infinite';
   }
   if(glowEl)glowEl.style.background=`radial-gradient(circle,${trophy.glow},transparent 70%)`;
-  if(bgGlowEl)bgGlowEl.style.background=`radial-gradient(circle,${trophy.glow.replace(/[\d.]+\)$/,'0.12)')},transparent 70%)`;
-  if(boxEl)boxEl.style.background=trophy.bg;
+  if(bgGlowEl)bgGlowEl.style.background=`radial-gradient(circle,${trophy.glow.replace(/[\d.]+\)$/,'0.15)')},transparent 70%)`;
+  if(boxEl){
+    boxEl.style.background=trophy.bg;
+    boxEl.style.borderTopColor=trophy.color;
+    // Update confirm button color
+    const confirmBtn=boxEl.querySelector('button');
+    if(confirmBtn){
+      const btnColors={PLATİN:'linear-gradient(135deg,#7c00cc,#b040ff)',ALTIN:'linear-gradient(135deg,#c67c00,#f5a623)',GÜMÜŞ:'linear-gradient(135deg,#3a6080,#6090b8)',BRONZ:'linear-gradient(135deg,#6b3a10,#a05a28)'};
+      const btnText={PLATİN:'#f0e0ff',ALTIN:'#1a0e00',GÜMÜŞ:'#e8f4ff',BRONZ:'#fff0e0'};
+      confirmBtn.style.background=btnColors[trophy.type]||btnColors.BRONZ;
+      confirmBtn.style.color=btnText[trophy.type]||'#fff';
+    }
+  }
 
   const countEl=document.getElementById('bu-count');
   if(countEl)countEl.textContent=badgeQueue.length>0?`+${badgeQueue.length} başarım daha`:'';
@@ -14762,42 +14793,101 @@ async function fetchFeed(){
 function renderFeed(items){
   if(!items||!items.length) return `<div style="text-align:center;padding:20px;color:var(--t3);font-size:11px;">Henüz etkinlik yok 📭</div>`;
   const timeAgo=ts=>{const d=Math.floor((Date.now()-ts)/1000);if(d<60)return d+"sn önce";if(d<3600)return Math.floor(d/60)+"dk önce";if(d<86400)return Math.floor(d/3600)+"sa önce";return Math.floor(d/86400)+"g önce";};
+
+  // Tier görsel tanımları — her tier için kart stili
+  const tierStyles={
+    platinum:{
+      card:'background:linear-gradient(135deg,rgba(120,0,220,0.28),rgba(40,10,70,0.96));border:1.5px solid rgba(200,120,255,0.65);box-shadow:0 0 22px rgba(180,80,255,0.28),0 2px 8px rgba(0,0,0,0.5);',
+      avatar:'border:2.5px solid rgba(220,160,255,0.9);box-shadow:0 0 14px rgba(180,80,255,0.7);',
+      shimmer:true,
+      particles:true,
+      label:'background:linear-gradient(90deg,rgba(180,80,255,0.35),rgba(220,160,255,0.2));border:1px solid rgba(200,120,255,0.6);color:#e8c7ff;',
+    },
+    gold:{
+      card:'background:linear-gradient(135deg,rgba(100,65,0,0.3),rgba(25,18,5,0.96));border:1.5px solid rgba(245,180,35,0.65);box-shadow:0 0 16px rgba(245,166,35,0.25),0 2px 8px rgba(0,0,0,0.4);',
+      avatar:'border:2.5px solid rgba(255,210,80,0.9);box-shadow:0 0 12px rgba(245,166,35,0.6);',
+      shimmer:false,
+      particles:false,
+      label:'background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.5);color:#ffd97d;',
+    },
+    silver:{
+      card:'background:linear-gradient(135deg,rgba(30,60,90,0.28),rgba(10,15,22,0.96));border:1.5px solid rgba(160,210,240,0.5);box-shadow:0 0 10px rgba(140,200,230,0.18),0 2px 6px rgba(0,0,0,0.35);',
+      avatar:'border:2px solid rgba(180,220,245,0.8);box-shadow:0 0 10px rgba(140,200,230,0.4);',
+      shimmer:false,
+      particles:false,
+      label:'background:rgba(140,190,220,0.18);border:1px solid rgba(160,210,240,0.4);color:#c8dff0;',
+    },
+    bronze:{
+      card:'background:linear-gradient(135deg,rgba(70,35,8,0.22),rgba(12,10,8,0.96));border:1px solid rgba(180,120,70,0.38);box-shadow:0 0 6px rgba(180,120,70,0.15),0 1px 4px rgba(0,0,0,0.3);',
+      avatar:'border:2px solid rgba(200,140,90,0.7);box-shadow:0 0 7px rgba(180,120,70,0.3);',
+      shimmer:false,
+      particles:false,
+      label:'background:rgba(180,120,70,0.18);border:1px solid rgba(180,120,70,0.38);color:#e0a878;',
+    },
+  };
+
   return items.map(item=>{
-    let msg="";
-    const nm=`<b>${item.name||"Birisi"}</b>`;
-    if(item.type==="badge"){
-      const _tierColors={platinum:'#d4b4ff',gold:'#ffd97d',silver:'#b8d0e8',bronze:'#d4956a'};
-      const _tierFrames={
-        platinum:'🏆',gold:'🥇',silver:'🥈',bronze:'🥉'
-      };
+    let msg='';
+    const nm=`<b style="color:#fff;">${item.name||'Birisi'}</b>`;
+
+    if(item.type==='badge'){
       const _t=item.badgeTier||'bronze';
-      const _tc=_tierColors[_t]||'#ffd97d';
-      const _cup=_tierFrames[_t]||'';
-      const _isPlatinum=_t==='platinum';
-      const _label=item.badgeTierLabel||'';
-      if(_isPlatinum){
-        msg=`${nm} <span style="color:#d4b4ff;">🏆 <b style="background:linear-gradient(90deg,#d4b4ff,#fff,#d4b4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${item.badgeName||"rozet"}</b> <span style="font-size:9px;background:linear-gradient(90deg,rgba(180,100,255,0.3),rgba(220,160,255,0.2));border:1px solid rgba(180,100,255,0.5);border-radius:4px;padding:1px 5px;color:#d4b4ff;-webkit-text-fill-color:#d4b4ff;">PLATİN</span> rozetini kazandı! ✨</span>`;
-      } else {
-        msg=`${nm} <span style="color:${_tc};">${_cup} ${item.badgeIcon||"🏅"} <b>${item.badgeName||"rozet"}</b>${_label?' <span style="font-size:9px;opacity:0.7;">('+_label+')</span>':''} rozetini kazandı!</span>`;
-      }
+      const _ts=tierStyles[_t]||tierStyles.bronze;
+      const _tc={platinum:'#e8c7ff',gold:'#ffd97d',silver:'#c8dff0',bronze:'#e0a878'}[_t]||'#e0a878';
+      const _cup={platinum:'🏆',gold:'🥇',silver:'🥈',bronze:'🥉'}[_t]||'🥉';
+      const _tierLabel={platinum:'PLATİN',gold:'ALTIN',silver:'GÜMÜŞ',bronze:'BRONZ'}[_t]||'BRONZ';
+
+      // Avatar çerçevesi
+      const _frameId=item.frame||'default';
+      const _frameObj=(typeof AVATAR_FRAMES!=='undefined'?AVATAR_FRAMES:[]).find(f=>f.id===_frameId)||{gradient:'linear-gradient(135deg,#7c4dff,#e040fb)',glow:'rgba(124,77,255,.4)'};
+
+      const _avatarDiv=`<div style="width:40px;height:40px;border-radius:50%;background:${_frameObj.gradient};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;${_ts.avatar};transition:box-shadow .3s;">${item.avatar||'⚔️'}</div>`;
+
+      // Rozet ikonu + bilgi satırı
+      const _badgeIcon=item.badgeIcon||'🏅';
+      const _tierBadge=`<span style="display:inline-flex;align-items:center;gap:3px;font-size:8px;font-weight:900;padding:2px 6px;border-radius:4px;${_ts.label};margin-left:4px;vertical-align:middle;">${_cup} ${_tierLabel}</span>`;
+
+      msg=`<div style="font-size:11px;line-height:1.5;">
+        ${nm} <span style="color:${_tc};">${_badgeIcon} <b>${item.badgeName||'rozet'}</b></span>${_tierBadge} rozetini kazandı!
+      </div>`;
+
+      // PLATİN özel animasyonlu arka plan shimmer
+      const _shimmerEl=_ts.shimmer?`<div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(220,160,255,0.04) 10px,rgba(220,160,255,0.04) 20px);pointer-events:none;border-radius:11px;"></div>
+      <div style="position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(220,160,255,0.08),transparent);animation:platShimmer 2.8s ease-in-out infinite;pointer-events:none;"></div>`:'';
+
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;margin-bottom:6px;position:relative;overflow:hidden;${_ts.card}">
+        ${_shimmerEl}
+        <div style="position:relative;flex-shrink:0;">${_avatarDiv}</div>
+        <div style="flex:1;min-width:0;position:relative;">${msg}</div>
+        <div style="font-size:9px;color:var(--t3);flex-shrink:0;white-space:nowrap;position:relative;">${timeAgo(item.ts)}</div>
+      </div>`;
     }
-    else if(item.type==="levelup")
-      msg=`${nm} <span style="color:var(--pu);">⬆️ <b>${item.level||"?"}. seviye</b>ye ulaştı!</span>`;
-    else if(item.type==="welcome"){
-      msg=`${nm} <span style="color:var(--gr);">🎉 YKS RPG'ye katıldı! Hoş geldin!</span>`;
+    else if(item.type==='levelup'){
+      const _frameId=item.frame||'default';
+      const _frameObj=(typeof AVATAR_FRAMES!=='undefined'?AVATAR_FRAMES:[]).find(f=>f.id===_frameId)||{gradient:'linear-gradient(135deg,#7c4dff,#e040fb)',glow:'rgba(124,77,255,.4)'};
+      const _avatarDiv=`<div style="width:40px;height:40px;border-radius:50%;background:${_frameObj.gradient};display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid rgba(124,77,255,0.6);box-shadow:0 0 10px ${_frameObj.glow};flex-shrink:0;">${item.avatar||'⚔️'}</div>`;
+      msg=`${nm} <span style="color:#a78bfa;">⬆️ <b>${item.level||'?'}. seviye</b>ye ulaştı!</span>`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(124,77,255,0.08);border-radius:11px;margin-bottom:6px;border:1px solid rgba(124,77,255,0.2);">
+        ${_avatarDiv}
+        <div style="flex:1;font-size:11px;line-height:1.4;">${msg}</div>
+        <div style="font-size:9px;color:var(--t3);flex-shrink:0;white-space:nowrap;">${timeAgo(item.ts)}</div>
+      </div>`;
     }
-    else return "";
-    const _isPlat = item.type==="badge" && item.badgeTier==="platinum";
-    const _cardBg = _isPlat ? 'linear-gradient(135deg,rgba(100,0,180,0.18),rgba(30,10,50,0.95))' : 'var(--c2)';
-    const _cardBorder = _isPlat ? '1px solid rgba(180,100,255,0.55)' : '1px solid var(--br)';
-    const _cardShadow = _isPlat ? '0 0 14px rgba(180,100,255,0.22)' : 'none';
-    // Avatar çerçevesi
-    const _frameId=item.frame||'default';
-    const _frameObj=(typeof AVATAR_FRAMES!=='undefined'?AVATAR_FRAMES:[]).find(f=>f.id===_frameId)||{gradient:'linear-gradient(135deg,#7c4dff,#e040fb)',glow:'rgba(124,77,255,.4)'};
-    const _avatarHtml=`<div style="width:36px;height:36px;border-radius:50%;background:${_frameObj.gradient};display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid rgba(255,255,255,0.15);box-shadow:0 0 8px ${_frameObj.glow};flex-shrink:0;">${item.avatar||"⚔️"}</div>`;
-    return `<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:${_cardBg};border-radius:10px;margin-bottom:5px;border:${_cardBorder};box-shadow:${_cardShadow};position:relative;overflow:hidden;">${_isPlat?'<div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(180,100,255,0.03) 8px,rgba(180,100,255,0.03) 16px);pointer-events:none;"></div>':''}<div style="position:relative;flex-shrink:0;">${_avatarHtml}</div><div style="flex:1;font-size:11px;line-height:1.4;position:relative;">${msg}</div><div style="font-size:9px;color:var(--t3);flex-shrink:0;white-space:nowrap;position:relative;">${timeAgo(item.ts)}</div></div>`;
-  }).filter(Boolean).join("");
+    else if(item.type==='welcome'){
+      const _frameId=item.frame||'default';
+      const _frameObj=(typeof AVATAR_FRAMES!=='undefined'?AVATAR_FRAMES:[]).find(f=>f.id===_frameId)||{gradient:'linear-gradient(135deg,#7c4dff,#e040fb)',glow:'rgba(124,77,255,.4)'};
+      const _avatarDiv=`<div style="width:40px;height:40px;border-radius:50%;background:${_frameObj.gradient};display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid rgba(67,160,71,0.5);box-shadow:0 0 8px rgba(67,160,71,0.3);flex-shrink:0;">${item.avatar||'⚔️'}</div>`;
+      msg=`${nm} <span style="color:#81c784;">🎉 YKS RPG'ye katıldı! Hoş geldin!</span>`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(67,160,71,0.07);border-radius:11px;margin-bottom:6px;border:1px solid rgba(67,160,71,0.18);">
+        ${_avatarDiv}
+        <div style="flex:1;font-size:11px;line-height:1.4;">${msg}</div>
+        <div style="font-size:9px;color:var(--t3);flex-shrink:0;white-space:nowrap;">${timeAgo(item.ts)}</div>
+      </div>`;
+    }
+    return '';
+  }).filter(Boolean).join('');
 }
+
 
 let _rankingRefreshTimer=null;
 function startRankingAutoRefresh(){stopRankingAutoRefresh();_rankingRefreshTimer=setInterval(()=>{if(S.curTab==="ranking")renderRanking();},60000);}
@@ -15745,26 +15835,196 @@ renderStats=function(){
 // 5. ROZETLER SEKMESİ — PlayStation Trophy Tarzı
 // ══════════════════════════════════════════════════
 function getTrophyMeta(b){
-  // Minute-based badges: bronz<100dk, gümüş>=100dk, altın>=500dk, platin>=1000dk
-  const minMatch=b.id.match(/(?:b_min_[a-z]+_|b_ing_min)(\d+)$/);
-  if(minMatch){
-    const mins=parseInt(minMatch[1]);
-    if(mins>=1000)return{tier:'PLATİN',tierEn:'platinum',color:'#d4b4ff',glow:'rgba(180,100,255,0.35)',bg:'linear-gradient(135deg,rgba(100,0,180,0.18),rgba(160,80,255,0.06))',border:'rgba(160,80,255,0.35)',cup:'🏆'};
-    if(mins>=500)return{tier:'ALTIN',tierEn:'gold',color:'#ffd97d',glow:'rgba(245,166,35,0.3)',bg:'linear-gradient(135deg,rgba(80,50,0,0.2),rgba(245,166,35,0.06))',border:'rgba(245,166,35,0.35)',cup:'🥇'};
-    if(mins>=100)return{tier:'GÜMÜŞ',tierEn:'silver',color:'#b8d0e8',glow:'rgba(160,200,230,0.25)',bg:'linear-gradient(135deg,rgba(20,50,80,0.2),rgba(100,160,210,0.06))',border:'rgba(120,170,210,0.3)',cup:'🥈'};
-    return{tier:'BRONZ',tierEn:'bronze',color:'#d4956a',glow:'rgba(180,120,80,0.2)',bg:'linear-gradient(135deg,rgba(60,30,10,0.15),rgba(180,120,80,0.05))',border:'rgba(160,100,60,0.25)',cup:'🥉'};
-  }
-  // PLATİN: En zor başarımlar
-  if(['b_legend','b_efsanevi','b_allboss_banka','b_net_master','b_xp100000','b_xp75000','b_q5000','b_str365','b_tum_100','b_all_topics_full','b_streak_rec100'].includes(b.id))
-    return{tier:'PLATİN',tierEn:'platinum',color:'#d4b4ff',glow:'rgba(180,100,255,0.35)',bg:'linear-gradient(135deg,rgba(100,0,180,0.18),rgba(160,80,255,0.06))',border:'rgba(160,80,255,0.35)',cup:'🏆'};
-  // ALTIN: Yüksek başarımlar
-  if(['b_lv30','b_lv28','b_lv25','b_lv20','b_str180','b_str120','b_str90','b_xp50000','b_xp25000','b_xp20000','b_xp15000','b_xp_milestone','b_q3000','b_q2000','b_q1500','b_boss12','b_boss11','b_tyt_net110','b_ayt_net75','b_yks_savasci','b_den30','b_den50','b_streak_rec30'].includes(b.id)||b.id.includes('_king')||b.id.endsWith('_efsane')||b.id.endsWith('_efsanesi'))
-    return{tier:'ALTIN',tierEn:'gold',color:'#ffd97d',glow:'rgba(245,166,35,0.3)',bg:'linear-gradient(135deg,rgba(80,50,0,0.2),rgba(245,166,35,0.06))',border:'rgba(245,166,35,0.35)',cup:'🥇'};
-  // GÜMÜŞ: Orta-üst başarımlar
-  if(['b_lv18','b_lv15','b_lv12','b_str60','b_str45','b_str30','b_xp10000','b_xp7500','b_xp5000','b_q1000','b_q750','b_boss10','b_boss9','b_boss8','b_tyt_net100','b_ayt_net65','b_den10','b_den20'].includes(b.id)||b.id.includes('_usta')||b.id.includes('_uzman'))
-    return{tier:'GÜMÜŞ',tierEn:'silver',color:'#b8d0e8',glow:'rgba(160,200,230,0.25)',bg:'linear-gradient(135deg,rgba(20,50,80,0.2),rgba(100,160,210,0.06))',border:'rgba(120,170,210,0.3)',cup:'🥈'};
-  return{tier:'BRONZ',tierEn:'bronze',color:'#d4956a',glow:'rgba(180,120,80,0.2)',bg:'linear-gradient(135deg,rgba(60,30,10,0.15),rgba(180,120,80,0.05))',border:'rgba(160,100,60,0.25)',cup:'🥉'};
+  const P={tier:'PLATİN',tierEn:'platinum',color:'#e8c7ff',glow:'rgba(200,120,255,0.5)',bg:'linear-gradient(135deg,rgba(120,0,220,0.22),rgba(180,80,255,0.08))',border:'rgba(180,100,255,0.55)',cup:'🏆'};
+  const G={tier:'ALTIN',tierEn:'gold',color:'#ffd97d',glow:'rgba(245,166,35,0.45)',bg:'linear-gradient(135deg,rgba(100,65,0,0.25),rgba(245,166,35,0.08))',border:'rgba(245,166,35,0.5)',cup:'🥇'};
+  const S={tier:'GÜMÜŞ',tierEn:'silver',color:'#c8dff0',glow:'rgba(160,210,240,0.35)',bg:'linear-gradient(135deg,rgba(20,60,100,0.22),rgba(120,180,220,0.08))',border:'rgba(140,190,220,0.45)',cup:'🥈'};
+  const B={tier:'BRONZ',tierEn:'bronze',color:'#e0a878',glow:'rgba(200,140,90,0.3)',bg:'linear-gradient(135deg,rgba(80,40,10,0.2),rgba(200,140,90,0.07))',border:'rgba(180,120,70,0.38)',cup:'🥉'};
+
+  const id=b.id;
+
+  // ── Dakika bazlı ders rozetleri (b_min_xxx_NNN ve b_ing_minNNN) ──
+  const minM=id.match(/(?:b_min_[a-z]+_|b_ing_min)(\d+)$/);
+  if(minM){const m=+minM[1];if(m>=1000)return P;if(m>=500)return G;if(m>=100)return S;return B;}
+
+  // ── SEVİYE ──
+  // lv30 → ALTIN (kullanıcı isteği: 30.seviye altın değil platin değil)
+  // Ama "30. seviye platin değil" dendi → lv30 ALTIN kalıyor, platin yok seviye için
+  if(id==='b_lv30')return G;
+  if(id==='b_lv28'||id==='b_lv25'||id==='b_lv20')return G;
+  if(id==='b_lv18'||id==='b_lv15'||id==='b_lv12')return S;
+  if(id==='b_lv10'||id==='b_lv7'||id==='b_lv5'||id==='b_lv3'||id==='b_lv2')return B;
+
+  // ── GENEL BOSS (0-12) ──
+  if(id==='b_boss12')return G;
+  if(id==='b_boss11'||id==='b_boss10')return G;
+  if(id==='b_boss9'||id==='b_boss8'||id==='b_boss7'||id==='b_boss6')return S;
+  if(id==='b_boss5'||id==='b_boss4'||id==='b_boss3'||id==='b_boss2'||id==='b_boss1')return B;
+
+  // ── DERS BOSS: _8→GÜMÜŞ, _10→ALTIN, _15→ALTIN, _3→BRONZ, _1→BRONZ ──
+  if(id.match(/^b_boss_[a-z]+_15$/))return G;
+  if(id.match(/^b_boss_[a-z]+_10$/))return G;
+  if(id.match(/^b_boss_[a-z]+_8$/))return S;
+  if(id.match(/^b_boss_[a-z]+_5$/))return S;
+  if(id.match(/^b_boss_[a-z]+_3$/))return B;
+  if(id.match(/^b_boss_[a-z]+_1$/))return B;
+
+  // ── BANKA (oluştur) ──
+  if(id==='b_banka50')return G;
+  if(id==='b_banka30'||id==='b_banka20')return G;
+  if(id==='b_banka15'||id==='b_banka10')return S;
+  if(id==='b_banka5'||id==='b_banka3'||id==='b_banka2'||id==='b_banka1')return B;
+
+  // ── BANKA TAMAMLA (done) ──
+  // 3 banka gümüş, 5 banka altın, 10 banka platin
+  if(id==='b_bankadone20')return P;
+  if(id==='b_bankadone10')return P;
+  if(id==='b_bankadone5')return G;
+  if(id==='b_bankadone3')return S;
+  if(id==='b_bankadone2'||id==='b_bankadone1')return B;
+
+  // ── DERS BANKA TAMAMLA: _3→GÜMÜŞ, _5→ALTIN, _10→PLATİN ──
+  if(id.match(/^b_banka_[a-z]+_10$/))return P;
+  if(id.match(/^b_banka_[a-z]+_5$/))return G;
+  if(id.match(/^b_banka_[a-z]+_3$/))return S;
+  if(id.match(/^b_banka_[a-z]+_1$/))return B;
+
+  // ── KONU TAMAMLAMA (ders bazlı: _25→BRONZ, _50→GÜMÜŞ, _75→ALTIN, _100→PLATİN) ──
+  if(id.match(/^b_topic_[a-z]+_100$/))return P;
+  if(id.match(/^b_topic_[a-z]+_75$/))return G;
+  if(id.match(/^b_topic_[a-z]+_50$/))return S;
+  if(id.match(/^b_topic_[a-z]+_25$/))return B;
+
+  // ── GENEL KONU ──
+  if(id==='b_all_topics_full')return P;
+  if(id==='b_all_topics')return G;
+
+  // ── DERS BAZLI SORU: _200→GÜMÜŞ, _500→ALTIN, _1000→PLATİN ──
+  if(id.match(/^b_q_[a-z]+_1000$/))return P;
+  if(id.match(/^b_q_[a-z]+_500$/))return G;
+  if(id.match(/^b_q_[a-z]+_200$/))return S;
+  if(id.match(/^b_q_[a-z]+_100$/))return S;
+  if(id.match(/^b_q_[a-z]+_50$/))return B;
+  if(id.match(/^b_q_[a-z]+_25$/))return B;
+  if(id.match(/^b_q_[a-z]+_10$/))return B;
+
+  // ── TOPLAM SORU ──
+  if(id==='b_q5000')return P;
+  if(id==='b_q3000'||id==='b_q2000'||id==='b_q1500'||id==='b_q1000')return G;
+  if(id==='b_q750'||id==='b_q500'||id==='b_q300'||id==='b_q200')return S;
+  if(id==='b_q150'||id==='b_q100'||id==='b_q75'||id==='b_q50'||id==='b_q25'||id==='b_q10'||id==='b_q5')return B;
+
+  // ── SERİ (streak) ──
+  if(id==='b_str365')return P;
+  if(id==='b_str180'||id==='b_str120'||id==='b_str90')return G;
+  if(id==='b_str60'||id==='b_str45'||id==='b_str30')return S;
+  if(id==='b_str21'||id==='b_str14'||id==='b_str10'||id==='b_str7'||id==='b_str5'||id==='b_str3')return B;
+  if(id==='b_streak_rec100')return P;
+  if(id==='b_streak_rec30')return G;
+
+  // ── XP ──
+  if(id==='b_xp100000'||id==='b_xp75000')return P;
+  if(id==='b_xp50000'||id==='b_xp25000'||id==='b_xp20000'||id==='b_xp15000'||id==='b_xp_milestone')return G;
+  if(id==='b_xp10000'||id==='b_xp7500'||id==='b_xp5000'||id==='b_xp3000'||id==='b_xp2000')return S;
+  if(id==='b_xp1000'||id==='b_xp500'||id==='b_xp250'||id==='b_xp100')return B;
+
+  // ── NET ──
+  if(id==='b_net_master')return P;
+  if(id==='b_net500'||id==='b_net300'||id==='b_net200')return G;
+  if(id==='b_net150'||id==='b_net100'||id==='b_net75'||id==='b_net50')return S;
+  if(id==='b_net30'||id==='b_net20'||id==='b_net15'||id==='b_net10'||id==='b_net5')return B;
+
+  // ── DENEME ──
+  if(id==='b_den50')return G;
+  if(id==='b_den30'||id==='b_den20')return G;
+  if(id==='b_den10'||id==='b_den5')return S;
+  if(id==='b_den3'||id==='b_den1'||id==='b_first_deneme')return B;
+
+  // ── TYT NET: +80→GÜMÜŞ, +100→ALTIN, +110→PLATİN (b_tyt_net80 kaldırılmadı ama tier düzeltildi) ──
+  if(id==='b_tyt_net110')return P;
+  if(id==='b_tyt_net100')return G;
+  if(id==='b_tyt_net80')return S;
+  if(id==='b_tyt_net50')return B;
+
+  // ── AYT NET: +50→GÜMÜŞ, +65→ALTIN, +75→PLATİN ──
+  if(id==='b_ayt_net75')return P;
+  if(id==='b_ayt_net65')return G;
+  if(id==='b_ayt_net50')return S;
+  if(id==='b_ayt_net30')return B;
+
+  // ── YDT: +50→GÜMÜŞ, +65→ALTIN, +75→PLATİN (b_ydt_net80 kaldırılmamış ama ALTIN'a indirildi) ──
+  if(id==='b_ydt_net75')return P;
+  if(id==='b_ydt_net80')return G;  // mantıksız rozet ama varsa altın olsun
+  if(id==='b_ydt_net65')return G;
+  if(id==='b_ydt_net50')return S;
+
+  // ── İNGİLİZCE ──
+  // Tam konu → ALTIN, konu10 → GÜMÜŞ
+  if(id==='b_ing_konu_all'||id==='b_ing_tam')return G;
+  if(id==='b_ing_konu10'||id==='b_ing_fluent')return S;
+  if(id==='b_ing_topic5'||id==='b_ing_grammar'||id==='b_ing_vocab'||id==='b_ing_ilk')return B;
+  // İngilizce soru: 200→GÜMÜŞ, 500→ALTIN, platin yok (ing_q1000 varsa platin)
+  if(id==='b_ing_q500')return G;
+  if(id==='b_ing_q200')return S;
+  if(id==='b_ing_q50')return B;
+  // İngilizce XP
+  if(id==='b_ing_xp2000')return G;
+  if(id==='b_ing_xp500')return S;
+  // YDT (İngilizce deneme): +75→PLATİN, +65→ALTIN, +50→GÜMÜŞ
+  if(id==='b_ydt_full')return G;
+  if(id==='b_ydt_ilk')return B;
+  if(id==='b_ydt_yukselen')return S;
+  if(id==='b_ydt_10deneme')return G;
+
+  // ── GÜNLÜK DAKİKA ──
+  // 3 saat(180dk)→GÜMÜŞ, 4saat(240)→GÜMÜŞ, 5saat(300)→GÜMÜŞ
+  // 6saat(360)→ALTIN, 8saat(480)→ALTIN, 10saat(600)→ALTIN
+  if(id==='b_daily600'||id==='b_daily480'||id==='b_daily360')return G;
+  if(id==='b_daily300'||id==='b_daily240'||id==='b_daily180'||id==='b_daily120')return S;
+  if(id==='b_daily90'||id==='b_daily60'||id==='b_daily30')return B;
+  if(id==='b_daily8'||id==='b_daily4')return S; // eski format (saat)
+
+  // ── HAFTALIK DAKİKA ──
+  // 15saat(900)→GÜMÜŞ .. 30saat(1800)→GÜMÜŞ
+  // 35saat(2100)→ALTIN .. 65saat(3900)→ALTIN
+  // 70saat(4200)→PLATİN .. 80saat(4800)→PLATİN
+  // Mevcut rozet IDs: b_week60(1sa), b_week180(3sa), b_week300(5sa), b_week600(10sa),
+  //                   b_week900(15sa), b_week1200(20sa), b_week1800(30sa),
+  //                   b_week2400(40sa), b_week3000(50sa)
+  // Haftalık: 15-30sa → GÜMÜŞ, 35-65sa → ALTIN, 70sa+ → PLATİN
+  // Mevcut ID'ler: 1sa,3sa,5sa,10sa,15sa,20sa,30sa,40sa,50sa
+  if(id==='b_week3000')return P;     // 50 saat → PLATİN
+  if(id==='b_week2400')return G;     // 40 saat → ALTIN
+  if(id==='b_week1800')return G;     // 30 saat → ALTIN
+  if(id==='b_week1200')return S;     // 20 saat → GÜMÜŞ
+  if(id==='b_week900')return S;      // 15 saat → GÜMÜŞ
+  if(id==='b_week600')return B;      // 10 saat → BRONZ
+  if(id==='b_week300')return B;      // 5 saat → BRONZ
+  if(id==='b_week180')return B;      // 3 saat → BRONZ
+  if(id==='b_week60')return B;       // 1 saat → BRONZ
+
+  // ── GÖREV SAYISI ──
+  if(id==='b_task500'||id==='b_task300')return G;
+  if(id==='b_task200'||id==='b_task150'||id==='b_task100'||id==='b_task75')return S;
+  if(id==='b_task50'||id==='b_task30'||id==='b_task20'||id==='b_task10'||id==='b_task5'||id==='b_task1')return B;
+
+  // ── EFSANELER / PLATİN ──
+  if(id==='b_legend'||id==='b_efsanevi'||id==='b_allboss_banka'||id==='b_net_master'||id==='b_tum_100')return P;
+  if(id==='b_all_topics_full')return P;
+
+  // ── YKS SAVAŞÇISI ve benzeri büyük başarımlar ──
+  if(id==='b_yks_savasci')return G;
+
+  // ── Pattern bazlı genel kurallar ──
+  if(id.includes('_king')||id.endsWith('_efsanesi'))return G;
+  if(id.endsWith('_efsane'))return G;
+  if(id.includes('_ustasi')||id.includes('_usta')||id.includes('_uzman'))return S;
+  if(id.includes('_fatihi'))return S;
+  if(id.includes('_baslangic')||id.endsWith('_ilk'))return B;
+
+  // ── Default ──
+  return B;
 }
+
 
 function renderBadges(){
   const ALL=[...BDGS_S,...BDGS_L];
@@ -19390,20 +19650,104 @@ async function cloudLoad({ forceLoad = false } = {}){
         const ex = p.subjects && p.subjects[sb.id];
         ms[sb.id] = { xp:0, tasks:0, questions:0, correct:0, wrong:0, topics:{}, ...(ex||{}) };
       });
-      // Rozetleri üst üste yazmak yerine UNION al — cihazlar arası kayıp önlenir
+
+      // ── AKILLI MERGE — cihaz-öncelikli alanlar ──
+      // Cloud'dan gelen veri temel alınır; AMA yerel cihazda daha güncel olan
+      // birkaç alan cloud ile EZİLMEZ, birleştirilir ya da büyük olan alınır.
+
+      // 1) Rozetler: union (hiç kaybolmaz)
       const mergedBadges=[...new Set([...(S.badges||[]),...(p.badges||[])])];
-      const mergedBadgeTimes={...(S.badgeTimes||{}),...(p.badgeTimes||{})};
-      // Timer state'i cloud'dan gelen veriyle ezme — aktif timer kaybolmasın
+      const mergedBadgeTimes={...(p.badgeTimes||{}),...(S.badgeTimes||{})};
+
+      // 2) Arkadaş listesi: iki tarafı da koru, kodu unique tut
+      const remFriends = p.friendScores || [];
+      const locFriends = S.friendScores || [];
+      const friendMap = {};
+      [...remFriends, ...locFriends].forEach(f=>{ if(f&&f.code) friendMap[f.code]=f; });
+      const mergedFriends = Object.values(friendMap);
+
+      // 3) Günlük çalışma: BUGÜN'E ait değer yerel cihazdan alınır (sunucu geride kalabilir)
+      const today = new Date().toDateString();
+      const localDailyMins = (S.dailyMinsDay === today) ? (S.dailyMins||0) : 0;
+      const cloudDailyMins = (p.dailyMinsDay === today)  ? (p.dailyMins||0)  : 0;
+      const mergedDailyMins = Math.max(localDailyMins, cloudDailyMins);
+      const mergedDailyMinsDay = (mergedDailyMins > 0) ? today : (p.dailyMinsDay || S.dailyMinsDay);
+
+      // 4) Haftalık dakika: dailyLog'dan her iki tarafın en güncel günlük kayıtları birleştirilir
+      const mergedDailyLog = { ...(p.dailyLog||{}), ...(S.dailyLog||{}) };
+      // dailyLog'daki aynı gün için max değer al
+      const allDays = new Set([...Object.keys(p.dailyLog||{}), ...Object.keys(S.dailyLog||{})]);
+      const combinedDailyLog = {};
+      allDays.forEach(day => {
+        const loc = (S.dailyLog||{})[day];
+        const rem = (p.dailyLog||{})[day];
+        if(loc && rem){
+          // Her alanda max al
+          combinedDailyLog[day] = {
+            mins: Math.max(loc.mins||0, rem.mins||0),
+            tasks: Math.max(loc.tasks||0, rem.tasks||0),
+            questions: Math.max(loc.questions||0, rem.questions||0),
+          };
+        } else {
+          combinedDailyLog[day] = loc || rem;
+        }
+      });
+      // weekTotalMins: log'dan yeniden hesapla
+      let mergedWeekTotal = p.weekTotalMins||0;
+      const weekResetDay = (p.weekResetDay!=null)?p.weekResetDay:(S.weekResetDay!=null?S.weekResetDay:1);
+      try{
+        const now=new Date();now.setHours(0,0,0,0);
+        const diff=(now.getDay()-weekResetDay+7)%7;
+        const ws=new Date(now);ws.setDate(now.getDate()-diff);
+        let logWeekTotal=0;
+        for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);const dl=combinedDailyLog[d.toDateString()];if(dl)logWeekTotal+=(dl.mins||0);}
+        mergedWeekTotal=Math.max(mergedWeekTotal,logWeekTotal,S.weekTotalMins||0);
+      }catch(_){}
+
+      // 5) totalMinutes: büyük olan kazanır
+      const mergedTotalMins = Math.max(p.totalMinutes||0, S.totalMinutes||0);
+
+      // 6) Avatar: cloud'dan gelen asıl doğru değerdir (son kaydedilen cihaz kazanır)
+      //    AMA yerel zaten cloud'dakinden daha yeni ise (cloudSave henüz çalışmamış),
+      //    yerel'i koru. Bunu anlamak için xp eşitliğini kullanıyoruz:
+      //    Eğer yerel XP == cloud XP ise aynı oturumda olabiliriz → yerel avatar koru
+      const useLocalAvatar = !forceLoad && (S.xp||0) > 0 && (S.xp||0) === (p.xp||0);
+      const mergedAvatar  = useLocalAvatar ? (S.avatarEmoji||p.avatarEmoji||'⚔️') : (p.avatarEmoji||S.avatarEmoji||'⚔️');
+      const mergedFrame   = useLocalAvatar ? (S.avatarFrame||p.avatarFrame||'default') : (p.avatarFrame||S.avatarFrame||'default');
+
+      // 7) Timer state: aktif timer varsa yerel'i koru
       const _activeTimer={timerRunning:S.timerRunning,timerStartTs:S.timerStartTs,timerBaseSecs:S.timerBaseSecs,timerSecs:S.timerSecs};
-      S = { ...S, ...p, subjects: ms, badges: mergedBadges, badgeTimes: mergedBadgeTimes };
-      if(_activeTimer.timerRunning) Object.assign(S,_activeTimer); // aktif timer'ı koru
+
+      // ── Merge uygula ──
+      S = {
+        ...S,
+        ...p,
+        subjects: ms,
+        badges: mergedBadges,
+        badgeTimes: mergedBadgeTimes,
+        friendScores: mergedFriends,
+        dailyMins: mergedDailyMins,
+        dailyMinsDay: mergedDailyMinsDay,
+        dailyLog: combinedDailyLog,
+        weekTotalMins: mergedWeekTotal,
+        totalMinutes: mergedTotalMins,
+        avatarEmoji: mergedAvatar,
+        avatarFrame: mergedFrame,
+        weekResetDay: weekResetDay,
+      };
+      if(_activeTimer.timerRunning) Object.assign(S,_activeTimer);
       if(!S.unis||!S.unis.length) S.unis = [...DEF_UNIS.map(u=>({...u,depts:[],selDept:-1,photo:null}))];
       _restorePhotos();
-      // Cloud yüklemesinden gelen verilerle kazanılmış rozetleri popup olmadan işaretle
-      badgeQueue=[];  // eski kuyruk temizle — yanlış zamanlama önlenir
+      // Merge sonrası tutarlılığı garantile
+      if(typeof repairWeekData==='function') repairWeekData();
+      if(typeof recalcSubjectStatsFromLog==='function') recalcSubjectStatsFromLog();
+      // Rozet kuyruğunu temizle — yanlış zamanlama önlenir
+      badgeQueue=[];
       badgeShowing=false;
       chkBdgsSilent();
       save();
+      // Merge sonrası cloud'u da güncelle (birleştirilmiş veriyi geri yaz)
+      setTimeout(()=>cloudSave(), 2000);
       return true;
     }
     return false;
@@ -19451,9 +19795,31 @@ window.addEventListener('storage', function(e){
   try{
     const remote=JSON.parse(e.newValue);
     if(!remote||typeof remote!=='object') return;
-    // Diğer sekme daha fazla XP'ye sahipse verileri al
+    // Diğer sekme daha fazla XP'ye sahipse verileri al — akıllı merge
     if((remote.xp||0)>(S.xp||0)){
-      S={...S,...remote};
+      const today=new Date().toDateString();
+      const locDailyMins=(S.dailyMinsDay===today)?(S.dailyMins||0):0;
+      const remDailyMins=(remote.dailyMinsDay===today)?(remote.dailyMins||0):0;
+      // Arkadaş listesini birleştir
+      const fMap={};
+      [...(S.friendScores||[]),...(remote.friendScores||[])].forEach(f=>{if(f&&f.code)fMap[f.code]=f;});
+      // dailyLog'u birleştir
+      const allDays=new Set([...Object.keys(S.dailyLog||{}),...Object.keys(remote.dailyLog||{})]);
+      const cLog={};
+      allDays.forEach(day=>{
+        const l=(S.dailyLog||{})[day];const r=(remote.dailyLog||{})[day];
+        if(l&&r)cLog[day]={mins:Math.max(l.mins||0,r.mins||0),tasks:Math.max(l.tasks||0,r.tasks||0),questions:Math.max(l.questions||0,r.questions||0)};
+        else cLog[day]=l||r;
+      });
+      S={...S,...remote,
+        dailyMins:Math.max(locDailyMins,remDailyMins),
+        dailyMinsDay:today,
+        dailyLog:cLog,
+        weekTotalMins:Math.max(S.weekTotalMins||0,remote.weekTotalMins||0),
+        totalMinutes:Math.max(S.totalMinutes||0,remote.totalMinutes||0),
+        friendScores:Object.values(fMap),
+        badges:[...new Set([...(S.badges||[]),...(remote.badges||[])])],
+      };
       if(typeof _restorePhotos==='function') _restorePhotos();
       if(typeof renderAll==='function') renderAll();
     }
