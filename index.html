@@ -4702,6 +4702,43 @@ document.addEventListener('visibilitychange',function(){
     timerInterval=setInterval(_timerTick,1000);
     updateTimerDOM();
   }
+  // Sayfa arka plana geçince debounce beklemeden hemen kaydet
+  if(document.visibilityState==='hidden'){
+    if(_cloudSaveTimer){clearTimeout(_cloudSaveTimer);_cloudSaveTimer=null;}
+    // cloudLoad sürerken yazma — race condition önlenir
+    if(_cloudLoadInProgress) return;
+    // cloudSave'in async body'sini doğrudan çalıştır
+    if(_fbUser&&window._fbDb&&window._fbFirestore){
+      try{
+        _extractPhotos();
+        const _data=JSON.parse(JSON.stringify(S));
+        if(_data.unis)_data.unis.forEach(u=>{delete u.photo;delete u.coverPhoto;});
+        const{doc,setDoc}=window._fbFirestore;
+        if(doc&&setDoc){
+          const _ref=doc(window._fbDb,'users',_fbUser.uid,'data','state');
+          setDoc(_ref,{state:_data,updatedAt:Date.now()}).catch(()=>{});
+        }
+      }catch(_e){}
+      finally{ _restorePhotos(); }
+    }
+  }
+});
+// Mobil tarayıcı / PWA kapanışı için ek güvence
+window.addEventListener('pagehide',function(){
+  if(_cloudLoadInProgress) return; // cloudLoad sürerken yazma
+  if(_fbUser&&window._fbDb&&window._fbFirestore){
+    try{
+      _extractPhotos();
+      const _data=JSON.parse(JSON.stringify(S));
+      if(_data.unis)_data.unis.forEach(u=>{delete u.photo;delete u.coverPhoto;});
+      const{doc,setDoc}=window._fbFirestore;
+      if(doc&&setDoc){
+        const _ref=doc(window._fbDb,'users',_fbUser.uid,'data','state');
+        setDoc(_ref,{state:_data,updatedAt:Date.now()}).catch(()=>{});
+      }
+    }catch(_e){}
+    finally{ _restorePhotos(); }
+  }
 });
 
 function renderHome(){
@@ -6931,24 +6968,30 @@ let fbConnected=false,fbPollInterval=null;
 
 // Her kullanıcının kendi bin'i var, binId localStorage'da tutulur
 // Paylaşılan kod = friendCode, bin ID = ayrı tutulur
+let _getMyBinIdPromise = null; // race condition koruması — paralel çağrılarda tek bin oluşturulsun
 
 async function getMyBinId(){
   let binId=localStorage.getItem('jb_mybin');
   if(binId)return binId;
-  // Yeni bin oluştur
-  try{
-    const r=await fetch(`${JB_BASE}/b`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY,'X-Bin-Private':'false'},
-      body:JSON.stringify({code:S.friendCode,xp:0,name:S.myName||'YKS Savaşçısı',ts:0})
-    });
-    if(r.ok){
-      const d=await r.json();
-      binId=d.metadata?.id;
-      if(binId){localStorage.setItem('jb_mybin',binId);return binId;}
-    }
-  }catch(e){}
-  return null;
+  // Uçuşta başka bir çağrı varsa onu bekle — çift bin oluşmasını önle
+  if(_getMyBinIdPromise) return _getMyBinIdPromise;
+  _getMyBinIdPromise = (async()=>{
+    try{
+      const r=await fetch(`${JB_BASE}/b`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY,'X-Bin-Private':'false'},
+        body:JSON.stringify({code:S.friendCode,xp:0,name:S.myName||'YKS Savaşçısı',ts:0})
+      });
+      if(r.ok){
+        const d=await r.json();
+        const newId=d.metadata?.id;
+        if(newId){localStorage.setItem('jb_mybin',newId);return newId;}
+      }
+    }catch(e){}
+    return null;
+  })();
+  try{ return await _getMyBinIdPromise; }
+  finally{ _getMyBinIdPromise=null; }
 }
 
 // Arkadaşın bin ID'sini bul — kod paylaşımında binId de gönderilir
@@ -7907,12 +7950,60 @@ function addFriend(){
   toast(`${name} eklendi! Veriler yükleniyor... 🔄`);
 }
 function removeFriend(code){S.friendScores=(S.friendScores||[]).filter(f=>f.code!==code);save();renderPlan();}
+// ── Toplu arkadaş isteği yeniden gönder (veri kaybı kurtarma) ──
+async function bulkResendFriendRequests(btn){
+  if(!_fbUser||!window._fbDb){toast('Giriş yapmalısın!');return;}
+  // Leaderboard'dan tüm kullanıcıları çek
+  const entries = await fetchGlobalLb().catch(()=>[]);
+  if(!entries||!entries.length){toast('Leaderboard yüklenemedi, tekrar dene.');return;}
+  // Mevcut friendScores'da UID veya code bazında eşleşen kişileri bul
+  const existing = S.friendScores||[];
+  const existingUids = new Set(existing.map(f=>f.uid||f.code||f.binId).filter(Boolean));
+  // Kendimizi çıkar
+  const targets = entries.filter(e=>
+    e.uid && e.uid !== _fbUser.uid && existingUids.has(e.uid)
+  );
+  if(!targets.length){
+    // Hiç eşleşme yoksa — hepsine gönder seçeneği sunma, sadece bilgi ver
+    toast('Listende kayıtlı arkadaş bulunamadı. Leaderboard\'dan tek tek ➕ butonuna bas.');
+    return;
+  }
+  if(btn){btn.disabled=true;btn.textContent=`⏳ ${targets.length} kişiye gönderiliyor...`;}
+  let sent=0;
+  const {doc,setDoc}=window._fbFirestore;
+  for(const e of targets){
+    try{
+      const reqRef=doc(window._fbDb,'friendRequests',e.uid,'requests',_fbUser.uid);
+      await setDoc(reqRef,{
+        fromUid:_fbUser.uid,
+        fromName:S.myName||_fbUser.displayName||'YKS Savaşçısı',
+        fromXp:S.xp,fromLevel:getLvl(S.xp),fromStreak:S.streak||0,
+        fromCode:S.friendCode||'',fromBinId:localStorage.getItem('jb_mybin')||'',
+        ts:Date.now(),recovery:true
+      });
+      sent++;
+    }catch(e2){}
+  }
+  toast(`✅ ${sent} eski arkadaşa yeniden istek gönderildi! Onlar kabul edince liste geri gelir.`);
+  if(btn){btn.disabled=false;btn.textContent='✅ Gönderildi!';}
+  const sec=document.getElementById('friend-recovery-section');
+  if(sec)sec.style.display='none';
+}
+
+
 
 // ═══════════════════ ARKADAŞ İSTEĞİ SİSTEMİ ═══════════════════
-async function sendFriendRequest(targetUid, targetName, targetXp, targetLevel, targetStreak){
+async function sendFriendRequest(targetUid, targetName, targetXp, targetLevel, targetStreak, forceResend){
   if(!_fbUser||!window._fbDb){toast('Arkadaş isteği göndermek için giriş yapmalısın!');return;}
   if(!targetUid){toast('Bu kullanıcıya istek gönderilemedi.');return;}
-  if((S.friendScores||[]).some(f=>f.code===targetUid)){toast('Bu kişi zaten arkadaşın!');return;}
+  if(targetUid===_fbUser.uid){toast('Kendine istek gönderemezsin!');return;}
+  // Zaten arkadaş kontrolü — forceResend=true ile bypass edilir (kaybedilen arkadaşları kurtarmak için)
+  if(!forceResend){
+    const alreadyInList=(S.friendScores||[]).some(f=>
+      f.uid===targetUid||(f.code&&f.code===targetUid)||(f.binId&&f.binId===targetUid)
+    );
+    if(alreadyInList){toast('Bu kişi zaten arkadaşın! Leaderboard\'dan 🔄 ile yeniden gönderebilirsin.');return;}
+  }
   try{
     const {doc,setDoc}=window._fbFirestore;
     const reqRef=doc(window._fbDb,'friendRequests',targetUid,'requests',_fbUser.uid);
@@ -7973,7 +8064,7 @@ async function acceptFriendRequest(reqUid,name,xp,level,streak,code,binId){
     if(!S.friendScores)S.friendScores=[];
     const fc=code||reqUid;
     if(!S.friendScores.find(f=>f.code===fc)){
-      S.friendScores.push({name,code:fc,binId,xp,lvl:level,streak,online:false});
+      S.friendScores.push({name,uid:reqUid,code:fc,binId,xp,lvl:level,streak,online:false});
     }
     S.friendRequests=(S.friendRequests||[]).filter(r=>r.id!==reqUid);
     save();
@@ -14688,7 +14779,9 @@ async function pushGlobalLb(){
       frame:S.avatarFrame||'default',
       ts:Date.now(),
       weekXp:getWeekXp(),
-      weekXpKey:curWeekKey()
+      weekXpKey:curWeekKey(),
+      uid:_fbUser.uid,
+      code:S.friendCode||''
     });
   }catch(e){console.warn('[GlobalLb push]',e);}
 }
@@ -14910,7 +15003,9 @@ async function fetchGlobalLb(){
         const f=d.fields||{};
         const str=k=>f[k]?.stringValue||'';
         const num=k=>+(f[k]?.integerValue||f[k]?.doubleValue||0);
-        return{name:str('name'),xp:num('xp'),level:num('level'),streak:num('streak'),avatar:str('avatar'),ts:num('ts')};
+        // Doküman path'inden UID çıkar: ".../leaderboard/USER_UID"
+        const docUid=(d.name||'').split('/').pop()||'';
+        return{name:str('name'),xp:num('xp'),level:num('level'),streak:num('streak'),avatar:str('avatar'),ts:num('ts'),uid:str('uid')||docUid,code:str('code')};
       }).filter(e=>e.xp>0);
     }
     const q=query(collection(window._fbDb,'leaderboard'),orderBy('xp','desc'),limit(100));
@@ -15007,10 +15102,13 @@ async function renderRanking(){
     const isMe=e.isMe||(me&&e.uid===me);
     const m=medal(rank);
     const xpBar=all[0].xp>0?Math.round((e.xp/all[0].xp)*100):0;
-    const alreadyFriend=(S.friendScores||[]).some(f=>f.code===e.uid||f.code===(e.code||''));
+    const alreadyFriend=(S.friendScores||[]).some(f=>
+      (e.uid&&(f.uid===e.uid||f.code===e.uid||f.binId===e.uid))||
+      (e.code&&f.code===e.code)
+    );
     const friendBtn=(!isMe&&e.uid&&_fbUser)?
       alreadyFriend
-        ?`<div style="font-size:10px;color:var(--gr);font-weight:800;flex-shrink:0;">✅ Arkadaş</div>`
+        ?`<span style="display:flex;align-items:center;gap:4px;flex-shrink:0;"><div style="font-size:10px;color:var(--gr);font-weight:800;">✅ Arkadaş</div><button onclick="sendFriendRequest('${e.uid}','${(e.name||'').replace(/'/g,"\\'")}',${e.xp||0},${e.level||1},${e.streak||0},true)" title="Bağlantıyı yenile — arkadaşlık kaybolduysa kullan" style="background:rgba(67,160,71,0.15);border:1px solid rgba(67,160,71,0.35);border-radius:6px;color:var(--gr);padding:3px 5px;font-size:10px;cursor:pointer;font-family:'Nunito',sans-serif;line-height:1;">🔄</button></span>`
         :`<button onclick="sendFriendRequest('${e.uid}','${(e.name||'').replace(/'/g,"\\'")}',${e.xp||0},${e.level||1},${e.streak||0})" style="background:rgba(124,77,255,0.18);border:1px solid rgba(124,77,255,0.35);border-radius:7px;color:var(--pu);padding:5px 8px;font-size:9px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0;white-space:nowrap;">➕ İstek</button>`
       :'';
     return`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:${isMe?'rgba(124,77,255,0.15)':rankBg(rank)};border:1px solid ${isMe?'rgba(124,77,255,0.5)':rankBorder(rank)};margin-bottom:5px;position:relative;overflow:hidden;">
@@ -15050,6 +15148,11 @@ async function renderRanking(){
       <div style="color:var(--t3);font-size:10px;text-align:center;padding:8px;">⏳ Yükleniyor...</div>
     </div>
   </div>`:''}
+  <div id="friend-recovery-section" style="display:none;margin-top:12px;padding:12px;background:rgba(229,57,53,0.07);border:1px solid rgba(229,57,53,0.25);border-radius:11px;">
+    <div style="font-size:11px;font-weight:900;color:#ef9a9a;margin-bottom:6px;">⚠️ Arkadaş listeniz kayboldu mu?</div>
+    <div style="font-size:10px;color:var(--t3);margin-bottom:10px;">Senkronizasyon sorunu yaşadıysanız, leaderboard'daki eski arkadaşlarınıza toplu yeniden istek gönderin. Onlar kabul edince liste geri gelir.</div>
+    <button onclick="bulkResendFriendRequests(this)" style="width:100%;padding:9px;border-radius:8px;border:none;background:rgba(229,57,53,0.25);color:#ef9a9a;font-size:11px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">🔄 Eski Arkadaşlara Yeniden İstek Gönder</button>
+  </div>
   <div style="margin-top:18px;">
     <div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">🔔 Son Etkinlikler</div>
     <div id="feed-body">
@@ -15090,6 +15193,21 @@ async function renderRanking(){
     });
   }
   startRankingAutoRefresh();
+  // Arkadaş kurtarma bölümünü göster/gizle
+  // friendScores boşsa ve leaderboard'da eşleşen UID varsa göster
+  setTimeout(()=>{
+    const sec=document.getElementById('friend-recovery-section');
+    if(!sec)return;
+    const hasFriends=(S.friendScores||[]).length>0;
+    // S.friendScores varsa ve hiç uid alanı yoksa eski format — yine göster
+    const hasUidFields=(S.friendScores||[]).some(f=>f.uid);
+    // Eğer hiç arkadaş yoksa veya uid alanı hiçbirinde yoksa kurtarma öner
+    if(!hasFriends){
+      sec.style.display='block';
+    } else {
+      sec.style.display='none';
+    }
+  },1500);
 }
 
 // ═══════════════════ AYARLAR ═══════════════════
@@ -19609,22 +19727,26 @@ console.log('✅ Uni v8 ATLAS PRO loaded —', _BD.length, 'bölüm,', Object.ke
 // 🔥 FIREBASE AUTH + CLOUD SYNC (stub — modular SDK async yükleniyor)
 let _fbUser = null;
 let _cloudSaveTimer = null;
+let _cloudLoadInProgress = false; // cloudLoad sürerken cloudSave'i engelle
 
 function cloudSave(){
   if(!_fbUser || !window._fbDb) return;
+  if(_cloudLoadInProgress) return; // cloudLoad sürerken yazma — veri ezilmesin
   clearTimeout(_cloudSaveTimer);
   _cloudSaveTimer = setTimeout(async ()=>{
     try{
+      if(!_fbUser || !window._fbDb) return; // guard: giriş durumu değişmiş olabilir
       _extractPhotos();
       const data = JSON.parse(JSON.stringify(S));
       if(data.unis) data.unis.forEach(u=>{ delete u.photo; delete u.coverPhoto; });
       const { doc, setDoc } = window._fbFirestore;
+      if(!doc || !setDoc) throw new Error('Firestore fonksiyonları hazır değil');
       const ref = doc(window._fbDb, 'users', _fbUser.uid, 'data', 'state');
       await setDoc(ref, { state: data, updatedAt: Date.now() });
-      _restorePhotos();
       // Leaderboard'u da güncelle — her kayıtta sıralamaya yaz
       pushGlobalLb().catch(()=>{});
     }catch(e){ console.warn('[Cloud Save]', e.message); }
+    finally{ _restorePhotos(); } // hata olsa da fotoğrafları geri yükle
   }, 3000);
 }
 
@@ -19635,15 +19757,19 @@ async function cloudLoad({ forceLoad = false } = {}){
     setTimeout(()=>cloudSave(),1000);
     return false;
   }
+  _cloudLoadInProgress = true;
+  _cloudLoadStartTs = Date.now(); // watchdog için başlangıç zamanı
   try{
     const { doc, getDoc } = window._fbFirestore;
     const ref = doc(window._fbDb, 'users', _fbUser.uid, 'data', 'state');
     const snap = await getDoc(ref);
-    if(!snap.exists()) return false;
+    if(!snap.exists()){ return false; }
     const remote = snap.data()?.state;
-    if(!remote) return false;
+    if(!remote){ return false; }
     // forceLoad=true ise (hesap geçişi) XP kıyaslaması yapma — cloud her zaman kazanır
-    if(forceLoad || (remote.xp||0) >= (S.xp||0)){
+    // Sadece XP farkı varsa cloud kazanır; ama arkadaş/rozet/log merge HER ZAMAN çalışır
+    const cloudHasHigherXp = (remote.xp||0) >= (S.xp||0);
+    if(forceLoad || cloudHasHigherXp){
       const p = remote;
       const ms = {};
       SUBJ.forEach(sb => {
@@ -19663,7 +19789,12 @@ async function cloudLoad({ forceLoad = false } = {}){
       const remFriends = p.friendScores || [];
       const locFriends = S.friendScores || [];
       const friendMap = {};
-      [...remFriends, ...locFriends].forEach(f=>{ if(f&&f.code) friendMap[f.code]=f; });
+      // uid || code || binId sırasıyla anahtar kullan — code'suz arkadaşlar kaybolmasın
+      [...remFriends, ...locFriends].forEach(f=>{
+        if(!f) return;
+        const key = f.uid || f.code || f.binId;
+        if(key) friendMap[key] = {...(friendMap[key]||{}), ...f}; // mevcut kaydı yerel ile zenginleştir
+      });
       const mergedFriends = Object.values(friendMap);
 
       // 3) Günlük çalışma: BUGÜN'E ait değer yerel cihazdan alınır (sunucu geride kalabilir)
@@ -19672,6 +19803,17 @@ async function cloudLoad({ forceLoad = false } = {}){
       const cloudDailyMins = (p.dailyMinsDay === today)  ? (p.dailyMins||0)  : 0;
       const mergedDailyMins = Math.max(localDailyMins, cloudDailyMins);
       const mergedDailyMinsDay = (mergedDailyMins > 0) ? today : (p.dailyMinsDay || S.dailyMinsDay);
+
+      // 3b) Ders dağılımı (dailyDist): BUGÜN'E ait yerel dağılım korunur
+      // dailyMins gibi: yerel ve bulut karşılaştırılır, toplamı büyük olan kazanır
+      const localDailyDist = (S.dailyDistDay === today) ? (S.dailyDist||{}) : {};
+      const cloudDailyDist = (p.dailyDistDay === today) ? (p.dailyDist||{}) : {};
+      const localDistTotal = Object.values(localDailyDist).reduce((a,b)=>a+(b||0),0);
+      const cloudDistTotal = Object.values(cloudDailyDist).reduce((a,b)=>a+(b||0),0);
+      // Yerel toplam >= bulut toplamı ise yerel dağılımı koru; aksi durumda bulut kazanır
+      const mergedDailyDist = (localDistTotal >= cloudDistTotal) ? localDailyDist : cloudDailyDist;
+      const mergedDailyDistTotal = Math.max(localDistTotal, cloudDistTotal);
+      const mergedDailyDistDay = (mergedDailyDistTotal > 0) ? today : (p.dailyDistDay || S.dailyDistDay || null);
 
       // 4) Haftalık dakika: dailyLog'dan her iki tarafın en güncel günlük kayıtları birleştirilir
       const mergedDailyLog = { ...(p.dailyLog||{}), ...(S.dailyLog||{}) };
@@ -19682,12 +19824,23 @@ async function cloudLoad({ forceLoad = false } = {}){
         const loc = (S.dailyLog||{})[day];
         const rem = (p.dailyLog||{})[day];
         if(loc && rem){
-          // Her alanda max al
-          combinedDailyLog[day] = {
+          // Sayısal alanlarda max al
+          const mergedEntry = {
             mins: Math.max(loc.mins||0, rem.mins||0),
             tasks: Math.max(loc.tasks||0, rem.tasks||0),
             questions: Math.max(loc.questions||0, rem.questions||0),
           };
+          // subjMins (ders bazlı dakika): her iki taraftan max al
+          const locSubj = loc.subjMins || {};
+          const remSubj = rem.subjMins || {};
+          const allSubjKeys = new Set([...Object.keys(locSubj), ...Object.keys(remSubj)]);
+          if(allSubjKeys.size > 0){
+            mergedEntry.subjMins = {};
+            allSubjKeys.forEach(sid => {
+              mergedEntry.subjMins[sid] = Math.max(locSubj[sid]||0, remSubj[sid]||0);
+            });
+          }
+          combinedDailyLog[day] = mergedEntry;
         } else {
           combinedDailyLog[day] = loc || rem;
         }
@@ -19728,6 +19881,8 @@ async function cloudLoad({ forceLoad = false } = {}){
         friendScores: mergedFriends,
         dailyMins: mergedDailyMins,
         dailyMinsDay: mergedDailyMinsDay,
+        dailyDist: mergedDailyDist,
+        dailyDistDay: mergedDailyDistDay,
         dailyLog: combinedDailyLog,
         weekTotalMins: mergedWeekTotal,
         totalMinutes: mergedTotalMins,
@@ -19750,8 +19905,41 @@ async function cloudLoad({ forceLoad = false } = {}){
       setTimeout(()=>cloudSave(), 2000);
       return true;
     }
+    // Cloud XP yetersiz olsa da arkadaş/rozet/log birleştir
+    if(!forceLoad){
+      try{
+        const p2 = remote;
+        // Arkadaş merge
+        const fMap2={};
+        [...(S.friendScores||[]),...(p2.friendScores||[])].forEach(f=>{
+          if(!f)return; const key=f.uid||f.code||f.binId; if(key)fMap2[key]={...(fMap2[key]||{}),...f};
+        });
+        // Rozet merge
+        const mb2=[...new Set([...(S.badges||[]),...(p2.badges||[])])];
+        const mbt2={...(p2.badgeTimes||{}),...(S.badgeTimes||{})};
+        // dailyLog merge
+        const allD2=new Set([...Object.keys(S.dailyLog||{}),...Object.keys(p2.dailyLog||{})]);
+        const cLog2={};
+        allD2.forEach(day=>{
+          const l=(S.dailyLog||{})[day];const r=(p2.dailyLog||{})[day];
+          if(l&&r){
+            const e2={mins:Math.max(l.mins||0,r.mins||0),tasks:Math.max(l.tasks||0,r.tasks||0),questions:Math.max(l.questions||0,r.questions||0)};
+            const ls=l.subjMins||{};const rs=r.subjMins||{};
+            const sk=new Set([...Object.keys(ls),...Object.keys(rs)]);
+            if(sk.size>0){e2.subjMins={};sk.forEach(sid=>{e2.subjMins[sid]=Math.max(ls[sid]||0,rs[sid]||0);});}
+            cLog2[day]=e2;
+          } else cLog2[day]=l||r;
+        });
+        S.friendScores=Object.values(fMap2);
+        S.badges=mb2; S.badgeTimes=mbt2;
+        S.dailyLog=cLog2;
+        S.totalMinutes=Math.max(S.totalMinutes||0,p2.totalMinutes||0);
+        save();
+      }catch(_e2){}
+    }
     return false;
   }catch(e){ console.warn('[Cloud Load]', e.message); return false; }
+  finally{ _cloudLoadInProgress=false; } // her koşulda sıfırla — flag'in sıkışmasını önle
 }
 
 window.fbGoogleLogin = async function(){
@@ -19786,7 +19974,23 @@ window.fbShowUserMenu = function(){
 };
 
 // Cloud sync: save() dokunulmadı, ayrı interval ile sync
-setInterval(()=>{ cloudSave(); pushGlobalLb&&pushGlobalLb(); }, 30000); // 30sn'de bir buluta yaz
+setInterval(()=>{ if(!_cloudLoadInProgress){ cloudSave(); pushGlobalLb&&pushGlobalLb(); } }, 30000); // 30sn'de bir buluta yaz
+
+// Güvenlik watchdog: _cloudLoadInProgress >30sn takılı kalırsa zorla sıfırla
+let _cloudLoadStartTs = 0;
+const _origCloudLoadInProgressSet = Object.getOwnPropertyDescriptor(window,'_cloudLoadInProgress');
+setInterval(()=>{
+  if(_cloudLoadInProgress){
+    const now = Date.now();
+    if(_cloudLoadStartTs && (now - _cloudLoadStartTs) > 30000){
+      console.warn('[Cloud] _cloudLoadInProgress flag >30sn takılı, zorla sıfırlanıyor.');
+      _cloudLoadInProgress = false;
+      _cloudLoadStartTs = 0;
+    }
+  } else {
+    _cloudLoadStartTs = 0;
+  }
+}, 5000);
 
 // Çoklu sekme desteği: başka sekmede veri değişirse yenile
 window.addEventListener('storage', function(e){
@@ -19800,20 +20004,35 @@ window.addEventListener('storage', function(e){
       const today=new Date().toDateString();
       const locDailyMins=(S.dailyMinsDay===today)?(S.dailyMins||0):0;
       const remDailyMins=(remote.dailyMinsDay===today)?(remote.dailyMins||0):0;
-      // Arkadaş listesini birleştir
+      // Arkadaş listesini birleştir (uid||code||binId anahtar kullan)
       const fMap={};
-      [...(S.friendScores||[]),...(remote.friendScores||[])].forEach(f=>{if(f&&f.code)fMap[f.code]=f;});
-      // dailyLog'u birleştir
+      [...(S.friendScores||[]),...(remote.friendScores||[])].forEach(f=>{
+        if(!f)return; const key=f.uid||f.code||f.binId; if(key)fMap[key]={...(fMap[key]||{}),...f};
+      });
+      // dailyLog'u birleştir (subjMins dahil)
       const allDays=new Set([...Object.keys(S.dailyLog||{}),...Object.keys(remote.dailyLog||{})]);
       const cLog={};
       allDays.forEach(day=>{
         const l=(S.dailyLog||{})[day];const r=(remote.dailyLog||{})[day];
-        if(l&&r)cLog[day]={mins:Math.max(l.mins||0,r.mins||0),tasks:Math.max(l.tasks||0,r.tasks||0),questions:Math.max(l.questions||0,r.questions||0)};
-        else cLog[day]=l||r;
+        if(l&&r){
+          const entry={mins:Math.max(l.mins||0,r.mins||0),tasks:Math.max(l.tasks||0,r.tasks||0),questions:Math.max(l.questions||0,r.questions||0)};
+          const ls=l.subjMins||{};const rs=r.subjMins||{};
+          const sk=new Set([...Object.keys(ls),...Object.keys(rs)]);
+          if(sk.size>0){entry.subjMins={};sk.forEach(sid=>{entry.subjMins[sid]=Math.max(ls[sid]||0,rs[sid]||0);});}
+          cLog[day]=entry;
+        } else cLog[day]=l||r;
       });
+      // dailyDist birleştir
+      const remDD=(remote.dailyDistDay===today)?(remote.dailyDist||{}):{};
+      const locDD=(S.dailyDistDay===today)?(S.dailyDist||{}):{};
+      const remDDtotal=Object.values(remDD).reduce((a,b)=>a+(b||0),0);
+      const locDDtotal=Object.values(locDD).reduce((a,b)=>a+(b||0),0);
+      const mergedDD=locDDtotal>=remDDtotal?locDD:remDD;
       S={...S,...remote,
         dailyMins:Math.max(locDailyMins,remDailyMins),
         dailyMinsDay:today,
+        dailyDist:mergedDD,
+        dailyDistDay:(Math.max(locDDtotal,remDDtotal)>0)?today:(remote.dailyDistDay||S.dailyDistDay||null),
         dailyLog:cLog,
         weekTotalMins:Math.max(S.weekTotalMins||0,remote.weekTotalMins||0),
         totalMinutes:Math.max(S.totalMinutes||0,remote.totalMinutes||0),
@@ -19821,6 +20040,7 @@ window.addEventListener('storage', function(e){
         badges:[...new Set([...(S.badges||[]),...(remote.badges||[])])],
       };
       if(typeof _restorePhotos==='function') _restorePhotos();
+      if(typeof save==='function') save(); // merge'i localStorage'a yaz
       if(typeof renderAll==='function') renderAll();
     }
   }catch(err){}
@@ -19906,10 +20126,8 @@ async function _loadIsolatedAccount(user){
     // Sadece bu hesabın kendi key'i varsa yükle — genel key'e düşme
     load();
   }
-  // Sosyal veriler hesaba özel — her zaman temizle
-  S.friendScores = [];
-  S.friendRequests = [];
-  save();
+  // Sosyal veriler cloudLoad'dan gelecek — erken temizleme YAPMA
+  // (erken save() + cloudSave race condition → cloud'daki arkadaşlar silinir)
   if(typeof renderAll==='function') renderAll();
   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
 
@@ -19994,7 +20212,7 @@ onAuthStateChanged(auth, async user => {
                 _fbUser = _pendingAuthUser; _pendingAuthUser = null;
                 localStorage.setItem('yks_activeUid', _fbUser.uid);
                 S = mkState(); load();
-                S.friendScores=[]; S.friendRequests=[]; save();
+                // friendScores cloudLoad'dan gelecek — erken silme + save() yapma
                 if(typeof renderAll==='function') renderAll();
                 const loaded2 = await cloudLoad({ forceLoad: true });
                 if(loaded2){ if(typeof renderAll==='function') renderAll(); }
