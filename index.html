@@ -1003,6 +1003,15 @@ const AVATAR_EMOJIS=[
   {e:'⚖️',unlockLvl:6,cat:'Sembol'},{e:'🗡️',unlockLvl:7,cat:'Sembol'},{e:'🛡️',unlockLvl:5,cat:'Sembol'},
   {e:'🏹',unlockLvl:6,cat:'Sembol'},{e:'🪄',unlockLvl:8,cat:'Sembol'},{e:'🔑',unlockLvl:4,cat:'Sembol'},
   {e:'💎',unlockLvl:9,cat:'Sembol'},{e:'💰',unlockLvl:7,cat:'Sembol'},{e:'🎲',unlockLvl:5,cat:'Sembol'},
+  // ── Karanlık Karakterler ──
+  {e:'🧛',unlockLvl:5,cat:'Karanlık'},{e:'🧟',unlockLvl:5,cat:'Karanlık'},{e:'👹',unlockLvl:6,cat:'Karanlık'},
+  {e:'👺',unlockLvl:6,cat:'Karanlık'},{e:'💀',unlockLvl:7,cat:'Karanlık'},{e:'☠️',unlockLvl:7,cat:'Karanlık'},
+  {e:'👻',unlockLvl:4,cat:'Karanlık'},{e:'🤡',unlockLvl:8,cat:'Karanlık'},{e:'👿',unlockLvl:8,cat:'Karanlık'},
+  {e:'😈',unlockLvl:6,cat:'Karanlık'},{e:'🦇',unlockLvl:7,cat:'Karanlık'},{e:'🕷️',unlockLvl:9,cat:'Karanlık'},
+  {e:'🐍',unlockLvl:8,cat:'Karanlık'},{e:'🦂',unlockLvl:9,cat:'Karanlık'},{e:'🕸️',unlockLvl:10,cat:'Karanlık'},
+  {e:'🧿',unlockLvl:11,cat:'Karanlık'},{e:'⚰️',unlockLvl:12,cat:'Karanlık'},{e:'🔮',unlockLvl:10,cat:'Karanlık'},
+  {e:'🌑',unlockLvl:9,cat:'Karanlık'},{e:'🌙',unlockLvl:8,cat:'Karanlık'},{e:'🪦',unlockLvl:13,cat:'Karanlık'},
+  {e:'🧙',unlockLvl:10,cat:'Karanlık'},{e:'🧝',unlockLvl:11,cat:'Karanlık'},{e:'🧞',unlockLvl:12,cat:'Karanlık'},
   // ── Özel ──
   {e:'👑',unlockLvl:12,cat:'Özel'},{e:'🌟',unlockLvl:13,cat:'Özel'},{e:'🏆',unlockLvl:15,cat:'Özel'},
   {e:'🔱',unlockLvl:18,cat:'Özel'},{e:'🌈',unlockLvl:20,cat:'Özel'},{e:'🌠',unlockLvl:14,cat:'Özel'},
@@ -9181,6 +9190,61 @@ function shuffleArr(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=
 
 let fQList=[]; // Bu savaştaki rastgele seçilmiş soru listesi
 
+// ═══ BOSS SES EFEKTLERİ (Web Audio API) ═══
+function playBossSound(type){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    if(type==='pain'){
+      // Boss acı çığlığı — yüksek perdeli, kesik çığlık
+      const osc1=ctx.createOscillator();
+      const osc2=ctx.createOscillator();
+      const gain=ctx.createGain();
+      const dist=ctx.createWaveShaper();
+      // Distortion curve
+      const curve=new Float32Array(256);
+      for(let i=0;i<256;i++){const x=i*2/256-1;curve[i]=x<0?-Math.pow(-x,0.4):Math.pow(x,0.4);}
+      dist.curve=curve;
+      osc1.connect(dist);osc2.connect(dist);dist.connect(gain);gain.connect(ctx.destination);
+      osc1.type='sawtooth';osc2.type='square';
+      // Pitch: starts high, drops fast — pain screech
+      osc1.frequency.setValueAtTime(900,ctx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(200,ctx.currentTime+0.4);
+      osc2.frequency.setValueAtTime(700,ctx.currentTime);
+      osc2.frequency.exponentialRampToValueAtTime(150,ctx.currentTime+0.35);
+      gain.gain.setValueAtTime(0.0,ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.55,ctx.currentTime+0.02);
+      gain.gain.setValueAtTime(0.55,ctx.currentTime+0.12);
+      gain.gain.linearRampToValueAtTime(0.0,ctx.currentTime+0.55);
+      osc1.start(ctx.currentTime);osc2.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime+0.55);osc2.stop(ctx.currentTime+0.55);
+      setTimeout(()=>ctx.close(),700);
+    } else if(type==='laugh'){
+      // Boss kötü kahkahası — düşük, titreşen, tekrarlayan
+      const laughSteps=4;
+      for(let s=0;s<laughSteps;s++){
+        const osc=ctx.createOscillator();
+        const lfo=ctx.createOscillator();
+        const lfoGain=ctx.createGain();
+        const gain=ctx.createGain();
+        lfo.connect(lfoGain);lfoGain.connect(osc.frequency);
+        osc.connect(gain);gain.connect(ctx.destination);
+        osc.type='sawtooth';lfo.type='sine';
+        const t=ctx.currentTime+s*0.18;
+        osc.frequency.setValueAtTime(180+s*15,t);
+        osc.frequency.setValueAtTime(130+s*10,t+0.12);
+        lfo.frequency.setValueAtTime(8,t);
+        lfoGain.gain.setValueAtTime(30,t);
+        gain.gain.setValueAtTime(0.0,t);
+        gain.gain.linearRampToValueAtTime(0.4,t+0.02);
+        gain.gain.linearRampToValueAtTime(0.0,t+0.15);
+        osc.start(t);lfo.start(t);
+        osc.stop(t+0.18);lfo.stop(t+0.18);
+      }
+      setTimeout(()=>ctx.close(),1200);
+    }
+  }catch(e){}
+}
+
 function startFight(idx){
   fB=idx;fQ=0;
   const boss=BOSSES.find(b=>b.id===idx)||BOSSES[idx];
@@ -9241,6 +9305,8 @@ function answerFight(chosen,correct,btn){
     fH=Math.max(0,fH-fD);
     res.innerHTML='✅ Doğru! <b style="color:#4caf50;">Boss −'+fD+' HP hasar aldı!</b>';
     res.style.color='#4caf50';
+    // Boss acı çığlığı sesi
+    playBossSound('pain');
     // Hasar animasyonu
     if(em){em.style.animation='bossDamage .5s ease-in-out';setTimeout(()=>{if(em&&fH>0)em.style.animation='bossIdle 2s ease-in-out infinite';},500);}
     // HP barı güncelle
@@ -9259,6 +9325,8 @@ function answerFight(chosen,correct,btn){
     btn.classList.add('wrong');
     res.innerHTML='❌ Yanlış! Doğru: <b style="color:#4caf50;">'+fQList[fQ].opts[correct]+'</b>';
     res.style.color='#e53935';
+    // Boss kötü kahkahası
+    playBossSound('laugh');
     if(em){em.style.animation='bossLaugh .5s ease-in-out 2';setTimeout(()=>{if(em&&fH>0)em.style.animation='bossIdle 2s ease-in-out infinite';},1100);}
   }
   res.style.display='block';
@@ -11772,6 +11840,26 @@ const BILGI_CARDS={
     {q:'Permutasyon-kombinasyon-binom?',a:'nPr=n!/(n-r)! | nCr=n!/r!(n-r)! | Binom: (x+y)n=Sigma C(n,k)*x(n-k)*yk | Pascal ucgeni: her eleman ustundeki ikisinin toplami'},
     {q:'Cemberde acilar?',a:'Merkez acisi = yay acisinin 2 kati | Cevre aci = merkez acinin yarisi | Kiris-teget acisi = karsisindaki yayin yarisi'},
     {q:'Uzayda dogru ve duzlem?',a:'Dogrunun yonu vektoru: (a,b,c) | Duzlem: ax+by+cz+d=0 | Noktadan duzleme uzaklik: |ax0+by0+cz0+d|/kok(a2+b2+c2)'},
+  ],
+  ing:[
+    {q:'Tense Overview — Present Tenses?',a:'Simple Present: do/does — habits (I study every day) | Present Continuous: am/is/are+V-ing — now (She is reading) | Present Perfect: have/has+PP — experience/result (I have seen it)'},
+    {q:'Past Tenses — which to use?',a:'Simple Past: finished action (I went) | Past Continuous: interrupted action (I was sleeping when…) | Past Perfect: before another past event (I had eaten before he arrived)'},
+    {q:'Future Tenses — will vs going to?',a:'Will: spontaneous decision / prediction (It will rain) | Going to: planned intention (I am going to study tonight) | Present Continuous: fixed future plan (I am flying tomorrow)'},
+    {q:'Modal Verbs — must vs have to?',a:'Must: personal obligation / strong advice (You must study!) | Have to: external obligation (I have to wear uniform) | Should: advice (You should eat healthily) | Can/Could: ability/permission'},
+    {q:'Passive Voice — how to form?',a:'be + past participle | Simple: is/are/was/were + PP | Perfect: has/have been + PP | Continuous: is/are being + PP | Example: "The book was written by her."'},
+    {q:'Conditionals — 4 types?',a:'0: If+present, present (facts) | 1st: If+present, will (possible future) | 2nd: If+past, would (unreal present) | 3rd: If+past perfect, would have+PP (unreal past)'},
+    {q:'Relative Clauses — who/which/that/whose?',a:'Who: for people | Which: for things/animals | That: for people or things (restrictive) | Whose: possession | Where: place | When: time | Comma = non-restrictive (extra info)'},
+    {q:'Reported Speech — key changes?',a:'Present→Past | Will→Would | Can→Could | Must→Had to | "I am" → He said he was | Today→That day | Now→Then | Here→There | This→That | Tomorrow→The next day'},
+    {q:'Gerund vs Infinitive — common verbs?',a:'Gerund only: enjoy, finish, avoid, mind, suggest, consider, deny | Infinitive only: want, hope, decide, promise, plan, offer, manage | Both (same): like, love, hate, begin, continue'},
+    {q:'Prepositions of Time — at/in/on?',a:'At: exact time (at 5pm, at noon, at night) | On: days/dates (on Monday, on 3rd May) | In: months/years/seasons/periods (in June, in 2024, in the morning, in winter)'},
+    {q:'Articles — a/an/the?',a:'A/An: first mention / one of many (a dog, an apple) | The: specific / already known / unique (the sun, the dog I saw) | No article: plural/uncountable generalities (Dogs are loyal)'},
+    {q:'Common Vocabulary — YKS collocations?',a:'Pay attention to | Take part in | Make progress | Run out of | Come up with | Look forward to | Deal with | Get rid of | Bring up | Carry out | Give up | Stand for'},
+    {q:'Reading Strategies for YKS?',a:'1) Read questions first | 2) Skim for gist (30 sec) | 3) Scan for keywords | 4) Context clues for vocabulary | 5) Paragraph topic = first/last sentence | 6) Eliminate wrong options'},
+    {q:'Discourse Markers — linking words?',a:'Contrast: however, although, despite, on the other hand | Addition: moreover, furthermore, in addition | Cause: because, since, as, due to | Result: therefore, thus, consequently | Example: for instance, such as'},
+    {q:'YKS Grammar — Common Trap Topics?',a:'Subject-verb agreement (Everyone IS) | Stative verbs not in continuous (I know, not "I am knowing") | Inversion after negatives (Hardly had she…) | Subjunctive after suggest/recommend (suggest that he GO)'},
+    {q:'Word Formation — prefixes/suffixes?',a:'Un-/in-/im-/ir-: negative | -tion/-sion: noun | -ful/-less: adjective | -ly: adverb | -ize/-ise: verb | -ment/-ness/-ity: noun | Re-: again | Pre-: before | Over-: excess | Mis-: wrongly'},
+    {q:'Reading — Inference Questions?',a:'Words: "implies, suggests, infers, can be concluded" | Look beyond literal meaning | Use surrounding context | Eliminate clearly stated facts (not inference) | Match tone/attitude of author'},
+    {q:'Conjunctions — subordinating vs coordinating?',a:'Coordinating (FANBOYS): For/And/Nor/But/Or/Yet/So — join equal parts | Subordinating: because, although, when, if, since, unless, whereas — join main+dependent clause'},
   ],
 };
 
@@ -15657,11 +15745,23 @@ renderStats=function(){
 // 5. ROZETLER SEKMESİ — PlayStation Trophy Tarzı
 // ══════════════════════════════════════════════════
 function getTrophyMeta(b){
-  if(['b_legend','b_efsanevi','b_allboss_banka','b_net_master','b_xp100000','b_q5000','b_str365','b_tum_100','b_all_topics_full'].includes(b.id))
+  // Minute-based badges: bronz<100dk, gümüş>=100dk, altın>=500dk, platin>=1000dk
+  const minMatch=b.id.match(/(?:b_min_[a-z]+_|b_ing_min)(\d+)$/);
+  if(minMatch){
+    const mins=parseInt(minMatch[1]);
+    if(mins>=1000)return{tier:'PLATİN',tierEn:'platinum',color:'#d4b4ff',glow:'rgba(180,100,255,0.35)',bg:'linear-gradient(135deg,rgba(100,0,180,0.18),rgba(160,80,255,0.06))',border:'rgba(160,80,255,0.35)',cup:'🏆'};
+    if(mins>=500)return{tier:'ALTIN',tierEn:'gold',color:'#ffd97d',glow:'rgba(245,166,35,0.3)',bg:'linear-gradient(135deg,rgba(80,50,0,0.2),rgba(245,166,35,0.06))',border:'rgba(245,166,35,0.35)',cup:'🥇'};
+    if(mins>=100)return{tier:'GÜMÜŞ',tierEn:'silver',color:'#b8d0e8',glow:'rgba(160,200,230,0.25)',bg:'linear-gradient(135deg,rgba(20,50,80,0.2),rgba(100,160,210,0.06))',border:'rgba(120,170,210,0.3)',cup:'🥈'};
+    return{tier:'BRONZ',tierEn:'bronze',color:'#d4956a',glow:'rgba(180,120,80,0.2)',bg:'linear-gradient(135deg,rgba(60,30,10,0.15),rgba(180,120,80,0.05))',border:'rgba(160,100,60,0.25)',cup:'🥉'};
+  }
+  // PLATİN: En zor başarımlar
+  if(['b_legend','b_efsanevi','b_allboss_banka','b_net_master','b_xp100000','b_xp75000','b_q5000','b_str365','b_tum_100','b_all_topics_full','b_streak_rec100'].includes(b.id))
     return{tier:'PLATİN',tierEn:'platinum',color:'#d4b4ff',glow:'rgba(180,100,255,0.35)',bg:'linear-gradient(135deg,rgba(100,0,180,0.18),rgba(160,80,255,0.06))',border:'rgba(160,80,255,0.35)',cup:'🏆'};
-  if(['b_lv30','b_lv25','b_lv20','b_str180','b_str120','b_str90','b_xp50000','b_xp25000','b_q3000','b_q2000','b_boss12','b_tyt_net110','b_ayt_net75','b_yks_savasci'].includes(b.id)||b.id.includes('_king')||b.id.endsWith('_efsane')||b.id.endsWith('_efsanesi'))
+  // ALTIN: Yüksek başarımlar
+  if(['b_lv30','b_lv28','b_lv25','b_lv20','b_str180','b_str120','b_str90','b_xp50000','b_xp25000','b_xp20000','b_xp15000','b_xp_milestone','b_q3000','b_q2000','b_q1500','b_boss12','b_boss11','b_tyt_net110','b_ayt_net75','b_yks_savasci','b_den30','b_den50','b_streak_rec30'].includes(b.id)||b.id.includes('_king')||b.id.endsWith('_efsane')||b.id.endsWith('_efsanesi'))
     return{tier:'ALTIN',tierEn:'gold',color:'#ffd97d',glow:'rgba(245,166,35,0.3)',bg:'linear-gradient(135deg,rgba(80,50,0,0.2),rgba(245,166,35,0.06))',border:'rgba(245,166,35,0.35)',cup:'🥇'};
-  if(['b_lv15','b_lv12','b_str60','b_str45','b_str30','b_xp10000','b_xp7500','b_q1000','b_q750','b_boss11','b_boss10','b_boss9','b_boss8','b_tyt_net100','b_ayt_net65'].includes(b.id)||b.id.includes('_usta')||b.id.includes('_uzman'))
+  // GÜMÜŞ: Orta-üst başarımlar
+  if(['b_lv18','b_lv15','b_lv12','b_str60','b_str45','b_str30','b_xp10000','b_xp7500','b_xp5000','b_q1000','b_q750','b_boss10','b_boss9','b_boss8','b_tyt_net100','b_ayt_net65','b_den10','b_den20'].includes(b.id)||b.id.includes('_usta')||b.id.includes('_uzman'))
     return{tier:'GÜMÜŞ',tierEn:'silver',color:'#b8d0e8',glow:'rgba(160,200,230,0.25)',bg:'linear-gradient(135deg,rgba(20,50,80,0.2),rgba(100,160,210,0.06))',border:'rgba(120,170,210,0.3)',cup:'🥈'};
   return{tier:'BRONZ',tierEn:'bronze',color:'#d4956a',glow:'rgba(180,120,80,0.2)',bg:'linear-gradient(135deg,rgba(60,30,10,0.15),rgba(180,120,80,0.05))',border:'rgba(160,100,60,0.25)',cup:'🥉'};
 }
@@ -19807,8 +19907,12 @@ function buySkill(id){
 function openAvatarOv(catFilter){
   const inner=document.getElementById('ov-avatar-inner');
   const l=getLvl(S.xp);
-  const curEmoji=S.avatarEmoji||'⚔️';
-  const curFrame=S.avatarFrame||'default';
+  // Use temp state if already opened, else load from S
+  if(!window._avTemp||catFilter){
+    window._avTemp={emoji:S.avatarEmoji||'⚔️',frame:S.avatarFrame||'default'};
+  }
+  const curEmoji=window._avTemp.emoji;
+  const curFrame=window._avTemp.frame;
   const curName=S.myName||'YKS Savaşçısı';
   const cat=catFilter||S._avCat||'Karakter';
   S._avCat=cat;
@@ -19819,7 +19923,8 @@ function openAvatarOv(catFilter){
   const emojiGrid=AVATAR_EMOJIS.filter(a=>a.cat===cat).map(a=>{
     const unlocked=l>=a.unlockLvl;
     const sel=a.e===curEmoji;
-    return`<button onclick="${unlocked?`selectEmoji('${a.e}')`:`toast('Seviye ${a.unlockLvl} gerekli! 🔒')`}"
+    return`<button data-av-emoji="${encodeURIComponent(a.e)}" data-av-unlock="${a.unlockLvl}" data-av-ok="${unlocked}"
+      onclick="handleEmojiSelect(this)"
       style="aspect-ratio:1;border-radius:12px;border:2px solid ${sel?'var(--gold)':'rgba(255,255,255,0.07)'};
       background:${sel?'rgba(245,166,35,0.2)':'rgba(255,255,255,0.04)'};font-size:26px;cursor:pointer;
       display:flex;align-items:center;justify-content:center;position:relative;
@@ -19829,11 +19934,11 @@ function openAvatarOv(catFilter){
       ${sel?`<div style="position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--gold);"></div>`:''}
     </button>`;
   }).join('');
-
   const frameGrid=AVATAR_FRAMES.map(f=>{
     const unlocked=l>=f.unlockLvl;
     const sel=f.id===curFrame;
-    return`<button onclick="${unlocked?`selectFrame('${f.id}')`:`toast('Seviye ${f.unlockLvl} gerekli! 🔒')`}"
+    return`<button data-av-frame="${f.id}" data-av-unlock="${f.unlockLvl}" data-av-ok="${unlocked}"
+      onclick="handleFrameSelect(this)"
       style="padding:8px 10px;border-radius:11px;border:2px solid ${sel?'var(--gold)':'rgba(255,255,255,0.07)'};
       background:${sel?'rgba(245,166,35,0.1)':'rgba(255,255,255,0.03)'};cursor:pointer;opacity:${unlocked?1:0.35};
       display:flex;align-items:center;gap:9px;text-align:left;transition:all .15s;${sel?'box-shadow:0 0 10px rgba(245,166,35,0.3);':''}">
@@ -19846,28 +19951,35 @@ function openAvatarOv(catFilter){
     </button>`;
   }).join('');
 
+  const hasChanges=curEmoji!==(S.avatarEmoji||'⚔️')||curFrame!==(S.avatarFrame||'default');
+
   inner.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
       <div>
         <div style="font-size:16px;font-weight:900;">🎭 Karakter</div>
         <div style="font-size:9px;color:var(--t3);margin-top:1px;">Seviye ${l} · Avatar düzenle</div>
       </div>
-      <button onclick="closeOv('ov-avatar');renderHome();" style="background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--t2);font-size:15px;cursor:pointer;font-family:'Nunito',sans-serif;">✕</button>
+      <button onclick="closeOv('ov-avatar');window._avTemp=null;renderHome();" style="background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--t2);font-size:15px;cursor:pointer;font-family:'Nunito',sans-serif;">✕</button>
     </div>
 
-    <!-- Önizleme kartı -->
-    <div style="background:linear-gradient(135deg,rgba(124,77,255,0.15),rgba(224,64,251,0.1));border:1px solid rgba(124,77,255,0.25);border-radius:16px;padding:16px;margin-bottom:18px;display:flex;align-items:center;gap:16px;">
-      <div style="position:relative;flex-shrink:0;">
-        <div id="av-preview-frame" style="width:76px;height:76px;border-radius:50%;background:${frame.gradient};display:flex;align-items:center;justify-content:center;font-size:38px;border:3px solid rgba(255,255,255,0.2);box-shadow:0 0 22px ${frame.glow},0 4px 16px rgba(0,0,0,0.4);">
-          <span id="av-preview">${curEmoji}</span>
+    <!-- Önizleme kartı + KAYDET butonu -->
+    <div style="background:linear-gradient(135deg,rgba(124,77,255,0.15),rgba(224,64,251,0.1));border:1px solid rgba(124,77,255,0.25);border-radius:16px;padding:16px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:${hasChanges?'12px':'0'};">
+        <div style="position:relative;flex-shrink:0;">
+          <div id="av-preview-frame" style="width:76px;height:76px;border-radius:50%;background:${frame.gradient};display:flex;align-items:center;justify-content:center;font-size:38px;border:3px solid rgba(255,255,255,0.2);box-shadow:0 0 22px ${frame.glow},0 4px 16px rgba(0,0,0,0.4);">
+            <span id="av-preview">${curEmoji}</span>
+          </div>
+          <div style="position:absolute;bottom:-2px;right:-2px;background:var(--gold);color:#1a1a2e;font-size:8px;font-weight:900;border-radius:20px;padding:2px 6px;">Sv ${l}</div>
         </div>
-        <div style="position:absolute;bottom:-2px;right:-2px;background:var(--gold);color:#1a1a2e;font-size:8px;font-weight:900;border-radius:20px;padding:2px 6px;">Sv ${l}</div>
+        <div style="flex:1;min-width:0;">
+          <div id="av-name-display" style="font-size:15px;font-weight:900;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${curName}</div>
+          <div style="font-size:9px;color:var(--t3);margin-bottom:8px;">${frame.name} çerçevesi</div>
+          <button onclick="editAvatarName()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:5px 12px;font-size:9px;font-weight:800;color:var(--t2);cursor:pointer;font-family:'Nunito',sans-serif;">✏️ İsim Değiştir</button>
+        </div>
       </div>
-      <div style="flex:1;min-width:0;">
-        <div id="av-name-display" style="font-size:15px;font-weight:900;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${curName}</div>
-        <div style="font-size:9px;color:var(--t3);margin-bottom:8px;">${frame.name} çerçevesi</div>
-        <button onclick="editAvatarName()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:5px 12px;font-size:9px;font-weight:800;color:var(--t2);cursor:pointer;font-family:'Nunito',sans-serif;">✏️ İsim Değiştir</button>
-      </div>
+      <button onclick="saveAvatarSelection()" style="width:100%;padding:11px;background:linear-gradient(135deg,var(--pu),var(--pk));border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;box-shadow:0 4px 16px rgba(124,77,255,0.4);letter-spacing:.3px;display:${hasChanges?'block':'none'}">
+        💾 Kaydet
+      </button>
     </div>
 
     <!-- Emoji seçimi -->
@@ -19881,9 +19993,12 @@ function openAvatarOv(catFilter){
 
     <!-- Çerçeve seçimi -->
     <div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:9px;">🖼 Çerçeve Seç</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;">
       ${frameGrid}
     </div>
+    <button onclick="saveAvatarSelection()" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--pu),var(--pk));border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;box-shadow:0 4px 20px rgba(124,77,255,0.5);margin-bottom:4px;display:${hasChanges?'block':'none'}">
+      💾 Kaydet
+    </button>
   `;
   showOv('ov-avatar');
 }
@@ -19928,11 +20043,79 @@ async function saveAvatarName(){
   openAvatarOv(S._avCat);
 }
 
+function _updateAvatarSaveBtns(){
+  const curEmoji=window._avTemp?window._avTemp.emoji:(S.avatarEmoji||'⚔️');
+  const curFrame=window._avTemp?window._avTemp.frame:(S.avatarFrame||'default');
+  const hasChanges=curEmoji!==(S.avatarEmoji||'⚔️')||curFrame!==(S.avatarFrame||'default');
+  document.querySelectorAll('#ov-avatar-inner button[onclick="saveAvatarSelection()"]').forEach(btn=>{
+    btn.style.display=hasChanges?'block':'none';
+  });
+}
+function handleFrameSelect(btn){
+  const ok=btn.getAttribute('data-av-ok')==='true';
+  const lv=btn.getAttribute('data-av-unlock');
+  if(!ok){toast('Seviye '+lv+' gerekli! 🔒');return;}
+  const id=btn.getAttribute('data-av-frame');
+  selectFrameTemp(id);
+}
+function handleEmojiSelect(btn){
+  const ok=btn.getAttribute('data-av-ok')==='true';
+  const lv=btn.getAttribute('data-av-unlock');
+  if(!ok){toast('Seviye '+lv+' gerekli! 🔒');return;}
+  const e=decodeURIComponent(btn.getAttribute('data-av-emoji'));
+  selectEmojiTemp(e);
+}
+function selectEmojiTemp(e){
+  if(!window._avTemp)window._avTemp={emoji:S.avatarEmoji||'⚔️',frame:S.avatarFrame||'default'};
+  window._avTemp.emoji=e;
+  // Update preview span only
+  const prev=document.getElementById('av-preview');
+  if(prev)prev.textContent=e;
+  // Update emoji button highlights without full re-render
+  document.querySelectorAll('[data-av-emoji]').forEach(btn=>{
+    const btnEmoji=decodeURIComponent(btn.getAttribute('data-av-emoji'));
+    const sel=btnEmoji===e;
+    btn.style.border='2px solid '+(sel?'var(--gold)':'rgba(255,255,255,0.07)');
+    btn.style.background=sel?'rgba(245,166,35,0.2)':'rgba(255,255,255,0.04)';
+    btn.style.boxShadow=sel?'0 0 10px rgba(245,166,35,0.4)':'';
+    // update dot indicator
+    let dot=btn.querySelector('.sel-dot');
+    if(sel&&!dot){dot=document.createElement('div');dot.className='sel-dot';dot.style.cssText='position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--gold);pointer-events:none;';btn.appendChild(dot);}
+    else if(!sel&&dot)dot.remove();
+  });
+  // Show/hide save button
+  _updateAvatarSaveBtns();
+}
+function selectFrameTemp(id){
+  if(!window._avTemp)window._avTemp={emoji:S.avatarEmoji||'⚔️',frame:S.avatarFrame||'default'};
+  window._avTemp.frame=id;
+  // Update frame highlight
+  document.querySelectorAll('[data-av-frame]').forEach(btn=>{
+    const sel=btn.getAttribute('data-av-frame')===id;
+    btn.style.border='2px solid '+(sel?'var(--gold)':'rgba(255,255,255,0.07)');
+    btn.style.background=sel?'rgba(245,166,35,0.1)':'rgba(255,255,255,0.03)';
+    btn.style.boxShadow=sel?'0 0 10px rgba(245,166,35,0.3)':'';
+  });
+  // Update preview frame
+  const frameObj=AVATAR_FRAMES.find(f=>f.id===id)||AVATAR_FRAMES[0];
+  const prevFrame=document.getElementById('av-preview-frame');
+  if(prevFrame){prevFrame.style.background=frameObj.gradient;prevFrame.style.boxShadow='0 0 22px '+frameObj.glow+',0 4px 16px rgba(0,0,0,0.4)';}
+  _updateAvatarSaveBtns();
+}
+function saveAvatarSelection(){
+  if(!window._avTemp)return;
+  S.avatarEmoji=window._avTemp.emoji;
+  S.avatarFrame=window._avTemp.frame;
+  save();
+  window._avTemp=null;
+  toast('✅ Avatar kaydedildi!');
+  renderHome();
+  openAvatarOv(S._avCat);
+}
 function selectEmoji(e){
   S.avatarEmoji=e;save();
   const prev=document.getElementById('av-preview');
   if(prev)prev.textContent=e;
-  // Tam yeniden render yerine sadece önizlemeyi güncelle
   renderHome();
 }
 function selectFrame(id){
