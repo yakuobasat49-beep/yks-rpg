@@ -14590,14 +14590,20 @@ async function fetchFeed(){
       }
 
       if(item.type==='badge'){
-        // badgeTier yoksa badgeId'den hesapla
+        // badgeTier yoksa badgeId'den hesapla (eski Firebase kayıtları için)
         if(!item.badgeTier && item.badgeId && typeof getTrophyMeta==='function'){
-          const _allBadges=[...(typeof BDGS_S!=='undefined'?BDGS_S:[]),...(typeof BDGS_L!=='undefined'?BDGS_L:[])];
+          const _allBadges=typeof ALL_BDGS!=='undefined'?ALL_BDGS:[...(typeof BDGS_S!=='undefined'?BDGS_S:[]),...(typeof BDGS_L!=='undefined'?BDGS_L:[])];
           const _b=_allBadges.find(b=>b.id===item.badgeId);
           if(_b){
             const _tm=getTrophyMeta(_b);
             item.badgeTier=_tm.tierEn;
             item.badgeTierLabel=_tm.tier;
+            item.badgeIcon=item.badgeIcon||_b.icon;
+            item.badgeName=item.badgeName||_b.name;
+          } else {
+            // badgeId tanımsızsa default bronz
+            item.badgeTier='bronze';
+            item.badgeTierLabel='BRONZ';
           }
         }
       }
