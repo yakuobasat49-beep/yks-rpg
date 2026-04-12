@@ -3754,14 +3754,18 @@ function curWeekKey(){return getWeekStart(0).toDateString();}
 function archiveCurrentWeek(){
   if(!S.weekHistory)S.weekHistory=[];
   const wk=S.weekTotalReset||curWeekKey();
-  const subjMins={};SUBJ.forEach(s=>{subjMins[s.id]=(S.subjectMinutes&&S.subjectMinutes[s.id])||0;});
+  // Bug 14: haftanın subjMins'ini dailyLog'dan hesapla (cumulative S.subjectMinutes değil)
+  const subjMins={};SUBJ.forEach(s=>{subjMins[s.id]=0;});
   const days=[];
   const start=new Date(wk);
   for(let i=0;i<7;i++){
     const d=new Date(start);d.setDate(start.getDate()+i);
     const dk=d.toDateString();
     const dl=S.dailyLog&&S.dailyLog[dk];
-    if(dl)days.push({dk,mins:dl.mins||0,sm:dl.subjMins||{}});
+    if(dl){
+      days.push({dk,mins:dl.mins||0,xp:dl.xp||0,sm:dl.subjMins||{}});
+      SUBJ.forEach(s=>{subjMins[s.id]+=(dl.subjMins&&dl.subjMins[s.id])||0;});
+    }
   }
   const rec={wk,wx:[...(S.weeklyXp||[0,0,0,0,0,0,0])],totalMins:S.weekTotalMins||0,subjMins,days};
   const idx=S.weekHistory.findIndex(h=>h.wk===wk);
@@ -4130,22 +4134,31 @@ function editStreak(){
 function streakUpd(){
   const td=toDS();
   if(S.lastDay===td) return; // Bugün zaten sayıldı, tekrar artırma
-  // Dün için gece yarısı bazlı güvenli hesaplama
   const todayMid=new Date(); todayMid.setHours(0,0,0,0);
   const yest=new Date(todayMid.getTime()-864e5).toDateString();
   if(S.streak>S.streakRecord) S.streakRecord=S.streak;
   if(S.lastDay===yest){
     // Dünden bugüne: seri devam ediyor
     S.streak=(S.streak||0)+1;
+    // Kalkan kullanıldıysa sıfırla — yeni gün başladı, koruma tamam
+    if(S.shieldUsed) S.shieldUsed=false;
   } else if(!S.lastDay){
     // İlk çalışma günü
     S.streak=1;
+    S.shieldUsed=false;
   } else {
-    // Seri kırıldı: kalkan var mı?
-    if(!consumeStreakShield()){
+    // lastDay dünden daha eski — boşluk var
+    const lastDayTs=S.lastDay?new Date(S.lastDay).getTime():0;
+    const gapDays=Math.round((todayMid.getTime()-lastDayTs)/864e5);
+    if(gapDays===2){
+      // Tam 1 gün atlandı — kalkan varsa korur
+      if(!consumeStreakShield()) S.streak=1;
+      // else: kalkan devreye girdi, streak korundu
+    } else {
+      // 2+ günlük boşluk — kalkan da çalışmaz
+      S.shieldUsed=false;
       S.streak=1;
     }
-    // Kalkan devreye girdiyse streak sayısı korunur
   }
   S.lastDay=td;
   if(S.streak>S.streakRecord) S.streakRecord=S.streak;
@@ -4209,6 +4222,14 @@ function addMins(mins, sid) {
   if (sid && S.weekDone) {
     S.weekDone[sid] = Math.max(0, (S.weekDone[sid] || 0) + mins);
   }
+
+  // 7. dailyDist senkronizasyonu — dailyLog.subjMins ile Plan sekmesini eşle
+  // Kronometer veya görev dakikası eklenince dailyDist de güncellenir
+  if(sid && mins > 0){
+    const _td2=toDS();
+    if(!S.dailyDist||S.dailyDistDay!==_td2){S.dailyDist={};S.dailyDistDay=_td2;SUBJ.forEach(s2=>S.dailyDist[s2.id]=0);}
+    S.dailyDist[sid]=Math.max(0,(S.dailyDist[sid]||0)+mins);
+  }
 }
 
 function getDayLog(dateKey){
@@ -4248,6 +4269,14 @@ function delLogByIdx(idx){
     const slot=realEntry.daySlot!=null?realEntry.daySlot:entryDaySlot(realEntry);
     S.weeklyXp[slot]=Math.max(0,(S.weeklyXp[slot]||0)-realEntry.xp);
   }
+  // Bug 8: dailyLog.xp ve subjXP her zaman geri al (meta bağımsız)
+  {const _dldk=realEntry.ts?new Date(realEntry.ts).toDateString():toDS();
+  if(S.dailyLog&&S.dailyLog[_dldk]){
+    S.dailyLog[_dldk].xp=Math.max(0,(S.dailyLog[_dldk].xp||0)-realEntry.xp);
+    const _esid=realEntry.meta&&realEntry.meta.subjId;
+    if(_esid&&S.dailyLog[_dldk].subjXP)
+      S.dailyLog[_dldk].subjXP[_esid]=Math.max(0,(S.dailyLog[_dldk].subjXP[_esid]||0)-realEntry.xp);
+  }}
   if(realEntry.meta){
     const m=realEntry.meta;const sid=m.subjId;
     if(sid&&S.subjects[sid]){
@@ -4274,12 +4303,15 @@ function delLogByIdx(idx){
         // weekTotalMins — sadece bu haftanın girdisiyse
         if(entryIsThisWeek(realEntry))
           S.weekTotalMins=Math.max(0,(S.weekTotalMins||0)-m.mins);
-        // dailyLog'dan da çıkar
+        // dailyLog.mins ve subjMins
         if(S.dailyLog&&S.dailyLog[entryDateKey]){
           S.dailyLog[entryDateKey].mins=Math.max(0,(S.dailyLog[entryDateKey].mins||0)-m.mins);
           if(S.dailyLog[entryDateKey].subjMins&&sid)
             S.dailyLog[entryDateKey].subjMins[sid]=Math.max(0,(S.dailyLog[entryDateKey].subjMins[sid]||0)-m.mins);
         }
+        // Bug 9: dailyDist geri al
+        if(S.dailyDist&&S.dailyDistDay===entryDateKey&&sid)
+          S.dailyDist[sid]=Math.max(0,(S.dailyDist[sid]||0)-m.mins);
         // dailyMins (bugünkü sayaç) — sadece bugünse
         if(isToday)S.dailyMins=Math.max(0,(S.dailyMins||0)-m.mins);
       }
@@ -4304,6 +4336,14 @@ function delLog(id){
     const slot=entry.daySlot!=null?entry.daySlot:entryDaySlot(entry);
     S.weeklyXp[slot]=Math.max(0,(S.weeklyXp[slot]||0)-entry.xp);
   }
+  // Bug 8: dailyLog.xp ve subjXP her zaman geri al (meta bağımsız)
+  {const _dldk=entry.ts?new Date(entry.ts).toDateString():toDS();
+  if(S.dailyLog&&S.dailyLog[_dldk]){
+    S.dailyLog[_dldk].xp=Math.max(0,(S.dailyLog[_dldk].xp||0)-entry.xp);
+    const _esid=entry.meta&&entry.meta.subjId;
+    if(_esid&&S.dailyLog[_dldk].subjXP)
+      S.dailyLog[_dldk].subjXP[_esid]=Math.max(0,(S.dailyLog[_dldk].subjXP[_esid]||0)-entry.xp);
+  }}
   if(entry.meta){
     const m=entry.meta;const sid=m.subjId;
     if(sid&&S.subjects[sid]){
@@ -4333,6 +4373,9 @@ function delLog(id){
           if(S.dailyLog[entryDateKey].subjMins&&sid)
             S.dailyLog[entryDateKey].subjMins[sid]=Math.max(0,(S.dailyLog[entryDateKey].subjMins[sid]||0)-m.mins);
         }
+        // Bug 9: dailyDist geri al
+        if(S.dailyDist&&S.dailyDistDay===entryDateKey&&sid)
+          S.dailyDist[sid]=Math.max(0,(S.dailyDist[sid]||0)-m.mins);
         if(isToday)S.dailyMins=Math.max(0,(S.dailyMins||0)-m.mins);
       }
     }
@@ -4359,6 +4402,13 @@ function delLogByDay(dayStr){
     if(entryIsThisWeek(entry)){
       const slot=entry.daySlot!=null?entry.daySlot:entryDaySlot(entry);
       S.weeklyXp[slot]=Math.max(0,(S.weeklyXp[slot]||0)-entry.xp);
+    }
+    // Bug 8: dailyLog.xp ve subjXP her zaman geri al (meta bağımsız)
+    if(S.dailyLog&&S.dailyLog[dayStr]){
+      S.dailyLog[dayStr].xp=Math.max(0,(S.dailyLog[dayStr].xp||0)-entry.xp);
+      const _esid=entry.meta&&entry.meta.subjId;
+      if(_esid&&S.dailyLog[dayStr].subjXP)
+        S.dailyLog[dayStr].subjXP[_esid]=Math.max(0,(S.dailyLog[dayStr].subjXP[_esid]||0)-entry.xp);
     }
     if(entry.meta){
       const m=entry.meta;const sid=m.subjId;
@@ -4387,6 +4437,9 @@ function delLogByDay(dayStr){
             if(S.dailyLog[dayStr].subjMins&&sid)
               S.dailyLog[dayStr].subjMins[sid]=Math.max(0,(S.dailyLog[dayStr].subjMins[sid]||0)-m.mins);
           }
+          // Bug 9: dailyDist geri al
+          if(S.dailyDist&&S.dailyDistDay===dayStr&&sid)
+            S.dailyDist[sid]=Math.max(0,(S.dailyDist[sid]||0)-m.mins);
           if(isToday)S.dailyMins=Math.max(0,(S.dailyMins||0)-m.mins);
         }
       }
@@ -4552,6 +4605,13 @@ function timerCardHTML(){
     <div style="font-size:8px;font-weight:800;">${s.name}</div>
   </button>`).join('');
 
+  // Ders seçici
+  const selSubjObj=S._timerSubj?SUBJ.find(x=>x.id===S._timerSubj):null;
+  const timerSubjBtns=SUBJ.map(s=>{
+    const isSel=S._timerSubj===s.id;
+    return`<button onclick="setTimerSubj('${s.id}')" style="padding:5px 7px;border-radius:8px;border:1.5px solid ${isSel?s.color:'rgba(255,255,255,0.08)'};background:${isSel?s.color+'22':'rgba(255,255,255,0.03)'};color:${isSel?s.color:'var(--t3)'};cursor:pointer;font-family:'Nunito',sans-serif;font-size:9px;font-weight:800;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:3px;"><span style="font-size:12px;">${s.icon}</span><span>${s.name}</span></button>`;
+  }).join('');
+
   return `<div id="timer-ring" style="background:linear-gradient(155deg,#090920,#12083a,#070720);border:1px solid rgba(124,77,255,0.2);border-radius:22px;padding:20px 18px 18px;margin-bottom:10px;position:relative;overflow:hidden;">
     <!-- glow blob -->
     <div style="position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,${accentCol}12,transparent 65%);pointer-events:none;"></div>
@@ -4561,7 +4621,7 @@ function timerCardHTML(){
       <div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;">⏱ Kronometer</div>
       ${running?`<div style="display:flex;align-items:center;gap:5px;background:rgba(124,77,255,0.18);border:1px solid rgba(124,77,255,0.35);border-radius:20px;padding:3px 10px;">
         <div style="width:6px;height:6px;border-radius:50%;background:var(--pu);animation:studyTick 1.4s ease-in-out infinite;"></div>
-        <span style="font-size:9px;font-weight:900;color:var(--pu);">ÇALIŞIYOR</span>
+        <span style="font-size:9px;font-weight:900;color:var(--pu);">${selSubjObj?selSubjObj.icon+' '+selSubjObj.name:'ÇALIŞIYOR'}</span>
       </div>`:''}
     </div>
 
@@ -4569,6 +4629,12 @@ function timerCardHTML(){
     <div style="text-align:center;margin-bottom:22px;position:relative;">
       <div id="timer-digits" style="font-size:52px;font-weight:900;letter-spacing:2px;color:#fff;font-family:'Nunito',sans-serif;line-height:1;text-shadow:0 0 40px ${accentCol}66;">${timeStr}</div>
       <div style="font-size:10px;color:var(--t3);margin-top:6px;font-weight:700;">Bu oturumda · Hedef: <span style='color:var(--gold);font-weight:900;'>${S.dailyGoalHours||4}s</span></div>
+    </div>
+
+    <!-- Ders Seçici -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;">📚 Hangi Ders? <span style="color:rgba(255,255,255,0.25);font-weight:600;font-size:8px;">(5dk'da bir ders istatistiğine eklenir)</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">${timerSubjBtns}<button onclick="setTimerSubj(null)" style="padding:5px 7px;border-radius:8px;border:1.5px solid ${!S._timerSubj?'rgba(255,255,255,0.4)':'rgba(255,255,255,0.08)'};background:${!S._timerSubj?'rgba(255,255,255,0.08)':'rgba(255,255,255,0.03)'};color:${!S._timerSubj?'var(--t1)':'var(--t3)'};cursor:pointer;font-family:'Nunito',sans-serif;font-size:9px;font-weight:800;transition:all .15s;">Genel</button></div>
     </div>
 
     <!-- Buttons -->
@@ -4652,9 +4718,12 @@ function _timerTick(){
   // Her 5 dakikada dakika kaydet
   if(done>0&&done%300===0&&done!==(S._lastMinSave||0)){
     S._lastMinSave=done;
-    addMins(5,null);
-    addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:null,correct:0,wrong:0,questions:0,mins:5,topic:null});
-    save();toast('✅ 5dk kaydedildi!');
+    const _tSid=S._timerSubj||null;
+    addMins(5,_tSid);
+    const _tSubjIcon=_tSid?((SUBJ.find(x=>x.id===_tSid)||{}).icon||'⏱️'):'⏱️';
+    const _tSubjName=_tSid?((SUBJ.find(x=>x.id===_tSid)||{}).name||''):'';
+    addLog(_tSubjIcon,_tSubjName?`Kronometer: ${_tSubjName} 5dk`:'Kronometer: 5dk çalışma',0,{type:'minute',subjId:_tSid,correct:0,wrong:0,questions:0,mins:5,topic:null});
+    save();toast('✅ 5dk kaydedildi!'+((_tSubjName)?' ('+_tSubjName+')':''));
   }
 
   if(done%10===0) save();
@@ -4697,6 +4766,26 @@ function resetTimer(){
 // Arka sekme (Page Visibility) fix — tab tekrar aktif olunca farkı hesapla
 document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible'&&S.timerRunning){
+    // Kaçırılan 5dk dilimlerini hesapla ve kaydet (iOS/Safari kısıtlaması fix)
+    const nowDone=_timerElapsed();
+    const lastSave=S._lastMinSave||0;
+    if(nowDone>lastSave){
+      const missedSlots=Math.floor((nowDone-lastSave)/300);
+      if(missedSlots>0){
+        for(let i=1;i<=missedSlots;i++){
+          const slotSec=lastSave+i*300;
+          const _tSid=S._timerSubj||null;
+          addMins(5,_tSid);
+          const _tSubjName=_tSid?((SUBJ.find(x=>x.id===_tSid)||{}).name||''):'';
+          const _tSubjIcon=_tSid?((SUBJ.find(x=>x.id===_tSid)||{}).icon||'⏱️'):'⏱️';
+          addLog(_tSubjIcon,_tSubjName?`Kronometer: ${_tSubjName} 5dk`:'Kronometer: 5dk çalışma',0,{type:'minute',subjId:_tSid,correct:0,wrong:0,questions:0,mins:5,topic:null});
+        }
+        S._lastMinSave=lastSave+missedSlots*300;
+        save();
+        if(missedSlots>0) toast(`✅ ${missedSlots*5}dk kaydedildi (arka plan)`);
+      }
+    }
+    S.timerSecs=nowDone;
     // Interval'i yeniden başlat (timestamp zaten doğru, sadece tick'i yenile)
     clearInterval(timerInterval);
     timerInterval=setInterval(_timerTick,1000);
@@ -5078,6 +5167,7 @@ function doCT(id){
   const t=(S.customTasks||[]).find(x=>x.id===id);if(!t)return;
   const ox=S.xp;S.xp+=t.xp;S.tasks+=1;t.count=(t.count||0)+1;
   streakUpd();addWXP(t.xp);addLog(t.icon||'⚡',`${t.icon} ${t.name}`,t.xp);
+  addDailyLog(t.xp,0,0);
   chkBdgs();save();toast(`+${t.xp} XP! ✅`);maybeLU(ox);renderHome();
 }
 function delCT(id){S.customTasks=(S.customTasks||[]).filter(x=>x.id!==id);save();renderHome();}
@@ -5168,6 +5258,7 @@ function toggleGoal(id){
   if(g.type==='soru'&&g.target){S.questions+=g.target;SUBJ.forEach(()=>{});}
   if(g.type==='dakika'&&g.target)S.totalMinutes=(S.totalMinutes||0)+g.target;
   streakUpd();addWXP(g.xp);addLog('☀️',`Hedef: "${g.text}"`,g.xp);
+  addDailyLog(g.xp,0,0);
   if((S.goals||[]).every(x=>x.done)){S.dailyDone=(S.dailyDone||0)+1;setTimeout(()=>toast('Tüm hedefler tamam! 🎊'),300);}
   chkBdgs();save();maybeLU(ox);renderDaily();toast(`+${g.xp} XP! ☀️`);
 }
@@ -5869,9 +5960,19 @@ function toggleFasikulBolum(fid,bi){
     // Konu haritasına da ekle
     if(s){if(!S.subjects[s.id].topics)S.subjects[s.id].topics={};S.subjects[s.id].topics[bolumName]=true;}
     addWXP(15);streakUpd();addLog(s?s.icon:'📒',`${f.name}: ${bolumName}`,15);
+    addDailyLog(15,0,0,s?s.id:null);
     chkBdgs();maybeLU(ox);toast(`"${bolumName}" tamamlandı! +15 XP ✅`);
   }else{
-    // Kaldırınca başka yerde yoksa konu haritasından da kaldır
+    // Bug 15: undo → XP, görev ve dailyLog geri al
+    S.xp=Math.max(0,S.xp-15);S.tasks=Math.max(0,S.tasks-1);
+    if(s){S.subjects[s.id].xp=Math.max(0,(S.subjects[s.id].xp||0)-15);}
+    const _td=toDS();
+    if(S.dailyLog&&S.dailyLog[_td]){
+      S.dailyLog[_td].xp=Math.max(0,(S.dailyLog[_td].xp||0)-15);
+      if(s&&S.dailyLog[_td].subjXP)
+        S.dailyLog[_td].subjXP[s.id]=Math.max(0,(S.dailyLog[_td].subjXP[s.id]||0)-15);
+    }
+    // Konu haritasından da kaldır (başka banka/fasikül işaretlemediyse)
     if(s){const stillDone=(S.soruBankalari||[]).filter(x=>x.subjId===s.id).some(x=>x.topics.some(t=>t.name===bolumName&&t.done));if(!stillDone)delete (S.subjects[s.id].topics||{})[bolumName];}
   }
   save();renderFasikulDetay(fid);
@@ -6351,11 +6452,19 @@ function toggleBankaTopic(bid,ti){
     // Konu haritasına da ekle/işaretle
     if(s){if(!S.subjects[s.id].topics)S.subjects[s.id].topics={};S.subjects[s.id].topics[topicName]=true;}
     addWXP(15);streakUpd();addLog(ders?ders.icon:'📚',`${b.name}: ${topicName}`,15);
+    addDailyLog(15,0,0,s?s.id:null);
     chkBdgs();maybeLU(ox);toast(`"${topicName}" tamamlandı! +15 XP ✅`);
   }else{
-    // Geri al: XP ve görev sayısını düzelt
+    // Geri al: XP, görev sayısı, dailyLog
     S.xp=Math.max(0,S.xp-15);S.tasks=Math.max(0,S.tasks-1);
     if(s)S.subjects[s.id].xp=Math.max(0,(S.subjects[s.id].xp||0)-15);
+    // Bug 16: dailyLog.xp ve subjXP da geri al
+    const _td=toDS();
+    if(S.dailyLog&&S.dailyLog[_td]){
+      S.dailyLog[_td].xp=Math.max(0,(S.dailyLog[_td].xp||0)-15);
+      if(s&&S.dailyLog[_td].subjXP)
+        S.dailyLog[_td].subjXP[s.id]=Math.max(0,(S.dailyLog[_td].subjXP[s.id]||0)-15);
+    }
     // Banka'dan kaldırınca: başka banka yoksa konu haritasından da kaldır
     if(s){const stillDone=(S.soruBankalari||[]).filter(x=>x.id!==bid&&(x.subjId||'')===s.id).some(x=>x.topics.some(t=>t.name===topicName&&t.done));if(!stillDone)delete (S.subjects[s.id].topics||{})[topicName];}
   }
@@ -7065,8 +7174,8 @@ function renderPlan(){
   checkWeekReset();
   // Gelen arkadaş isteklerini arka planda yükle
   loadFriendRequests();
-  const monStr=S.weekTotalReset||curWeekKey();
-  if(S.weekPlanReset!==monStr){S.weekDone=Object.fromEntries(SUBJ.map(s=>[s.id,0]));S.weekPlanReset=monStr;save();}
+  const weekKey=curWeekKey();
+  if(S.weekPlanReset!==weekKey){S.weekDone=Object.fromEntries(SUBJ.map(s=>[s.id,0]));S.weekPlanReset=weekKey;save();}
 
   // Günlük dakika sıfırlama
   const td=toDS();
@@ -8186,7 +8295,7 @@ function renderStats(){
         const d=new Date(viewStart);d.setDate(viewStart.getDate()+i);
         const dk=d.toDateString();
         const found=rec.days&&rec.days.find(x=>x.dk===dk);
-        viewDayData.push({mins:found?found.mins||0:0,sm:found?found.sm||{}:{},isToday:false});
+        viewDayData.push({mins:found?found.mins||0:0,xp:found?found.xp||0:0,sm:found?found.sm||{}:{},isToday:false});
       }
     } else {
       viewWX=[0,0,0,0,0,0,0];viewTotalMins=0;viewSubjMins={};
@@ -19824,13 +19933,14 @@ async function cloudLoad({ forceLoad = false } = {}){
         const loc = (S.dailyLog||{})[day];
         const rem = (p.dailyLog||{})[day];
         if(loc && rem){
-          // Sayısal alanlarda max al
+          // Bug 13: xp, subjXP, subjQ da merge edilmeli
           const mergedEntry = {
             mins: Math.max(loc.mins||0, rem.mins||0),
+            xp: Math.max(loc.xp||0, rem.xp||0),
             tasks: Math.max(loc.tasks||0, rem.tasks||0),
             questions: Math.max(loc.questions||0, rem.questions||0),
           };
-          // subjMins (ders bazlı dakika): her iki taraftan max al
+          // subjMins
           const locSubj = loc.subjMins || {};
           const remSubj = rem.subjMins || {};
           const allSubjKeys = new Set([...Object.keys(locSubj), ...Object.keys(remSubj)]);
@@ -19838,6 +19948,26 @@ async function cloudLoad({ forceLoad = false } = {}){
             mergedEntry.subjMins = {};
             allSubjKeys.forEach(sid => {
               mergedEntry.subjMins[sid] = Math.max(locSubj[sid]||0, remSubj[sid]||0);
+            });
+          }
+          // subjXP
+          const locXP = loc.subjXP || {};
+          const remXP = rem.subjXP || {};
+          const allXPKeys = new Set([...Object.keys(locXP), ...Object.keys(remXP)]);
+          if(allXPKeys.size > 0){
+            mergedEntry.subjXP = {};
+            allXPKeys.forEach(sid => {
+              mergedEntry.subjXP[sid] = Math.max(locXP[sid]||0, remXP[sid]||0);
+            });
+          }
+          // subjQ
+          const locQ = loc.subjQ || {};
+          const remQ = rem.subjQ || {};
+          const allQKeys = new Set([...Object.keys(locQ), ...Object.keys(remQ)]);
+          if(allQKeys.size > 0){
+            mergedEntry.subjQ = {};
+            allQKeys.forEach(sid => {
+              mergedEntry.subjQ[sid] = Math.max(locQ[sid]||0, remQ[sid]||0);
             });
           }
           combinedDailyLog[day] = mergedEntry;
@@ -19868,8 +19998,15 @@ async function cloudLoad({ forceLoad = false } = {}){
       const mergedAvatar  = useLocalAvatar ? (S.avatarEmoji||p.avatarEmoji||'⚔️') : (p.avatarEmoji||S.avatarEmoji||'⚔️');
       const mergedFrame   = useLocalAvatar ? (S.avatarFrame||p.avatarFrame||'default') : (p.avatarFrame||S.avatarFrame||'default');
 
-      // 7) Timer state: aktif timer varsa yerel'i koru
-      const _activeTimer={timerRunning:S.timerRunning,timerStartTs:S.timerStartTs,timerBaseSecs:S.timerBaseSecs,timerSecs:S.timerSecs};
+      // 7) Timer state: yerel timer her zaman korunur (cloud geride kalabilir)
+      const _activeTimer={timerRunning:S.timerRunning,timerStartTs:S.timerStartTs,timerBaseSecs:S.timerBaseSecs,timerSecs:S.timerSecs,_lastMinSave:S._lastMinSave,_timerSubj:S._timerSubj,timerDay:S.timerDay};
+      // 8) Seri: yerel lastDay ve streak cloud'dan asla ezilmez (sync gecikmesi koruması)
+      const _localStreak={streak:S.streak,lastDay:S.lastDay,streakRecord:S.streakRecord,shieldUsed:S.shieldUsed};
+      // 9) Bugünkü dailyMins: yerel her zaman en güncel (kronometer anında günceller)
+      const _localToday=new Date().toDateString();
+      const _localDailyMins=(S.dailyMinsDay===_localToday)?(S.dailyMins||0):0;
+      const _cloudDailyMins=(p.dailyMinsDay===_localToday)?(p.dailyMins||0):0;
+      const _bestDailyMins=Math.max(_localDailyMins,_cloudDailyMins);
 
       // ── Merge uygula ──
       S = {
@@ -19890,7 +20027,15 @@ async function cloudLoad({ forceLoad = false } = {}){
         avatarFrame: mergedFrame,
         weekResetDay: weekResetDay,
       };
-      if(_activeTimer.timerRunning) Object.assign(S,_activeTimer);
+      // Yerel korunan alanları geri yaz — cloud bu alanları asla ezemez
+      Object.assign(S,_activeTimer); // timer her zaman yerel (çalışıyor olsun ya da olmasın)
+      // Streak: yerel lastDay daha yeni veya eşitse yerel kazan
+      const _cloudLastDayTs=S.lastDay?new Date(S.lastDay).getTime():0;
+      const _localLastDayTs=_localStreak.lastDay?new Date(_localStreak.lastDay).getTime():0;
+      if(_localLastDayTs>=_cloudLastDayTs) Object.assign(S,_localStreak);
+      // dailyMins: en büyük değer kazanır, today kontrolüyle
+      S.dailyMins=_bestDailyMins;
+      S.dailyMinsDay=(_bestDailyMins>0)?_localToday:(p.dailyMinsDay||S.dailyMinsDay);
       if(!S.unis||!S.unis.length) S.unis = [...DEF_UNIS.map(u=>({...u,depts:[],selDept:-1,photo:null}))];
       _restorePhotos();
       // Merge sonrası tutarlılığı garantile
@@ -19923,10 +20068,17 @@ async function cloudLoad({ forceLoad = false } = {}){
         allD2.forEach(day=>{
           const l=(S.dailyLog||{})[day];const r=(p2.dailyLog||{})[day];
           if(l&&r){
-            const e2={mins:Math.max(l.mins||0,r.mins||0),tasks:Math.max(l.tasks||0,r.tasks||0),questions:Math.max(l.questions||0,r.questions||0)};
+            // Bug 13: xp, subjXP, subjQ da merge et
+            const e2={mins:Math.max(l.mins||0,r.mins||0),xp:Math.max(l.xp||0,r.xp||0),tasks:Math.max(l.tasks||0,r.tasks||0),questions:Math.max(l.questions||0,r.questions||0)};
             const ls=l.subjMins||{};const rs=r.subjMins||{};
             const sk=new Set([...Object.keys(ls),...Object.keys(rs)]);
             if(sk.size>0){e2.subjMins={};sk.forEach(sid=>{e2.subjMins[sid]=Math.max(ls[sid]||0,rs[sid]||0);});}
+            const lx=l.subjXP||{};const rx=r.subjXP||{};
+            const sxk=new Set([...Object.keys(lx),...Object.keys(rx)]);
+            if(sxk.size>0){e2.subjXP={};sxk.forEach(sid=>{e2.subjXP[sid]=Math.max(lx[sid]||0,rx[sid]||0);});}
+            const lq=l.subjQ||{};const rq=r.subjQ||{};
+            const sqk=new Set([...Object.keys(lq),...Object.keys(rq)]);
+            if(sqk.size>0){e2.subjQ={};sqk.forEach(sid=>{e2.subjQ[sid]=Math.max(lq[sid]||0,rq[sid]||0);});}
             cLog2[day]=e2;
           } else cLog2[day]=l||r;
         });
@@ -20015,10 +20167,17 @@ window.addEventListener('storage', function(e){
       allDays.forEach(day=>{
         const l=(S.dailyLog||{})[day];const r=(remote.dailyLog||{})[day];
         if(l&&r){
-          const entry={mins:Math.max(l.mins||0,r.mins||0),tasks:Math.max(l.tasks||0,r.tasks||0),questions:Math.max(l.questions||0,r.questions||0)};
+          // Bug 13: xp, subjXP, subjQ da merge et
+          const entry={mins:Math.max(l.mins||0,r.mins||0),xp:Math.max(l.xp||0,r.xp||0),tasks:Math.max(l.tasks||0,r.tasks||0),questions:Math.max(l.questions||0,r.questions||0)};
           const ls=l.subjMins||{};const rs=r.subjMins||{};
           const sk=new Set([...Object.keys(ls),...Object.keys(rs)]);
           if(sk.size>0){entry.subjMins={};sk.forEach(sid=>{entry.subjMins[sid]=Math.max(ls[sid]||0,rs[sid]||0);});}
+          const lx=l.subjXP||{};const rx=r.subjXP||{};
+          const sxk=new Set([...Object.keys(lx),...Object.keys(rx)]);
+          if(sxk.size>0){entry.subjXP={};sxk.forEach(sid=>{entry.subjXP[sid]=Math.max(lx[sid]||0,rx[sid]||0);});}
+          const lq=l.subjQ||{};const rq=r.subjQ||{};
+          const sqk=new Set([...Object.keys(lq),...Object.keys(rq)]);
+          if(sqk.size>0){entry.subjQ={};sqk.forEach(sid=>{entry.subjQ[sid]=Math.max(lq[sid]||0,rq[sid]||0);});}
           cLog[day]=entry;
         } else cLog[day]=l||r;
       });
