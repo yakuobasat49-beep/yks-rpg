@@ -3456,7 +3456,7 @@ function mkState(){
     dailyMins:0,dailyMinsDay:null,
     weekTotalMins:0,weekTotalReset:null,
     customKonuDefs:[],
-    friendCode:Math.random().toString(36).substr(2,6).toUpperCase(),
+    friendCode:Math.random().toString(36).substr(2,8).toUpperCase(),
     friendScores:[],
     friendRequests:[],
     dailyBossDate:null,dailyBossDone:false,
@@ -3473,6 +3473,35 @@ function mkState(){
     avatarEmoji:'🧑‍💻',  // seçili avatar emojisi
     avatarFrame:'default', // seçili çerçeve
     globalLbPushed:0, // son liderlik tablosu push zamanı
+    // UI state — mkState'te tanımlı olmadığında cloud sync sonrası undefined geliyordu
+    myName:'',
+    timerRunning:false,
+    timerSecs:0,
+    timerDay:null,
+    bestNet:0,
+    totalNet:0,
+    welcomeSent:false,
+    guideSeen:false,
+    onboardingDone:false,
+    shieldUsed:false,
+    badgeTimes:{},
+    dailyDist:{},
+    dailyDistDay:null,
+    dailyGoalHours:4,
+    soundVolume:0.5,
+    activeSound:null,
+    bankaSelBanka:null,
+    bankaSelDers:null,
+    bankaTab:'list',
+    denMode:'tyt',
+    denTur:'tyt',
+    denBrans:null,
+    bransTur:'tyt',
+    bilgiTab:'all',
+    curBossGrp:null,
+    curBossLocal:null,
+    obFocusSubjs:[],
+    _avCat:'all',
   };
 }
 
@@ -3623,7 +3652,7 @@ function load(){
     if(S.totalMinutes==null)S.totalMinutes=0;
     if(!S.weekPlan)S.weekPlan=Object.fromEntries(SUBJ.map(s=>[s.id,0]));
     if(!S.weekDone)S.weekDone=Object.fromEntries(SUBJ.map(s=>[s.id,0]));
-    if(!S.friendCode)S.friendCode=Math.random().toString(36).substr(2,6).toUpperCase();
+    if(!S.friendCode)S.friendCode=Math.random().toString(36).substr(2,8).toUpperCase();
     if(S.timerBaseSecs==null)S.timerBaseSecs=0;
     if(S._lastMinSave==null)S._lastMinSave=0;
     // Fotoğrafları ayrı localStorage anahtarlarından geri yükle
@@ -4222,6 +4251,7 @@ function addLog(ico,txt,xp,meta){
   if(!S.logId)S.logId=1;
   // daySlot: bu entry hangi haftalık slot'ta → silme sırasında doğru slot'tan çıkarmak için
   S.log.unshift({id:S.logId++,ico,txt,xp,ts:Date.now(),daySlot:dIdx(),meta:meta||null});
+  if(S.log.length>600) S.log=S.log.slice(0,500); // log maksimum 500 girişle sınırlı
 }
 function delLog(id){
   let entry=S.log.find(l=>l.id===id);
@@ -5842,6 +5872,7 @@ function delFasikul(fid){
   if(!confirm('Bu fasikülü sil?'))return;
   const f=S.fasikuller.find(x=>x.id===fid);
   const subjId=f?.subjId;
+  _deletePhoto('fask',fid); // fotoğrafı temizle
   S.fasikuller=S.fasikuller.filter(x=>x.id!==fid);
   S.fasikulSelId=null;save();
   if(subjId)renderFasikulDers(subjId);
@@ -8560,11 +8591,12 @@ function resetSection(what){
     })();
     // Eğer Google hesabındaysa yeni isimle welcome event'i tekrar gönder
     if(activeUid && typeof pushFeedEvent==='function' && _fbUser){
-      setTimeout(()=>{
-        // Feed'deki eski bu UID'e ait welcome'ları fetchFeed zaten temizleyecek
+      (async()=>{
+        // Önce leaderboard'a yaz — yoksa fetchFeed welcome'ı siler
+        if(typeof pushGlobalLb==='function') await pushGlobalLb().catch(()=>{});
         // Yeni (sıfırlanmış) welcome ekle — artık kullanıcı ismini girince güncellenecek
-        pushFeedEvent('welcome',{});
-      }, 1500);
+        await pushFeedEvent('welcome',{});
+      })();
     }
     toast('Tüm veriler silindi. Yeni başlangıç! 🚀');
   }
@@ -8806,6 +8838,10 @@ function resetYesterdayQuestions(){
 
 // ═══ OTOMATİK DERS İSTATİSTİĞİ — her yüklemede/renderda log'dan hesapla ═══
 function recalcSubjectStatsFromLog(){
+  // 3 saniye içinde zaten çalıştıysa atla (her renderHome'da O(n) tarama önlenir)
+  const now=Date.now();
+  if(recalcSubjectStatsFromLog._lastRun && now-recalcSubjectStatsFromLog._lastRun<3000) return;
+  recalcSubjectStatsFromLog._lastRun=now;
   try{
     const logQ={}, logC={}, logW={};
     let totalQ=0;
@@ -11441,6 +11477,7 @@ function selectDept(uid,idx){
 function toggleFav(id){}
 function deleteUni(id){
   if(!confirm('Silmek istediğine emin misin?'))return;
+  _deletePhoto('uni',id); // fotoğrafı temizle
   S.unis=S.unis.filter(u=>u.id!==id);
   save();closeOv('ov-uni');renderTargets();toast('Üniversite silindi 🗑');
 }
@@ -14585,7 +14622,7 @@ async function fetchFeed(){
         else if(seenWelcome.has(item.uid)){ shouldDelete=true; }
         // Leaderboard'da bu UID hiç yoksa VE XP'si 0 ise sıfırlanmış hesap → sil
         // (lbMap boşsa internet sorunu olabilir, o zaman silme)
-        else if(Object.keys(lbMap).length > 5 && !lbMap[item.uid]){ shouldDelete=true; }
+        else if(Object.keys(lbMap).length > 5 && !lbMap[item.uid] && (Date.now()-item.ts)>600000){ shouldDelete=true; }
         else { seenWelcome.add(item.uid); }
       }
 
@@ -14851,6 +14888,20 @@ async function renderRanking(){
     fetchFeed().then(items=>{
       const fb=document.getElementById("feed-body");
       if(fb)fb.innerHTML=renderFeed(items);
+      // Kendi welcome'ı feed'de yoksa (silinmiş olabilir) bir kez recovery yap
+      if(_fbUser && !sessionStorage.getItem('yks_welcome_checked')){
+        sessionStorage.setItem('yks_welcome_checked','1');
+        const myWelcome=items.find(x=>x.type==='welcome'&&x.uid===_fbUser.uid);
+        if(!myWelcome){
+          // welcomeSent flag'ini sıfırla ve yeniden gönder
+          S.welcomeSent=false; save();
+          (async()=>{
+            if(typeof pushGlobalLb==='function') await pushGlobalLb().catch(()=>{});
+            if(typeof pushFeedEvent==='function') await pushFeedEvent('welcome',{});
+            S.welcomeSent=true; save();
+          })();
+        }
+      }
     });
   }
   // Arkadaş isteklerini yükle ve badge güncelle
@@ -16357,9 +16408,10 @@ obFinish=function(){
   // Yeni kullanıcı welcome event'i — sadece Google girişi varsa ve bir kez gönder
   if(!S.welcomeSent){
     S.welcomeSent=true; save();
-    setTimeout(()=>{
-      if(typeof pushFeedEvent==='function' && _fbUser) pushFeedEvent('welcome',{});
-    },3500);
+    (async()=>{
+      if(typeof pushGlobalLb==='function') await pushGlobalLb().catch(()=>{});
+      if(typeof pushFeedEvent==='function' && _fbUser) await pushFeedEvent('welcome',{});
+    })();
   }
   setTimeout(()=>{
     if(!S.guideSeen){
@@ -19076,6 +19128,7 @@ window.removeDept = function(uid, idx) {
 
 window.deleteUni = function(uid) {
   if(!confirm('Bu üniversiteyi takipten çıkar?')) return;
+  _deletePhoto('uni',uid); // fotoğrafı temizle
   S.unis=(S.unis||[]).filter(x=>x.id!==uid);
   save(); closeOv('ov-uni'); renderTargets(); toast('Takipten çıkarıldı 🗑️');
 };
@@ -19240,7 +19293,10 @@ async function cloudLoad({ forceLoad = false } = {}){
       // Rozetleri üst üste yazmak yerine UNION al — cihazlar arası kayıp önlenir
       const mergedBadges=[...new Set([...(S.badges||[]),...(p.badges||[])])];
       const mergedBadgeTimes={...(S.badgeTimes||{}),...(p.badgeTimes||{})};
+      // Timer state'i cloud'dan gelen veriyle ezme — aktif timer kaybolmasın
+      const _activeTimer={timerRunning:S.timerRunning,timerStartTs:S.timerStartTs,timerBaseSecs:S.timerBaseSecs,timerSecs:S.timerSecs};
       S = { ...S, ...p, subjects: ms, badges: mergedBadges, badgeTimes: mergedBadgeTimes };
+      if(_activeTimer.timerRunning) Object.assign(S,_activeTimer); // aktif timer'ı koru
       if(!S.unis||!S.unis.length) S.unis = [...DEF_UNIS.map(u=>({...u,depts:[],selDept:-1,photo:null}))];
       _restorePhotos();
       // Cloud yüklemesinden gelen verilerle kazanılmış rozetleri popup olmadan işaretle
@@ -19287,6 +19343,22 @@ window.fbShowUserMenu = function(){
 
 // Cloud sync: save() dokunulmadı, ayrı interval ile sync
 setInterval(()=>{ cloudSave(); pushGlobalLb&&pushGlobalLb(); }, 30000); // 30sn'de bir buluta yaz
+
+// Çoklu sekme desteği: başka sekmede veri değişirse yenile
+window.addEventListener('storage', function(e){
+  const sk=typeof getSkey==='function'?getSkey():null;
+  if(!sk||e.key!==sk||!e.newValue) return;
+  try{
+    const remote=JSON.parse(e.newValue);
+    if(!remote||typeof remote!=='object') return;
+    // Diğer sekme daha fazla XP'ye sahipse verileri al
+    if((remote.xp||0)>(S.xp||0)){
+      S={...S,...remote};
+      if(typeof _restorePhotos==='function') _restorePhotos();
+      if(typeof renderAll==='function') renderAll();
+    }
+  }catch(err){}
+});
 </script>
 
 <!-- Firebase Modular SDK — eval gerektirmez -->
@@ -19388,7 +19460,10 @@ async function _loadIsolatedAccount(user){
     toast('✅ ' + (user.displayName||'Hoş geldin') + '!');
     if(!S.welcomeSent){
       S.welcomeSent=true; save();
-      setTimeout(()=>{ if(typeof pushFeedEvent==='function'&&_fbUser) pushFeedEvent('welcome',{}); },2000);
+      (async()=>{
+        if(typeof pushGlobalLb==='function') await pushGlobalLb().catch(()=>{});
+        if(typeof pushFeedEvent==='function'&&_fbUser) await pushFeedEvent('welcome',{});
+      })();
     }
   }
   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
@@ -19493,7 +19568,7 @@ onAuthStateChanged(auth, async user => {
                   cloudSave();
                   if(typeof renderAll==='function') renderAll();
                   toast('✅ ' + (_fbUser.displayName||'Hoş geldin') + '!');
-                  if(!S.welcomeSent){ S.welcomeSent=true; save(); setTimeout(()=>{ if(typeof pushFeedEvent==='function') pushFeedEvent('welcome',{}); },2000); }
+                  if(!S.welcomeSent){ S.welcomeSent=true; save(); (async()=>{ if(typeof pushGlobalLb==='function') await pushGlobalLb().catch(()=>{}); if(typeof pushFeedEvent==='function') await pushFeedEvent('welcome',{}); })(); }
                   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
                 }
               },
