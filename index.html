@@ -4606,12 +4606,12 @@ function timerCardHTML(){
     <div style="margin-bottom:18px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
         <div style="font-size:9px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1px;">📅 Bugün Toplam</div>
-        <div style="font-size:11px;font-weight:900;color:var(--gl);">${th>0?th+'s ':''} ${tm}dk</div>
+        <div id="timer-today-txt" style="font-size:11px;font-weight:900;color:var(--gl);">${th>0?th+'s ':''} ${tm}dk</div>
       </div>
       <div style="height:8px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);">
-        <div style="height:100%;width:${barPct.toFixed(1)}%;background:linear-gradient(90deg,var(--pu),var(--pk));border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 8px rgba(124,77,255,0.4);"></div>
+        <div id="timer-today-bar" style="height:100%;width:${barPct.toFixed(1)}%;background:linear-gradient(90deg,var(--pu),var(--pk));border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 8px rgba(124,77,255,0.4);"></div>
       </div>
-      <div style="font-size:8px;color:var(--t3);margin-top:4px;text-align:right;">${barPct.toFixed(0)}% / ${S.dailyGoalHours||4} saat hedef</div>
+      <div id="timer-today-pct" style="font-size:8px;color:var(--t3);margin-top:4px;text-align:right;">${barPct.toFixed(0)}% / ${S.dailyGoalHours||4} saat hedef</div>
       <div style="font-size:8px;color:rgba(124,77,255,0.7);margin-top:3px;display:flex;align-items:center;gap:4px;">
         <span>⚡</span>
         <span>Kronometer her <b style="color:rgba(124,77,255,0.9);">5 dakika</b>da bir bugünkü çalışmana otomatik <b style="color:rgba(124,77,255,0.9);">+5 dakika</b> ekler</span>
@@ -4694,7 +4694,7 @@ function _timerTick(){
         addMins(5,null);
         addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:null,correct:0,wrong:0,questions:0,mins:5,topic:null});
       }
-      if(_newSlots>0){save();toast(`✅ ${_newSlots*5}dk kaydedildi! Plan sekmesinden ders dağılımını ayarlayabilirsin 📊`);}
+      if(_newSlots>0){save();updateTimerDOM();toast(`✅ ${_newSlots*5}dk kaydedildi! Plan sekmesinden ders dağılımını ayarlayabilirsin 📊`);}
     }
   }
 
@@ -4705,6 +4705,17 @@ function _timerTick(){
   if(el){
     const hrs=Math.floor(done/3600),mins=Math.floor(done/60)%60,secs=done%60;
     el.textContent=`${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    // Bugün toplam satırını da canlı güncelle (5dk dolmadan da görünsün)
+    const _tdNow=toDS();
+    const _todayM=(S.dailyLog&&S.dailyLog[_tdNow])?(S.dailyLog[_tdNow].mins||0):0;
+    const _th=Math.floor(_todayM/60),_tm=_todayM%60;
+    const _pct=Math.min(100,(_todayM/((S.dailyGoalHours||4)*60))*100);
+    const todayTxt=document.getElementById('timer-today-txt');
+    const todayBar=document.getElementById('timer-today-bar');
+    const todayPct=document.getElementById('timer-today-pct');
+    if(todayTxt)todayTxt.textContent=(_th>0?_th+'s ':'')+_tm+'dk';
+    if(todayBar)todayBar.style.width=_pct.toFixed(1)+'%';
+    if(todayPct)todayPct.textContent=_pct.toFixed(0)+'% / '+(S.dailyGoalHours||4)+' saat hedef';
   } else {
     updateTimerDOM();
   }
@@ -7062,6 +7073,92 @@ function makeSVGChart(datasets,labels,height=140){
 const JB_KEY='$2a$10$ybPHypPFytGtyt/Ht5gXi.yHhvCpLl2nrp4SboximtvNDSw8TV89C';
 const JB_BASE='https://api.jsonbin.io/v3';
 let fbConnected=false,fbPollInterval=null;
+
+// ── Merkezi Oda Listesi (Public Rooms Index) ──
+// Ortak index bin ID — ilk kullanıcı oluşturur, diğerleri bul mekanizmasıyla ulaşır
+// Yerel cache: localStorage'da saklanır, bulunamazsa otomatik aranır/oluşturulur
+const ROOMS_INDEX_NAME='yks-rpg-rooms-index-v1';
+let _roomsIndexBinId=localStorage.getItem('jb_rooms_index')||null;
+let _roomsIndexPromise=null;
+
+async function getRoomsIndexBinId(){
+  if(_roomsIndexBinId)return _roomsIndexBinId;
+  if(_roomsIndexPromise)return _roomsIndexPromise;
+  _roomsIndexPromise=(async()=>{
+    try{
+      // Önce mevcut binleri ara — aynı isme sahip bin varsa onu kullan
+      const searchR=await fetch(`${JB_BASE}/b?page=1&count=20`,{
+        headers:{'X-Master-Key':JB_KEY}
+      });
+      if(searchR.ok){
+        const sd=await searchR.json();
+        const bins=(sd.result||sd||[]);
+        const found=Array.isArray(bins)?bins.find(b=>(b.metadata?.name||b.name||'')===ROOMS_INDEX_NAME):null;
+        if(found){
+          const id=found.metadata?.id||found.id;
+          if(id){localStorage.setItem('jb_rooms_index',id);_roomsIndexBinId=id;return id;}
+        }
+      }
+    }catch(e){}
+    // Bulunamazsa yeni oluştur
+    try{
+      const r=await fetch(`${JB_BASE}/b`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY,'X-Bin-Private':'false','X-Bin-Name':ROOMS_INDEX_NAME},
+        body:JSON.stringify({rooms:[],_v:1})
+      });
+      if(r.ok){
+        const d=await r.json();
+        const id=d.metadata?.id;
+        if(id){localStorage.setItem('jb_rooms_index',id);_roomsIndexBinId=id;return id;}
+      }
+    }catch(e){}
+    return null;
+  })();
+  try{return await _roomsIndexPromise;}finally{_roomsIndexPromise=null;}
+}
+
+// Herkese açık oda listesini çek
+async function fetchPublicRooms(){
+  const indexId=await getRoomsIndexBinId();
+  if(!indexId)return[];
+  try{
+    const data=await readBin(indexId);
+    return(data?.rooms||[]).filter(r=>r.isPublic).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  }catch(e){return[];}
+}
+
+// Yeni odayı index'e kaydet (oluşturma sonrası çağrılır)
+async function registerRoomInIndex(binId,name,desc,isPublic,hasPassword){
+  if(!isPublic)return;
+  const indexId=await getRoomsIndexBinId();
+  if(!indexId)return;
+  try{
+    const data=(await readBin(indexId))||{rooms:[]};
+    if(!data.rooms)data.rooms=[];
+    const existing=data.rooms.findIndex(r=>r.binId===binId);
+    const entry={binId,name,desc,isPublic,hasPassword,ts:Date.now(),memberCount:1};
+    if(existing>=0)data.rooms[existing]=entry;
+    else data.rooms.push(entry);
+    if(data.rooms.length>80)data.rooms=data.rooms.slice(-80);
+    await fetch(`${JB_BASE}/b/${indexId}`,{method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
+      body:JSON.stringify(data)});
+  }catch(e){}
+}
+
+// Odayı index'ten sil
+async function unregisterRoomFromIndex(binId){
+  const indexId=await getRoomsIndexBinId();
+  if(!indexId)return;
+  try{
+    const data=(await readBin(indexId))||{rooms:[]};
+    data.rooms=(data.rooms||[]).filter(r=>r.binId!==binId);
+    await fetch(`${JB_BASE}/b/${indexId}`,{method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
+      body:JSON.stringify(data)});
+  }catch(e){}
+}
 
 // Her kullanıcının kendi bin'i var, binId localStorage'da tutulur
 // Paylaşılan kod = friendCode, bin ID = ayrı tutulur
@@ -14246,6 +14343,8 @@ async function libCreateRoom(name,desc,password,isPublic){
     window._libCreateForm={show:false,name:'',desc:'',password:'',isPublic:false};
     save();
     toast('Oda oluşturuldu! 🏰');
+    // Herkese açık oda ise merkezi listeye kaydet
+    if(pub) registerRoomInIndex(binId,name.trim(),(desc||'').trim(),true,hasPassword).catch(()=>{});
     renderKutuphane();
   }catch(e){toast('Bağlantı hatası.');window._libCreating=false;}
 }
@@ -14413,10 +14512,28 @@ if(!window._libJoinPassword)window._libJoinPassword='';
 if(!window._libCreateForm){window._libCreateForm={show:false,name:'',desc:'',password:'',isPublic:false};}
 if(!window._libNeedsPassword)window._libNeedsPassword=false;
 if(!window._libPendingJoin)window._libPendingJoin=null;
+if(!window._pubRooms)window._pubRooms=null; // null=yüklenmedi, []=boş
+if(!window._pubRoomsLoading)window._pubRoomsLoading=false;
+
+// Açılışta ve kütüphane sekmesi açılınca public odaları yükle
+async function loadPublicRooms(){
+  if(window._pubRoomsLoading)return;
+  window._pubRoomsLoading=true;
+  try{
+    const rooms=await fetchPublicRooms();
+    window._pubRooms=rooms;
+  }catch(e){window._pubRooms=[];}
+  finally{window._pubRoomsLoading=false;}
+  if(S.curTab==='kutuphane')renderKutuphane();
+}
+// Sayfa yüklenince ilk kez çek
+setTimeout(loadPublicRooms,2000);
 
 // ── RENDER ──
 function renderKutuphane(){
   const page=document.getElementById('page');if(!page)return;
+  // Kütüphane açılınca public oda listesini taze çek
+  if(window._pubRooms===null&&!window._pubRoomsLoading)loadPublicRooms();
   const ql=window._libQL;
   const room=S.activeRoom;
   const rd=window._libRoomData;
@@ -14707,6 +14824,47 @@ function renderKutuphane(){
     </div>
   </div>
 
+  <!-- Herkese Açık Odalar -->
+  <div class="lib-section" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>🌐 Herkese Açık Odalar</span>
+    <button onclick="window._pubRooms=null;loadPublicRooms();" style="background:none;border:none;color:rgba(124,77,255,.5);font-size:10px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:2px 6px;">↺ Yenile</button>
+  </div>
+  ${window._pubRoomsLoading?`
+    <div style="text-align:center;padding:18px;color:rgba(124,77,255,.35);font-size:11px;">⏳ Odalar yükleniyor…</div>
+  `:window._pubRooms===null?`
+    <div style="text-align:center;padding:18px;color:rgba(255,255,255,.15);font-size:10px;">Odalar yüklenemedi. Yenile butonuna bas.</div>
+  `:window._pubRooms.length===0?`
+    <div style="text-align:center;padding:18px;border:1px dashed rgba(124,77,255,.12);border-radius:12px;margin-bottom:9px;">
+      <div style="font-size:28px;margin-bottom:6px;opacity:.3;">🏰</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.2);">Henüz herkese açık oda yok.<br>İlk odayı sen oluştur!</div>
+    </div>
+  `:(()=>{
+    const myBinId=S.activeRoom?.binId||null;
+    return window._pubRooms.map(r=>{
+      const isJoined=myBinId===r.binId;
+      const isLocked=r.hasPassword;
+      const ageMin=Math.round((Date.now()-(r.ts||Date.now()))/60000);
+      const ageTxt=ageMin<60?ageMin+'dk önce':Math.round(ageMin/60)+'s önce';
+      return`<div class="pub-room-card" onclick="${isJoined?`window._libView='room';libSyncRoom();renderKutuphane();`:`window._libJoinPub('${r.binId}','${(r.name||'').replace(/'/g,"\\'")}',${isLocked})`}">
+        <div style="width:42px;height:42px;border-radius:13px;background:rgba(124,77,255,.12);border:1.5px solid rgba(124,77,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🏰</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name||'Çalışma Odası'}</div>
+            ${isLocked?'<span style="font-size:9px;color:#f5a623;">🔒</span>':'<span style="font-size:9px;color:#81c784;">🌐</span>'}
+          </div>
+          ${r.desc?`<div style="font-size:9px;color:rgba(255,255,255,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.desc}</div>`:''}
+          <div style="font-size:8px;color:rgba(255,255,255,.2);margin-top:2px;">${ageTxt}</div>
+        </div>
+        <div style="flex-shrink:0;">
+          ${isJoined
+            ?'<span style="font-size:9px;background:rgba(124,77,255,.15);border:1px solid rgba(124,77,255,.3);border-radius:100px;padding:3px 8px;color:var(--lib-pu2);font-weight:800;">İçeridesin ✓</span>'
+            :`<span style="font-size:9px;background:rgba(67,160,71,.1);border:1px solid rgba(67,160,71,.25);border-radius:100px;padding:3px 9px;color:#81c784;font-weight:800;">${isLocked?'🔒 Gir':'Gir →'}</span>`}
+        </div>
+      </div>`;
+    }).join('');
+  })()}
+
+
   <!-- Soru Kütüphanesi -->
   <div class="lib-section">📚 Soru Kütüphanem</div>
   <div class="ql-section-header">
@@ -14741,6 +14899,20 @@ function renderQLSection(){
   ${ql.folders.length===0?`<div class="room-empty">📂 Henüz klasör yok — "Yeni Klasör" ile başla!</div>`:''}`;
 }
 
+// Herkese açık odaya tıklama — şifreli ise prompt, şifresiz ise direkt katıl
+window._libJoinPub=async function(binId,name,isLocked){
+  if(isLocked){
+    // Şifre giriş alanını göster — shareCode formatına çevir: binId:binId
+    window._libPendingJoin={shareCode:binId+':'+binId,binId,code:''};
+    window._libNeedsPassword=true;
+    renderKutuphane();
+    return;
+  }
+  // Şifresiz: direkt katıl
+  toast('Odaya bağlanılıyor…');
+  await libJoinByCode(binId+':'+binId,'');
+};
+
 if(S.activeRoom){window._libView='room';libSyncRoom();}
 
 
@@ -14770,6 +14942,8 @@ function nav(tab){
   document.querySelectorAll('.ni').forEach(b=>b.classList.remove('on'));
   document.getElementById('nav-'+tab).classList.add('on');
   document.getElementById('page').scrollTop=0;
+  // Kütüphane sekmesine geçince public odaları tazele
+  if(tab==='kutuphane'){window._pubRooms=null;loadPublicRooms();}
   ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings})[tab]?.();
   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
 }
@@ -15250,12 +15424,12 @@ async function renderRanking(){
       const fb=document.getElementById("feed-body");
       if(fb)fb.innerHTML=renderFeed(items);
       // Kendi welcome'ı feed'de yoksa (silinmiş olabilir) bir kez recovery yap
+      // NOT: welcomeSent=true ise kullanıcı zaten katılmış demektir, tekrar gönderme
       if(_fbUser && !sessionStorage.getItem('yks_welcome_checked')){
         sessionStorage.setItem('yks_welcome_checked','1');
         const myWelcome=items.find(x=>x.type==='welcome'&&x.uid===_fbUser.uid);
-        if(!myWelcome){
-          // welcomeSent flag'ini sıfırla ve yeniden gönder
-          S.welcomeSent=false; save();
+        if(!myWelcome && !S.welcomeSent){
+          // Sadece daha önce hiç gönderilmemişse gönder — aynı hesapla yeni cihazda oturum açınca spam olmaz
           (async()=>{
             if(typeof pushGlobalLb==='function') await pushGlobalLb().catch(()=>{});
             if(typeof pushFeedEvent==='function') await pushFeedEvent('welcome',{});
@@ -19921,13 +20095,14 @@ async function cloudLoad({ forceLoad = false } = {}){
       // 5) totalMinutes: büyük olan kazanır
       const mergedTotalMins = Math.max(p.totalMinutes||0, S.totalMinutes||0);
 
-      // 6) Avatar: cloud'dan gelen asıl doğru değerdir (son kaydedilen cihaz kazanır)
-      //    AMA yerel zaten cloud'dakinden daha yeni ise (cloudSave henüz çalışmamış),
-      //    yerel'i koru. Bunu anlamak için xp eşitliğini kullanıyoruz:
-      //    Eğer yerel XP == cloud XP ise aynı oturumda olabiliriz → yerel avatar koru
-      const useLocalAvatar = !forceLoad && (S.xp||0) > 0 && (S.xp||0) === (p.xp||0);
+      // 6) Avatar: avatarTs timestamp'i varsa daha yeni olan cihazın avatarı kazanır
+      //    Yoksa eski davranış: forceLoad'da cloud kazanır, aynı XP'de yerel koru
+      const localAvatarTs = S.avatarTs || 0;
+      const cloudAvatarTs = p.avatarTs || 0;
+      const useLocalAvatar = !forceLoad && (localAvatarTs >= cloudAvatarTs) && (S.xp||0) > 0;
       const mergedAvatar  = useLocalAvatar ? (S.avatarEmoji||p.avatarEmoji||'⚔️') : (p.avatarEmoji||S.avatarEmoji||'⚔️');
       const mergedFrame   = useLocalAvatar ? (S.avatarFrame||p.avatarFrame||'default') : (p.avatarFrame||S.avatarFrame||'default');
+      const mergedAvatarTs = Math.max(localAvatarTs, cloudAvatarTs);
 
       // 7) Timer state: yerel timer her zaman korunur (cloud geride kalabilir)
       const _activeTimer={timerRunning:S.timerRunning,timerStartTs:S.timerStartTs,timerBaseSecs:S.timerBaseSecs,timerSecs:S.timerSecs,_lastMinSave:S._lastMinSave,_timerSubj:S._timerSubj,timerDay:S.timerDay};
@@ -19956,6 +20131,7 @@ async function cloudLoad({ forceLoad = false } = {}){
         totalMinutes: mergedTotalMins,
         avatarEmoji: mergedAvatar,
         avatarFrame: mergedFrame,
+        avatarTs: mergedAvatarTs,
         weekResetDay: weekResetDay,
       };
       // Yerel korunan alanları geri yaz — cloud bu alanları asla ezemez
@@ -20268,8 +20444,8 @@ onAuthStateChanged(auth, async user => {
     // ── AYNI HESAP — normal giriş / sayfa yenileme ──
     if(isSameAccount){
       const loaded = await cloudLoad();
-      if(loaded){ if(typeof renderAll==='function') renderAll(); toast('☁️ Tekrar hoş geldin!'); }
-      else { toast('✅ Hoş geldin!'); }
+      if(loaded){ if(typeof renderAll==='function') renderAll(); }
+      else { /* cloud'da veri yok ya da bağlantı yok — local ile devam */ }
       if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
       return;
     }
@@ -20785,7 +20961,9 @@ function saveAvatarSelection(){
   if(!window._avTemp)return;
   S.avatarEmoji=window._avTemp.emoji;
   S.avatarFrame=window._avTemp.frame;
+  S.avatarTs=Date.now(); // avatar değişim zamanı — cloud sync için
   save();
+  if(typeof pushGlobalLb==='function') pushGlobalLb().catch(()=>{}); // leaderboard avatarını da güncelle
   window._avTemp=null;
   toast('✅ Avatar kaydedildi!');
   renderHome();
