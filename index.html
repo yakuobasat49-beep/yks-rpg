@@ -654,9 +654,21 @@ input::placeholder{color:var(--t3);}
 .timer-fs-today{
   font-size:11px;color:rgba(255,255,255,.2);margin-top:10px;font-weight:700;
 }
+.room-card:hover{border-color:rgba(124,77,255,.3);}
+.room-member-card:hover{border-color:rgba(124,77,255,.25);}
+.rutin-card:hover:not(.done){border-color:rgba(124,77,255,.25);}
+.sk:hover{border-color:rgba(124,77,255,.3);}
+.lib-btn.primary:hover{box-shadow:0 6px 22px rgba(124,77,255,.45);transform:translateY(-1px);}
+.lib-btn.ghost:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);}
 @media(max-width:400px){
   .timer-fs-digits{font-size:68px;letter-spacing:2px;}
   .timer-fs-btn{padding:12px 24px;font-size:13px;}
+}
+/* Desktop: hafif geniş görünüm */
+@media(min-width:501px){
+  #root{border-left:1px solid rgba(255,255,255,0.04);border-right:1px solid rgba(255,255,255,0.04);}
+  .bnav{border-left:1px solid rgba(255,255,255,0.04);border-right:1px solid rgba(255,255,255,0.04);}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(124,77,255,.06),transparent 60%);pointer-events:none;z-index:-1;}
 }
 
 </style>
@@ -14437,7 +14449,12 @@ async function libSyncRoom(){
       headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
       body:JSON.stringify(data)});
     window._libRoomData=data;
-    if(S.curTab==='kutuphane')renderKutuphane();
+    if(S.curTab==='kutuphane'&&window._libView==='room'){
+      const pg=document.getElementById('page');
+      const st=pg?pg.scrollTop:0;
+      renderKutuphane();
+      if(pg)requestAnimationFrame(()=>{pg.scrollTop=st;});
+    }
   }catch(e){}
 }
 
@@ -14522,6 +14539,7 @@ async function loadPublicRooms(){
   try{
     const rooms=await fetchPublicRooms();
     window._pubRooms=rooms;
+    window._pubRoomsTs=Date.now();
   }catch(e){window._pubRooms=[];}
   finally{window._pubRoomsLoading=false;}
   if(S.curTab==='kutuphane')renderKutuphane();
@@ -14943,7 +14961,10 @@ function nav(tab){
   document.getElementById('nav-'+tab).classList.add('on');
   document.getElementById('page').scrollTop=0;
   // Kütüphane sekmesine geçince public odaları tazele
-  if(tab==='kutuphane'){window._pubRooms=null;loadPublicRooms();}
+  if(tab==='kutuphane'){
+    const stale=!window._pubRoomsTs||(Date.now()-window._pubRoomsTs)>60000;
+    if(stale){window._pubRooms=null;loadPublicRooms();}
+  }
   ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings})[tab]?.();
   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
 }
