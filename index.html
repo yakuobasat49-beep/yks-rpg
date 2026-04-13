@@ -501,257 +501,164 @@ input::placeholder{color:var(--t3);}
 .wt-tip{font-size:9px;color:var(--t3);line-height:1.5;background:rgba(255,255,255,0.03);border-radius:6px;padding:6px 8px;}
 
 /* ══ KÜTÜPHANe — Modern Lofi Study ══ */
+/* ═══ KÜTÜPHANe & ODA SİSTEMİ — YENİ TASARIM ═══ */
 :root{
-  --wood:#3d1f0a;--wood2:#5c2e0d;--amber:#d4870a;--warm:#f5c842;--paper:#fdf6e3;--shelf:#2a1205;
-  --lib-bg:#0a0d12;--lib-surface:#0f1318;--lib-border:rgba(180,150,100,.14);
-  --lib-gold:#c9a96e;--lib-gold2:#f0d080;--lib-green:#4caf50;--lib-glow:rgba(201,169,110,.18);
+  --lib-bg:#08080f;--lib-surface:#0e0e1c;--lib-card:#13132a;
+  --lib-border:rgba(120,100,255,.15);--lib-border2:rgba(120,100,255,.08);
+  --lib-pu:rgba(124,77,255,1);--lib-pu2:rgba(180,140,255,.9);
+  --lib-gold:#f5a623;--lib-gold2:#ffd97d;
+  --lib-green:#43a047;--lib-green2:#81c784;
+  --lib-red:#e53935;--lib-t1:#fff;--lib-t2:rgba(255,255,255,.65);--lib-t3:rgba(255,255,255,.3);
 }
-@keyframes candleFlicker{0%,100%{transform:rotate(-2deg) scaleY(1);}25%{transform:rotate(3deg) scaleY(.96);}50%{transform:rotate(-1deg) scaleY(1.04);}75%{transform:rotate(2.5deg) scaleY(.97);}}
-@keyframes ambientGlow{0%,100%{opacity:.4;}50%{opacity:.75;}}
-.lib-candles{display:flex;gap:8px;position:absolute;bottom:10px;right:14px;align-items:flex-end;}
-@keyframes libPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,169,110,.0),0 2px 20px rgba(0,0,0,.4);}50%{box-shadow:0 0 0 3px rgba(201,169,110,.12),0 2px 20px rgba(0,0,0,.4);}}
-@keyframes onlinePing{0%{transform:scale(1);opacity:.8;}100%{transform:scale(2.8);opacity:0;}}
-@keyframes studyTick{0%,100%{opacity:1;}50%{opacity:.4;}}
-@keyframes floatUp{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
-@keyframes shimmer{0%{background-position:-200% center;}100%{background-position:200% center;}}
-
-/* ── HERO ── */
-.lib-hero{
-  background:linear-gradient(170deg,#0e0c08 0%,#15110a 40%,#0e0c08 100%);
-  border:1px solid rgba(201,169,110,.2);border-radius:20px;
-  margin-bottom:14px;overflow:hidden;position:relative;
-  box-shadow:0 8px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(201,169,110,.08);
-}
-.lib-hero-bg{
-  position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 0%,rgba(201,169,110,.06) 0%,transparent 70%),
-    radial-gradient(circle at 20% 80%,rgba(255,200,80,.04) 0%,transparent 40%),
-    radial-gradient(circle at 80% 80%,rgba(255,200,80,.04) 0%,transparent 40%);
-}
-.lib-window{
-  position:absolute;top:10px;right:12px;
-  width:48px;height:58px;
-  background:linear-gradient(180deg,#0a1a2e 0%,#0d2440 50%,#0a1a2e 100%);
-  border:1px solid rgba(100,150,220,.2);border-radius:4px 4px 0 0;
-  overflow:hidden;
-}
-.lib-window-pane{position:absolute;top:50%;left:50%;width:1px;background:rgba(100,150,220,.15);height:100%;transform:translateX(-50%);}
-.lib-window-star{position:absolute;font-size:7px;animation:floatUp 3s ease-in-out infinite;}
-.lib-window-star:nth-child(2){top:12px;left:8px;animation-delay:.5s;}
-.lib-window-star:nth-child(3){top:6px;right:9px;animation-delay:1.2s;}
-.lib-window-star:nth-child(4){top:22px;left:50%;transform:translateX(-50%);animation-delay:.8s;}
-.lib-desk{
-  position:absolute;bottom:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,#2a1a08,#4a2e12,#3a2208,#4a2e12,#2a1a08);
-}
-.lib-lamp{position:absolute;bottom:3px;left:14px;display:flex;flex-direction:column;align-items:center;}
-.lib-lamp-head{width:22px;height:9px;background:linear-gradient(135deg,#2a1a08,#3d2510);border-radius:4px 4px 0 0;border:1px solid rgba(201,169,110,.3);}
-.lib-lamp-glow{width:30px;height:16px;background:radial-gradient(ellipse,rgba(255,220,80,.15) 0%,transparent 70%);margin-top:-2px;}
-.lib-lamp-stem{width:2px;height:18px;background:linear-gradient(180deg,#3d2510,#2a1808);margin:0 auto;}
-.lib-lamp-base{width:14px;height:4px;background:#2a1808;border-radius:2px;}
-
-.lib-books-row{display:flex;align-items:flex-end;padding:0 12px;gap:3px;height:44px;}
-.lib-book-new{border-radius:3px 3px 0 0;flex-shrink:0;position:relative;cursor:default;}
-.lib-book-new::after{content:'';position:absolute;top:2px;left:2px;right:2px;height:2px;background:rgba(255,255,255,.12);border-radius:1px;}
-.lib-book-spine{position:absolute;left:2px;top:0;bottom:0;width:2px;background:rgba(0,0,0,.25);}
-.lib-shelf-plank{width:100%;height:6px;background:linear-gradient(180deg,#4a2e12 0%,#3a2208 60%,#2a1808 100%);box-shadow:0 3px 10px rgba(0,0,0,.5);}
-
-.lib-hero-inner{padding:14px 14px 13px;position:relative;}
-.lib-badge-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-.lib-badge{
-  display:inline-flex;align-items:center;gap:4px;
-  background:rgba(201,169,110,.1);border:1px solid rgba(201,169,110,.25);
-  border-radius:100px;padding:2px 9px;
-  font-size:8px;font-weight:900;color:var(--lib-gold);letter-spacing:1px;text-transform:uppercase;
-}
-.lib-title-new{
-  font-size:22px;font-weight:900;color:#fff;margin-bottom:1px;
-  text-shadow:0 0 30px rgba(201,169,110,.2);
-  letter-spacing:-.3px;
-}
-.lib-subtitle-new{font-size:10px;color:rgba(255,255,255,.35);margin-bottom:12px;font-weight:600;}
+/* HERO */
+.lib-hero{position:relative;border-radius:20px;overflow:hidden;margin-bottom:14px;background:linear-gradient(155deg,#090920,#12083a,#070720);border:1px solid rgba(124,77,255,.2);}
+.lib-hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% -20%,rgba(124,77,255,.18) 0%,transparent 65%);pointer-events:none;}
+.lib-hero-inner{padding:18px 16px 16px;position:relative;}
+.lib-badge-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.lib-badge{background:rgba(124,77,255,.12);border:1px solid rgba(124,77,255,.25);border-radius:100px;padding:3px 10px;font-size:9px;font-weight:900;color:var(--lib-pu2);letter-spacing:.5px;}
+.lib-title-new{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.3px;margin-bottom:2px;}
+.lib-subtitle-new{font-size:10px;color:var(--lib-t3);margin-bottom:12px;font-weight:600;}
 .lib-stats-row-new{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.lib-stat-new{
-  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
-  border-radius:12px;padding:9px 8px;text-align:center;
-  transition:border-color .2s;
-}
-.lib-stat-new:hover{border-color:rgba(201,169,110,.2);}
-.lib-stat-v-new{font-size:15px;font-weight:900;color:var(--lib-gold2);display:block;line-height:1;}
-.lib-stat-l-new{font-size:8px;color:rgba(255,255,255,.3);font-weight:700;margin-top:3px;display:block;}
-
-/* ── SECTION DIVIDER ── */
-.lib-section{
-  font-size:9px;font-weight:900;color:rgba(201,169,110,.55);
-  letter-spacing:2px;text-transform:uppercase;margin:16px 0 9px;
-  display:flex;align-items:center;gap:8px;
-}
-.lib-section::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(201,169,110,.15),transparent);}
-
-/* ── ROOM CARDS ── */
-.room-card{
-  background:linear-gradient(145deg,#111008,#170f05);
-  border:1px solid rgba(201,169,110,.15);border-radius:16px;
-  padding:14px;margin-bottom:9px;cursor:pointer;transition:all .2s;
-  position:relative;overflow:hidden;
-  box-shadow:0 4px 20px rgba(0,0,0,.3);
-}
-.room-card:active{transform:scale(.98);}
-.room-card.active-room{border-color:rgba(201,169,110,.4);animation:libPulse 3s ease-in-out infinite;}
-.room-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,169,110,.3),transparent);}
-.room-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
-.room-name{font-size:13px;font-weight:900;color:var(--lib-gold2);}
-.room-desc{font-size:9px;color:rgba(255,255,255,.35);margin-top:2px;}
-.room-badge{background:rgba(201,169,110,.1);border:1px solid rgba(201,169,110,.25);border-radius:100px;padding:2px 8px;font-size:8px;font-weight:800;color:var(--lib-gold);}
+.lib-stat-new{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px 8px;text-align:center;}
+.lib-stat-v-new{font-size:16px;font-weight:900;color:var(--lib-pu2);display:block;line-height:1;}
+.lib-stat-l-new{font-size:8px;color:var(--lib-t3);font-weight:700;margin-top:3px;display:block;}
+/* SECTION DIVIDER */
+.lib-section{display:flex;align-items:center;gap:8px;font-size:9px;font-weight:900;color:rgba(124,77,255,.5);letter-spacing:2px;text-transform:uppercase;margin:16px 0 10px;}
+.lib-section::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(124,77,255,.18),transparent);}
+/* INPUTS & BUTTONS */
+.lib-input{width:100%;padding:11px 13px;border-radius:11px;border:1.5px solid var(--lib-border);background:rgba(255,255,255,.03);color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;margin-bottom:8px;outline:none;transition:border-color .2s;}
+.lib-input:focus{border-color:rgba(124,77,255,.5);}
+.lib-input::placeholder{color:rgba(255,255,255,.2);}
+.lib-btn{padding:11px 18px;border-radius:11px;border:none;font-size:12px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;}
+.lib-btn:active{transform:scale(.97);}
+.lib-btn.primary{background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;box-shadow:0 4px 16px rgba(124,77,255,.3);}
+.lib-btn.ghost{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);}
+/* CREATE ROOM FORM */
+.room-create-form{background:rgba(124,77,255,.06);border:1.5px solid rgba(124,77,255,.2);border-radius:16px;padding:16px;margin-bottom:10px;}
+.room-create-title{font-size:10px;font-weight:900;color:rgba(124,77,255,.6);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
+/* ROOM CARDS */
+.room-card{background:var(--lib-card);border:1.5px solid var(--lib-border2);border-radius:16px;padding:14px;margin-bottom:9px;position:relative;overflow:hidden;transition:border-color .2s;}
+.room-card.active-room{border-color:rgba(124,77,255,.4);box-shadow:0 0 0 1px rgba(124,77,255,.1);}
+.room-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,.3),transparent);}
+.room-name{font-size:13px;font-weight:900;color:#fff;}
+.room-desc{font-size:9px;color:var(--lib-t3);margin-top:2px;}
+.room-badge{background:rgba(124,77,255,.1);border:1px solid rgba(124,77,255,.25);border-radius:100px;padding:2px 9px;font-size:8px;font-weight:800;color:var(--lib-pu2);}
+.room-badge.locked{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.3);color:#f5a623;}
+.room-badge.public{background:rgba(67,160,71,.1);border-color:rgba(67,160,71,.3);color:#81c784;}
 .room-badge.full{background:rgba(229,57,53,.1);border-color:rgba(229,57,53,.25);color:#ef5350;}
 .room-members-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
-.room-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4a2e12,#2a1808);display:flex;align-items:center;justify-content:center;font-size:12px;border:1.5px solid rgba(201,169,110,.3);flex-shrink:0;position:relative;}
-.online-dot{position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;background:#43a047;border-radius:50%;border:2px solid #111008;}
-.online-dot::after{content:'';position:absolute;inset:-1px;border-radius:50%;background:#43a047;animation:onlinePing 2s ease-out infinite;}
-.room-empty{font-size:10px;color:rgba(255,255,255,.25);text-align:center;padding:16px;border:1px dashed rgba(201,169,110,.1);border-radius:12px;margin-bottom:9px;}
-.room-join-btn{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(201,169,110,.3);background:linear-gradient(135deg,rgba(201,169,110,.1),rgba(201,169,110,.05));color:var(--lib-gold2);font-size:11px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;}
-.room-join-btn:active{transform:scale(.97);}
-.room-join-btn.leave{border-color:rgba(229,57,53,.25);background:rgba(229,57,53,.06);color:#ef5350;}
-
-/* ── INPUT & BUTTON ── */
-.lib-input{
-  width:100%;padding:10px 13px;border-radius:10px;
-  border:1px solid rgba(201,169,110,.2);
-  background:rgba(255,255,255,.04);
-  color:#fff;font-size:12px;font-family:'Nunito',sans-serif;outline:none;margin-bottom:9px;
-  transition:border-color .2s;
-}
-.lib-input:focus{border-color:rgba(201,169,110,.45);}
-.lib-input::placeholder{color:rgba(255,255,255,.2);}
-.lib-btn{padding:10px 18px;border-radius:10px;border:none;font-size:11px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;}
-.lib-btn:active{transform:scale(.97);}
-.lib-btn.primary{background:linear-gradient(135deg,#c9a96e,#a07840);color:#fff;box-shadow:0 4px 14px rgba(201,169,110,.2);}
-.lib-btn.ghost{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.55);}
-
-/* ── INSIDE ROOM ── */
-.room-inside{background:linear-gradient(160deg,#110d06,#180f05);border:1.5px solid rgba(201,169,110,.3);border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 8px 40px rgba(0,0,0,.5);}
-.room-inside-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(201,169,110,.1);}
-.room-inside-title{font-size:14px;font-weight:900;color:var(--lib-gold2);}
-.member-list{display:flex;flex-direction:column;gap:8px;}
-.member-row{
-  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
-  border-radius:14px;padding:11px 12px;display:flex;align-items:center;gap:10px;
-  transition:border-color .2s;
-}
-.member-row.me{border-color:rgba(201,169,110,.25);background:rgba(201,169,110,.05);}
-.member-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:linear-gradient(135deg,#2a1808,#1a1005);border:2px solid rgba(201,169,110,.25);flex-shrink:0;}
-.member-info{flex:1;min-width:0;}
-.member-name{font-size:12px;font-weight:800;color:var(--lib-gold2);}
-.member-subj{font-size:9px;color:rgba(255,255,255,.35);margin-top:1px;}
-.member-time{text-align:right;flex-shrink:0;}
-.member-hours{font-size:17px;font-weight:900;color:var(--lib-gold2);}
-.member-hlabel{font-size:8px;color:rgba(201,169,110,.45);font-weight:700;}
-.member-studying{display:inline-flex;align-items:center;gap:3px;background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.2);border-radius:100px;padding:2px 8px;font-size:8px;font-weight:800;color:#81c784;margin-top:3px;}
-.study-dot{width:5px;height:5px;border-radius:50%;background:#66bb6a;animation:studyTick 1.4s ease-in-out infinite;}
-
-/* ── SORU KÜTÜPHANESİ ── */
-.ql-section-header{
-  display:flex;align-items:center;gap:10px;
-  background:linear-gradient(135deg,rgba(76,175,80,.08),rgba(76,175,80,.03));
-  border:1px solid rgba(76,175,80,.15);border-radius:14px;
-  padding:12px 14px;margin-bottom:10px;position:relative;overflow:hidden;
-}
+.room-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,rgba(124,77,255,.3),rgba(180,140,255,.15));display:flex;align-items:center;justify-content:center;font-size:12px;border:1.5px solid rgba(124,77,255,.25);flex-shrink:0;}
+.room-empty{font-size:10px;color:var(--lib-t3);text-align:center;padding:16px;border:1px dashed rgba(124,77,255,.12);border-radius:12px;margin-bottom:9px;}
+/* ROOM MEMBER CARDS */
+.room-member-card{background:var(--lib-card);border:1.5px solid var(--lib-border2);border-radius:16px;padding:14px;margin-bottom:8px;position:relative;overflow:hidden;transition:border-color .2s;}
+.room-member-card.is-me{border-color:rgba(124,77,255,.35);}
+.room-member-card.is-leader{border-color:rgba(245,166,35,.25);}
+/* ACTIVE ROOM BANNER */
+.active-room-banner{display:flex;align-items:center;gap:12px;background:rgba(124,77,255,.08);border:1.5px solid rgba(124,77,255,.25);border-radius:16px;padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;position:relative;overflow:hidden;}
+.active-room-banner::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,.4),transparent);}
+.active-room-banner:active{transform:scale(.99);}
+.active-room-icon{width:46px;height:46px;border-radius:14px;background:rgba(124,77,255,.15);border:1.5px solid rgba(124,77,255,.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.active-room-live{display:flex;align-items:center;gap:4px;font-size:8px;font-weight:900;color:#66bb6a;margin-top:3px;}
+.active-room-live-dot{width:5px;height:5px;border-radius:50%;background:#66bb6a;animation:studyTick 1.4s ease-in-out infinite;}
+/* INFO BOX */
+.lib-info-box{background:rgba(124,77,255,.04);border:1px solid rgba(124,77,255,.12);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+.lib-info-title{font-size:9px;font-weight:900;color:rgba(124,77,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.lib-info-text{font-size:10px;color:var(--lib-t3);line-height:1.6;}
+/* PUBLIC ROOMS LIST */
+.pub-room-card{background:var(--lib-card);border:1.5px solid var(--lib-border2);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s;}
+.pub-room-card:hover,.pub-room-card:active{border-color:rgba(124,77,255,.35);}
+/* FOLDER / PHOTO GRID (unchanged) */
+.ql-section-header{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:14px;margin-bottom:10px;position:relative;overflow:hidden;}
 .ql-section-header::before{content:'📚';position:absolute;right:10px;bottom:-6px;font-size:48px;opacity:.06;}
 .ql-section-icon{font-size:22px;}
 .ql-section-text{flex:1;}
 .ql-section-title{font-size:13px;font-weight:900;color:#81c784;}
 .ql-section-sub{font-size:9px;color:rgba(129,199,132,.45);margin-top:1px;}
+.folder-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:10px;}
+.folder-card{background:rgba(255,255,255,.025);border:1.5px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;position:relative;cursor:pointer;transition:border-color .2s;min-height:88px;}
+.folder-card:active{transform:scale(.98);}
+.folder-card:hover{border-color:rgba(129,199,132,.25);}
+.folder-card-bg{position:absolute;inset:0;background:linear-gradient(135deg,rgba(76,175,80,.06),transparent);}
+.folder-card-inner{padding:12px;position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;}
+.folder-icon{font-size:24px;}
+.folder-name{font-size:10px;font-weight:900;color:rgba(255,255,255,.8);word-break:break-word;}
+.folder-count{font-size:8px;color:rgba(129,199,132,.5);font-weight:700;}
+.folder-new{border-style:dashed;border-color:rgba(129,199,132,.15);background:rgba(76,175,80,.03);}
+.photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+.photo-q{border-radius:10px;overflow:hidden;position:relative;cursor:pointer;background:#0a0a18;border:1px solid rgba(255,255,255,.07);}
+.photo-q img{width:100%;height:130px;object-fit:cover;display:block;}
+.photo-q-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:16px 6px 5px;font-size:9px;font-weight:800;color:rgba(255,255,255,.7);}
+.photo-q-del{position:absolute;top:4px;right:4px;background:rgba(229,57,53,.8);border:none;border-radius:6px;color:#fff;font-size:10px;cursor:pointer;padding:2px 6px;font-weight:900;}
+.photo-upload-box{border:2px dashed rgba(129,199,132,.2);border-radius:14px;padding:20px;text-align:center;cursor:pointer;margin-bottom:12px;transition:border-color .2s;background:rgba(76,175,80,.02);}
+.photo-upload-box:active{border-color:rgba(129,199,132,.4);}
+.photo-upload-ico{font-size:32px;margin-bottom:6px;}
+.photo-upload-txt{font-size:10px;color:rgba(129,199,132,.4);font-weight:700;}
+.back-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:8px 14px;color:rgba(255,255,255,.45);font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;margin-bottom:14px;}
+.folder-detail-header{margin-bottom:14px;}
+.folder-detail-name{font-size:18px;font-weight:900;color:#fff;}
+.folder-detail-count{font-size:10px;color:rgba(255,255,255,.3);margin-top:2px;}
 
-.folder-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
-.folder-card{
-  background:linear-gradient(145deg,#0c160c,#0f1a0f);
-  border:1px solid rgba(76,175,80,.14);border-radius:14px;
-  padding:13px 11px;cursor:pointer;transition:all .2s;
-  position:relative;overflow:hidden;
-  box-shadow:0 2px 12px rgba(0,0,0,.25);
+/* ═══ TIMER FULLSCREEN MODE ═══ */
+#timer-fs-overlay{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:#07071a;
+  flex-direction:column;align-items:center;justify-content:center;
+  font-family:'Nunito',sans-serif;
+  padding:0;
 }
-.folder-card:active{transform:scale(.97);}
-.folder-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(76,175,80,.25),transparent);}
-.folder-card-inner{position:relative;z-index:1;}
-.folder-card-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 90% 0%,rgba(76,175,80,.06) 0%,transparent 60%);pointer-events:none;}
-.folder-icon{font-size:28px;margin-bottom:6px;display:block;}
-.folder-name{font-size:11px;font-weight:800;color:#a5d6a7;margin-bottom:3px;line-height:1.3;}
-.folder-count{font-size:9px;color:rgba(129,199,132,.4);}
-.folder-new{border:1.5px dashed rgba(76,175,80,.2);background:rgba(76,175,80,.03);}
-.folder-new .folder-icon{opacity:.35;}
-.folder-new .folder-name{color:rgba(129,199,132,.4);}
-
-/* ── PHOTO GRID ── */
-.photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;}
-.photo-q{border-radius:12px;overflow:hidden;border:1px solid rgba(76,175,80,.15);position:relative;aspect-ratio:4/3;background:#0a120a;cursor:pointer;transition:all .2s;}
-.photo-q:active{transform:scale(.97);}
-.photo-q img{width:100%;height:100%;object-fit:cover;display:block;}
-.photo-q-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.85));padding:6px 8px 7px;font-size:8px;font-weight:800;color:#a5d6a7;}
-.photo-q-del{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:rgba(229,57,53,.8);border:none;color:#fff;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;}
-.photo-upload-box{
-  border:2px dashed rgba(76,175,80,.2);border-radius:14px;
-  padding:22px 16px;text-align:center;
-  background:rgba(76,175,80,.03);cursor:pointer;transition:all .2s;margin-bottom:10px;
+#timer-fs-overlay.active{display:flex;}
+.timer-fs-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 40%,rgba(124,77,255,.15) 0%,rgba(7,7,26,.0) 65%);
+  pointer-events:none;
 }
-.photo-upload-box:active{background:rgba(76,175,80,.07);}
-.photo-upload-ico{font-size:30px;margin-bottom:6px;}
-.photo-upload-txt{font-size:10px;color:rgba(129,199,132,.5);font-weight:700;}
-
-/* ── FOLDER DETAIL HEADER ── */
-.folder-detail-header{
-  background:linear-gradient(135deg,#0c160c,#0f1a0f);
-  border:1px solid rgba(76,175,80,.18);border-radius:16px;
-  padding:14px;margin-bottom:12px;position:relative;overflow:hidden;
+.timer-fs-subject{
+  font-size:13px;font-weight:900;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(124,77,255,.7);margin-bottom:12px;min-height:18px;
 }
-.folder-detail-header::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(76,175,80,.3),transparent);}
-.folder-detail-name{font-size:16px;font-weight:900;color:#a5d6a7;margin-bottom:2px;}
-.folder-detail-count{font-size:10px;color:rgba(129,199,132,.4);}
-
-.back-btn{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:rgba(201,169,110,.6);background:none;border:none;cursor:pointer;font-family:'Nunito',sans-serif;margin-bottom:12px;padding:0;transition:color .15s;}
-.back-btn:hover{color:rgba(201,169,110,.9);}
-
-/* ── ROOM MEMBER CARD (inside room view) ── */
-.room-member-card{
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:16px;padding:13px 14px;margin-bottom:8px;
-  position:relative;transition:border-color .2s;
+.timer-fs-digits{
+  font-size:clamp(72px,20vw,140px);font-weight:900;letter-spacing:4px;
+  color:#fff;line-height:1;
+  text-shadow:0 0 60px rgba(124,77,255,.5);
+  transition:text-shadow .4s;
+  font-variant-numeric:tabular-nums;
 }
-.room-member-card.is-me{border-color:rgba(201,169,110,.3);background:rgba(201,169,110,.05);}
-.room-member-card.is-leader{border-color:rgba(201,169,110,.4);}
-
-/* ── INFO BOX ── */
-.lib-info-box{
-  background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);
-  border-radius:12px;padding:11px 13px;margin-bottom:12px;
+.timer-fs-digits.running{text-shadow:0 0 80px rgba(124,77,255,.7),0 0 160px rgba(124,77,255,.2);}
+.timer-fs-sub{
+  font-size:12px;color:rgba(255,255,255,.3);margin-top:12px;font-weight:700;
 }
-.lib-info-title{font-size:8px;font-weight:900;color:rgba(201,169,110,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
-.lib-info-text{font-size:9px;color:rgba(255,255,255,.25);line-height:1.9;}
-
-/* ── ROOM CREATE FORM ── */
-.room-create-form{
-  background:rgba(255,255,255,.02);border:1px solid rgba(201,169,110,.15);
-  border-radius:16px;padding:14px;margin-bottom:10px;
+.timer-fs-bar-wrap{
+  width:min(420px,80vw);height:4px;background:rgba(255,255,255,.07);
+  border-radius:100px;overflow:hidden;margin-top:24px;
 }
-.room-create-title{font-size:10px;font-weight:900;color:rgba(201,169,110,.6);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
-
-/* ── CANDLES (hero) ── */
-
-
-/* ── ACTIVE ROOM BANNER ── */
-.active-room-banner{
-  display:flex;align-items:center;gap:11px;
-  background:linear-gradient(135deg,rgba(201,169,110,.1),rgba(201,169,110,.05));
-  border:1.5px solid rgba(201,169,110,.3);border-radius:16px;
-  padding:13px 14px;margin-bottom:10px;cursor:pointer;
-  transition:border-color .2s;position:relative;overflow:hidden;
+.timer-fs-bar{height:100%;background:linear-gradient(90deg,var(--pu),var(--pk));border-radius:100px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.timer-fs-controls{
+  display:flex;gap:16px;margin-top:32px;
 }
-.active-room-banner::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,169,110,.4),transparent);}
-.active-room-banner:active{transform:scale(.99);}
-.active-room-icon{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#2a1808,#1a1005);border:1.5px solid rgba(201,169,110,.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-.active-room-live{display:flex;align-items:center;gap:4px;font-size:8px;font-weight:900;color:#66bb6a;margin-top:3px;}
-.active-room-live-dot{width:5px;height:5px;border-radius:50%;background:#66bb6a;animation:studyTick 1.4s ease-in-out infinite;}
+.timer-fs-btn{
+  padding:14px 32px;border-radius:16px;border:none;font-family:'Nunito',sans-serif;
+  font-size:14px;font-weight:900;cursor:pointer;transition:all .2s;
+}
+.timer-fs-btn.play{background:linear-gradient(135deg,var(--pu),var(--pk));color:#fff;box-shadow:0 6px 24px rgba(124,77,255,.35);}
+.timer-fs-btn.play:active{transform:scale(.97);}
+.timer-fs-btn.reset{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);}
+.timer-fs-close{
+  position:fixed;top:16px;right:16px;
+  width:40px;height:40px;border-radius:12px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;z-index:1;
+}
+.timer-fs-close:hover{background:rgba(229,57,53,.15);border-color:rgba(229,57,53,.25);color:#ef9090;}
+.timer-fs-today{
+  font-size:11px;color:rgba(255,255,255,.2);margin-top:10px;font-weight:700;
+}
+@media(max-width:400px){
+  .timer-fs-digits{font-size:68px;letter-spacing:2px;}
+  .timer-fs-btn{padding:12px 24px;font-size:13px;}
+}
+
 </style>
 <style>
 #pwa-install-bar{display:none;position:fixed;bottom:76px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:476px;background:linear-gradient(135deg,#1a1a35,#12122a);border:1.5px solid rgba(124,77,255,0.45);border-radius:14px;padding:11px 14px;z-index:200;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
@@ -4659,12 +4566,7 @@ function timerCardHTML(){
     <div style="font-size:8px;font-weight:800;">${s.name}</div>
   </button>`).join('');
 
-  // Ders seçici
-  const selSubjObj=S._timerSubj?SUBJ.find(x=>x.id===S._timerSubj):null;
-  const timerSubjBtns=SUBJ.map(s=>{
-    const isSel=S._timerSubj===s.id;
-    return`<button onclick="setTimerSubj('${s.id}')" style="padding:5px 7px;border-radius:8px;border:1.5px solid ${isSel?s.color:'rgba(255,255,255,0.08)'};background:${isSel?s.color+'22':'rgba(255,255,255,0.03)'};color:${isSel?s.color:'var(--t3)'};cursor:pointer;font-family:'Nunito',sans-serif;font-size:9px;font-weight:800;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:3px;"><span style="font-size:12px;">${s.icon}</span><span>${s.name}</span></button>`;
-  }).join('');
+  // Ders seçici kaldırıldı — timer artık sadece toplam süreyi kaydeder
 
   return `<div id="timer-ring" style="background:linear-gradient(155deg,#090920,#12083a,#070720);border:1px solid rgba(124,77,255,0.2);border-radius:22px;padding:20px 18px 18px;margin-bottom:10px;position:relative;overflow:hidden;">
     <!-- glow blob -->
@@ -4673,22 +4575,19 @@ function timerCardHTML(){
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;position:relative;">
       <div style="font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;">⏱ Kronometer</div>
-      ${running?`<div style="display:flex;align-items:center;gap:5px;background:rgba(124,77,255,0.18);border:1px solid rgba(124,77,255,0.35);border-radius:20px;padding:3px 10px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:var(--pu);animation:studyTick 1.4s ease-in-out infinite;"></div>
-        <span style="font-size:9px;font-weight:900;color:var(--pu);">${selSubjObj?selSubjObj.icon+' '+selSubjObj.name:'ÇALIŞIYOR'}</span>
-      </div>`:''}
+      <div style="display:flex;align-items:center;gap:6px;">
+        ${running?`<div style="display:flex;align-items:center;gap:5px;background:rgba(124,77,255,0.18);border:1px solid rgba(124,77,255,0.35);border-radius:20px;padding:3px 10px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--pu);animation:studyTick 1.4s ease-in-out infinite;"></div>
+          <span style="font-size:9px;font-weight:900;color:var(--pu);">ÇALIŞIYOR</span>
+        </div>`:''}
+        <button id="timer-fs-btn" onclick="timerToggleFullscreen()" title="Tam Ekran" style="width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;" onmouseenter="this.style.background='rgba(124,77,255,0.2)';this.style.color='var(--pu)';this.style.borderColor='rgba(124,77,255,0.4)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)';this.style.color='rgba(255,255,255,0.5)';this.style.borderColor='rgba(255,255,255,0.12)'">⛶</button>
+      </div>
     </div>
 
     <!-- Big time display -->
     <div style="text-align:center;margin-bottom:22px;position:relative;">
       <div id="timer-digits" style="font-size:52px;font-weight:900;letter-spacing:2px;color:#fff;font-family:'Nunito',sans-serif;line-height:1;text-shadow:0 0 40px ${accentCol}66;">${timeStr}</div>
       <div style="font-size:10px;color:var(--t3);margin-top:6px;font-weight:700;">Bu oturumda · Hedef: <span style='color:var(--gold);font-weight:900;'>${S.dailyGoalHours||4}s</span></div>
-    </div>
-
-    <!-- Ders Seçici -->
-    <div style="margin-bottom:16px;">
-      <div style="font-size:9px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;">📚 Hangi Ders? <span style="color:rgba(255,255,255,0.25);font-weight:600;font-size:8px;">(5dk'da bir ders istatistiğine eklenir)</span></div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;">${timerSubjBtns}<button onclick="setTimerSubj(null)" style="padding:5px 7px;border-radius:8px;border:1.5px solid ${!S._timerSubj?'rgba(255,255,255,0.4)':'rgba(255,255,255,0.08)'};background:${!S._timerSubj?'rgba(255,255,255,0.08)':'rgba(255,255,255,0.03)'};color:${!S._timerSubj?'var(--t1)':'var(--t3)'};cursor:pointer;font-family:'Nunito',sans-serif;font-size:9px;font-weight:800;transition:all .15s;">Genel</button></div>
     </div>
 
     <!-- Buttons -->
@@ -4774,8 +4673,7 @@ function _timerTick(){
     const _prevLastSave=S._lastMinSave||0;
     const _remainSlots=Math.floor((_prevDone-_prevLastSave)/300);
     if(_remainSlots>0){
-      const _tSid=S._timerSubj||null;
-      for(let _rs=0;_rs<_remainSlots;_rs++) addMins(5,_tSid);
+      for(let _rs=0;_rs<_remainSlots;_rs++) addMins(5,null);
     }
     // Yeni gün için sıfırla
     S.timerSecs=0;S.timerBaseSecs=0;S.timerStartTs=Date.now();
@@ -4792,14 +4690,11 @@ function _timerTick(){
     if(done>=_nextSlot){
       const _newSlots=Math.floor((done-(S._lastMinSave||0))/300);
       S._lastMinSave=(S._lastMinSave||0)+_newSlots*300;
-      const _tSid=S._timerSubj||null;
       for(let _si=0;_si<_newSlots;_si++){
-        addMins(5,_tSid);
-        const _tSubjIcon=_tSid?((SUBJ.find(x=>x.id===_tSid)||{}).icon||'⏱️'):'⏱️';
-        const _tSubjName=_tSid?((SUBJ.find(x=>x.id===_tSid)||{}).name||''):'';
-        addLog(_tSubjIcon,_tSubjName?`Kronometer: ${_tSubjName} 5dk`:'Kronometer: 5dk çalışma',0,{type:'minute',subjId:_tSid,correct:0,wrong:0,questions:0,mins:5,topic:null});
+        addMins(5,null);
+        addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:null,correct:0,wrong:0,questions:0,mins:5,topic:null});
       }
-      if(_newSlots>0){save();toast(`✅ ${_newSlots*5}dk kaydedildi!${S._timerSubj?(' ('+((SUBJ.find(x=>x.id===S._timerSubj)||{}).name||'')+')'):''}`); }
+      if(_newSlots>0){save();toast(`✅ ${_newSlots*5}dk kaydedildi! Plan sekmesinden ders dağılımını ayarlayabilirsin 📊`);}
     }
   }
 
@@ -4850,11 +4745,8 @@ document.addEventListener('visibilitychange',function(){
       const missedSlots=Math.floor((nowDone-lastSave)/300);
       if(missedSlots>0){
         for(let i=1;i<=missedSlots;i++){
-          const _tSid=S._timerSubj||null;
-          addMins(5,_tSid);
-          const _tSubjName=_tSid?((SUBJ.find(x=>x.id===_tSid)||{}).name||''):'';
-          const _tSubjIcon=_tSid?((SUBJ.find(x=>x.id===_tSid)||{}).icon||'⏱️'):'⏱️';
-          addLog(_tSubjIcon,_tSubjName?`Kronometer: ${_tSubjName} 5dk`:'Kronometer: 5dk çalışma',0,{type:'minute',subjId:_tSid,correct:0,wrong:0,questions:0,mins:5,topic:null});
+          addMins(5,null);
+          addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:null,correct:0,wrong:0,questions:0,mins:5,topic:null});
         }
         S._lastMinSave=lastSave+missedSlots*300;
         save();
@@ -7273,11 +7165,9 @@ function renderPlan(){
   const weekKey=curWeekKey();
   if(S.weekPlanReset!==weekKey){S.weekDone=Object.fromEntries(SUBJ.map(s=>[s.id,0]));S.weekPlanReset=weekKey;save();}
 
-  // Günlük dakika sıfırlama
+  // Günlük dakika — kaynak olarak dailyLog kullan (S.dailyMins yerine)
   const td=toDS();
-  if(S.dailyMinsDay!==td){S.dailyMins=0;S.dailyMinsDay=td;}
-
-  const dailyMins=S.dailyMins||0;
+  const dailyMins=(S.dailyLog&&S.dailyLog[td])?(S.dailyLog[td].mins||0):(S.dailyMins||0);
   const dailyHrs=Math.floor(dailyMins/60);
   const dailyRemMins=dailyMins%60;
   const dailyGoalMins=(S.dailyGoalHours||4)*60;
@@ -8086,41 +7976,20 @@ function addDailyMins(delta) {
   if (_addDailyMinsLock) return;
   _addDailyMinsLock = true;
   setTimeout(() => { _addDailyMinsLock = false; }, 500);
-  const dist = S.dailyDist || {};
-  // Sadece süresi 0'dan büyük olan dersleri filtreleyelim ki boşuna dönmesin
-  const activeSubjs = SUBJ.filter(s => (dist[s.id] || 0) > 0);
-  const distTotal = activeSubjs.reduce((a, s) => a + (dist[s.id] || 0), 0);
 
-  if (distTotal > 0 && activeSubjs.length > 0) {
-    const absDelta = Math.abs(delta);
-    const sign = delta > 0 ? 1 : -1;
-    let plannedPortions = [];
-    let currentTotal = 0;
+  // Sadece toplam günlük dakikayı güncelle — ders dağılımı (dailyDist) etkilenmez
+  const td = toDS();
+  if (!S.dailyLog) S.dailyLog = {};
+  if (!S.dailyLog[td]) S.dailyLog[td] = { xp: 0, questions: 0, mins: 0, subjMins: {}, subjXP: {}, subjQ: {} };
+  S.dailyLog[td].mins = Math.max(0, (S.dailyLog[td].mins || 0) + delta);
 
-    // 1. Her dersin payını hesapla (aşağı yuvarlayarak, mutlak değer üzerinden)
-    activeSubjs.forEach(s => {
-      const ratio = dist[s.id] / distTotal;
-      const portion = Math.floor(absDelta * ratio);
-      plannedPortions.push({ id: s.id, portion: portion * sign });
-      currentTotal += portion;
-    });
+  // dailyMins sayacını güncelle
+  if (!S.dailyMinsDay || S.dailyMinsDay !== td) { S.dailyMins = 0; S.dailyMinsDay = td; }
+  S.dailyMins = Math.max(0, (S.dailyMins || 0) + delta);
 
-    // 2. Yuvarlamadan dolayı eksik kalan dakikaları dağıt
-    let remaining = absDelta - currentTotal;
-    for (let i = 0; i < remaining; i++) {
-      plannedPortions[i % plannedPortions.length].portion += sign;
-    }
+  // Haftalık toplam dakika
+  S.weekTotalMins = Math.max(0, (S.weekTotalMins || 0) + delta);
 
-    // 3. Şimdi merkezi fonksiyona gönder
-    plannedPortions.forEach(p => {
-      if (p.portion !== 0) addMins(p.portion, p.id);
-    });
-
-  } else {
-    // Eğer ders dağılımı yoksa direkt genel ekle/çıkar
-    addMins(delta, null);
-  }
-  
   save();
   renderPlan();
 }
@@ -14343,14 +14212,20 @@ function libRoomShareCode(){
   return `${S.activeRoom.code}:${S.activeRoom.binId}`;
 }
 
-async function libCreateRoom(name,desc){
+async function libCreateRoom(name,desc,password,isPublic){
   if(!name||!name.trim()){toast('Oda adı girin!');window._libCreating=false;return;}
   const code=Math.random().toString(36).substring(2,8).toUpperCase();
   const myCode=S.friendCode||'GUEST'+Date.now();
+  const hasPassword=!!(password&&password.trim());
+  const pub=!!isPublic;
   const initData={
-    code,name:name.trim(),desc:(desc||'').trim(),createdAt:Date.now(),
+    code,name:name.trim(),desc:(desc||'').trim(),
+    createdAt:Date.now(),
+    isPublic:pub,
+    passwordHash:hasPassword?btoa(password.trim()):'',
     members:{
-      [myCode]:{name:S.myName||'YKS Savaşçısı',mins:S.dailyMins||0,ts:Date.now(),studying:!!(S.timerOn),xp:S.xp||0,streak:S.streak||0}
+      [myCode]:{name:S.myName||'YKS Savaşçısı',mins:S.dailyMins||0,ts:Date.now(),
+                studying:!!(S.timerRunning),xp:S.xp||0,streak:S.streak||0}
     }
   };
   toast('Oda oluşturuluyor…');
@@ -14364,41 +14239,68 @@ async function libCreateRoom(name,desc){
     const d=await r.json();
     const binId=d.metadata?.id;
     if(!binId){toast('Oda oluşturulamadı :(');return;}
-    S.activeRoom={code,binId,name:name.trim(),desc:(desc||'').trim(),joinedAt:Date.now()};
+    S.activeRoom={code,binId,name:name.trim(),desc:(desc||'').trim(),
+                  isPublic:pub,hasPassword:hasPassword,joinedAt:Date.now()};
     window._libRoomData=initData;
     window._libView='room';
-    window._libCreateForm={show:false,name:'',desc:''};
+    window._libCreateForm={show:false,name:'',desc:'',password:'',isPublic:false};
     save();
-    toast('Oda oluşturuldu! 🏛️');
+    toast('Oda oluşturuldu! 🏰');
     renderKutuphane();
-  }catch(e){toast('Bağlantı hatası.');}
+  }catch(e){toast('Bağlantı hatası.');window._libCreating=false;}
 }
 
-async function libJoinByCode(shareCode){
+async function libJoinByCode(shareCode,enteredPassword){
   const parts=(shareCode||'').trim().split(':');
   if(parts.length<2){toast('Geçersiz kod. Format: ABC123:binId');return;}
   const code=parts[0].toUpperCase();
   const binId=parts.slice(1).join(':');
   toast('Odaya bağlanılıyor…');
-  const data=await readBin(binId);
-  if(!data){toast('Oda bulunamadı. Kodu kontrol et!');return;}
-  const myCode=S.friendCode||'GUEST'+Date.now();
-  data.members=data.members||{};
-  data.members[myCode]={name:S.myName||'YKS Savaşçısı',mins:S.dailyMins||0,ts:Date.now(),studying:!!(S.timerOn),xp:S.xp||0,streak:S.streak||0};
   try{
+    const data=await readBin(binId);
+    if(!data){toast('Oda bulunamadı. Kodu kontrol et!');return;}
+    // Şifre kontrolü
+    if(data.passwordHash){
+      const entered=(enteredPassword||window._libJoinPassword||'').trim();
+      if(!entered){
+        // Şifre isteme alanını göster
+        window._libPendingJoin={shareCode,binId,code};
+        window._libNeedsPassword=true;
+        renderKutuphane();
+        return;
+      }
+      if(btoa(entered)!==data.passwordHash){toast('Yanlış şifre! 🔒');return;}
+    }
+    window._libNeedsPassword=false;
+    window._libPendingJoin=null;
+    window._libJoinPassword='';
+    const myCode=S.friendCode||'GUEST'+Date.now();
+    data.members=data.members||{};
+    data.members[myCode]={name:S.myName||'YKS Savaşçısı',mins:S.dailyMins||0,ts:Date.now(),
+                          studying:!!(S.timerRunning),xp:S.xp||0,streak:S.streak||0};
     const r=await fetch(`${JB_BASE}/b/${binId}`,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
+      method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
       body:JSON.stringify(data)
     });
     if(!r.ok){toast('Katılım başarısız :(');return;}
-    S.activeRoom={code,binId,name:data.name||'Çalışma Odası',desc:data.desc||'',joinedAt:Date.now()};
+    S.activeRoom={code,binId,name:data.name||'Çalışma Odası',desc:data.desc||'',
+                  isPublic:!!data.isPublic,hasPassword:!!data.passwordHash,joinedAt:Date.now()};
     window._libRoomData=data;
     window._libView='room';
     save();
     toast(`${data.name||'Odaya'} katıldın! 🎉`);
     renderKutuphane();
   }catch(e){toast('Bağlantı hatası.');}
+}
+
+async function libJoinPublicRoom(binId,roomName){
+  await libJoinByCode(binId+':'+binId,'');
+}
+
+async function libJoinDirect(binId){
+  // Public odalar için direkt katılım (şifresiz)
+  window._libJoinCode=binId;
+  await libJoinByCode(binId+':'+binId,'');
 }
 
 async function libLeaveRoom(){
@@ -14409,7 +14311,9 @@ async function libLeaveRoom(){
     const data=await readBin(binId);
     if(data&&data.members){
       delete data.members[myCode];
-      await fetch(`${JB_BASE}/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},body:JSON.stringify(data)});
+      await fetch(`${JB_BASE}/b/${binId}`,{method:'PUT',
+        headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
+        body:JSON.stringify(data)});
     }
   }catch(e){}
   S.activeRoom=null;
@@ -14428,27 +14332,32 @@ async function libSyncRoom(){
     const data=await readBin(binId);
     if(!data)return;
     data.members=data.members||{};
-    data.members[myCode]={name:S.myName||'YKS Savaşçısı',mins:S.dailyMins||0,ts:Date.now(),studying:!!(S.timerOn),xp:S.xp||0,streak:S.streak||0};
-    await fetch(`${JB_BASE}/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},body:JSON.stringify(data)});
+    data.members[myCode]={name:S.myName||'YKS Savaşçısı',mins:S.dailyMins||0,ts:Date.now(),
+                          studying:!!(S.timerRunning),xp:S.xp||0,streak:S.streak||0};
+    await fetch(`${JB_BASE}/b/${binId}`,{method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
+      body:JSON.stringify(data)});
     window._libRoomData=data;
     if(S.curTab==='kutuphane')renderKutuphane();
   }catch(e){}
 }
 
-// Room sync interval (started after init)
+// Room sync interval
 setTimeout(()=>{
   if(window._roomSyncInterval)clearInterval(window._roomSyncInterval);
   window._roomSyncInterval=setInterval(()=>{if(S.activeRoom)libSyncRoom();},15000);
 },3000);
 
 function libShare(){
-  const code=libRoomShareCode();
-  if(!code)return;
-  const text=`🏛️ "${S.activeRoom.name}" çalışma odasına davet edildiniz!\n\nOda Kodu: ${code}\n\n📱 YKS RPG'yi açın → Kütüphane → Odaya Katıl`;
+  const code=libRoomShareCode();if(!code)return;
+  const room=S.activeRoom;
+  const text='🏰 "'+room.name+'" çalışma odasına davet edildiniz!'
+    +'\n\nOda Kodu: '+code
+    +(room.hasPassword?'\n🔒 Bu oda şifrelidir — şifreyi ayrıca iletin.':'')
+    +'\n\n📱 YKS RPG\'yi açın → Kütüphane → Odaya Katıl';
   if(navigator.share){navigator.share({title:'YKS RPG Çalışma Odası',text});}
   else{navigator.clipboard.writeText(text).then(()=>toast('Davet kopyalandı! 📋')).catch(()=>toast('Kod: '+code));}
 }
-
 function libCopyCode(){
   const code=libRoomShareCode();
   navigator.clipboard.writeText(code).then(()=>toast('Kod kopyalandı! 📋')).catch(()=>alert('Kod: '+code));
@@ -14461,16 +14370,13 @@ function qlCreateFolder(){
   const ql=window._libQL;
   ql.folders.push({id:'f_'+(++ql.seq),name:name.trim(),photos:[]});
   ql.view='folder';ql.activeFolder=ql.folders[ql.folders.length-1].id;
-  _saveLibQL();
-  renderKutuphane();
+  _saveLibQL();renderKutuphane();
 }
 function qlDeleteFolder(fid){
   if(!confirm('Bu klasörü ve içindeki tüm soruları silmek istiyor musun?'))return;
   const ql=window._libQL;
   ql.folders=ql.folders.filter(f=>f.id!==fid);
-  _saveLibQL();
-  renderKutuphane();
-  toast('Klasör silindi 🗑️');
+  _saveLibQL();renderKutuphane();toast('Klasör silindi 🗑️');
 }
 function qlOpenFolder(fid){const ql=window._libQL;ql.prevView=window._libView||'main';ql.view='folder';ql.activeFolder=fid;window._libView='folder';renderKutuphane();}
 function qlBack(){const ql=window._libQL;const prev=ql.prevView||'main';ql.view=prev;ql.activeFolder=null;window._libView=prev;renderKutuphane();}
@@ -14484,8 +14390,7 @@ function qlAddPhoto(fid){
       const folder=ql.folders.find(f=>f.id===fid);if(!folder)return;
       folder.photos=folder.photos||[];
       folder.photos.push({id:'p_'+Date.now(),src:e.target.result,note:'Soru '+(folder.photos.length+1)});
-      _saveLibQL();
-      renderKutuphane();
+      _saveLibQL();renderKutuphane();
     };reader.readAsDataURL(file);
   };inp.click();
 }
@@ -14497,15 +14402,19 @@ function qlDeletePhoto(fid,pid){
 function qlViewPhoto(src){
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
-  ov.innerHTML=`<div style="max-width:460px;width:100%;position:relative;"><img src="${src}" style="width:100%;border-radius:14px;border:1px solid rgba(67,160,71,.3);display:block;max-height:80vh;object-fit:contain;"><button onclick="this.closest('div').parentNode.remove()" style="position:absolute;top:-14px;right:-14px;width:32px;height:32px;border-radius:50%;background:#0a120a;border:1px solid rgba(67,160,71,.3);color:#81c784;font-size:16px;cursor:pointer;">✕</button></div>`;
+  ov.innerHTML='<div style="max-width:460px;width:100%;position:relative;"><img src="'+src+'" style="width:100%;border-radius:14px;border:1px solid rgba(124,77,255,.3);display:block;max-height:80vh;object-fit:contain;"><button onclick="this.closest(\'div\').parentNode.remove()" style="position:absolute;top:-14px;right:-14px;width:32px;height:32px;border-radius:50%;background:#0a0a1a;border:1px solid rgba(124,77,255,.3);color:#b08fff;font-size:16px;cursor:pointer;">✕</button></div>';
   document.body.appendChild(ov);ov.onclick=e=>{if(e.target===ov)ov.remove();};
 }
 
-// ── Main Render ──
+// ── State init ──
 if(!window._libView)window._libView='main';
 if(!window._libJoinCode)window._libJoinCode='';
-if(!window._libCreateForm){window._libCreateForm={show:false,name:'',desc:''};}
+if(!window._libJoinPassword)window._libJoinPassword='';
+if(!window._libCreateForm){window._libCreateForm={show:false,name:'',desc:'',password:'',isPublic:false};}
+if(!window._libNeedsPassword)window._libNeedsPassword=false;
+if(!window._libPendingJoin)window._libPendingJoin=null;
 
+// ── RENDER ──
 function renderKutuphane(){
   const page=document.getElementById('page');if(!page)return;
   const ql=window._libQL;
@@ -14528,19 +14437,15 @@ function renderKutuphane(){
         </div>
       </div>
     </div>
-    ${photoCount>0?`
-    <div class="photo-grid">
-      ${folder.photos.map(p=>`
-        <div class="photo-q" onclick="qlViewPhoto(this.querySelector('img').src)">
-          <img src="${p.src}" loading="lazy">
-          <div class="photo-q-label">${p.note}</div>
-          <button class="photo-q-del" onclick="event.stopPropagation();qlDeletePhoto('${folder.id}','${p.id}')">✕</button>
-        </div>`).join('')}
-    </div>`:`
-    <div style="text-align:center;padding:30px 0 20px;color:rgba(129,199,132,.25);font-size:10px;">
-      <div style="font-size:40px;margin-bottom:10px;opacity:.3;">📷</div>
-      Henüz soru eklenmedi
-    </div>`}
+    ${photoCount>0?`<div class="photo-grid">${folder.photos.map(p=>`
+      <div class="photo-q" onclick="qlViewPhoto(this.querySelector('img').src)">
+        <img src="${p.src}" loading="lazy">
+        <div class="photo-q-label">${p.note}</div>
+        <button class="photo-q-del" onclick="event.stopPropagation();qlDeletePhoto('${folder.id}','${p.id}')">✕</button>
+      </div>`).join('')}</div>`
+    :`<div style="text-align:center;padding:30px 0 20px;color:rgba(124,77,255,.2);font-size:10px;">
+        <div style="font-size:40px;margin-bottom:10px;opacity:.4;">📷</div>Henüz soru eklenmedi
+      </div>`}
     <div class="photo-upload-box" onclick="qlAddPhoto('${folder?folder.id:''}')">
       <div class="photo-upload-ico">📸</div>
       <div class="photo-upload-txt">Soru ekle · Galeri veya Kamera</div>
@@ -14557,101 +14462,106 @@ function renderKutuphane(){
     const totalMins=onlineMs.reduce((s,m)=>s+(m.mins||0),0);
     const isSyncing=window._libSyncing||false;
     const maxMins=Math.max(1,...onlineMs.map(m=>m.mins||0));
+    const isLocked=room.hasPassword||false;
+    const isPublic=room.isPublic||false;
 
     page.innerHTML=`
     <button class="back-btn" onclick="window._libView='main';renderKutuphane()">← Kütüphane</button>
 
-    <!-- ROOM HERO -->
-    <div style="background:linear-gradient(160deg,#110d06,#1a1004);border:1.5px solid rgba(201,169,110,.35);border-radius:20px;overflow:hidden;margin-bottom:12px;box-shadow:0 8px 40px rgba(0,0,0,.5);">
-      <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(201,169,110,.5),transparent);"></div>
+    <div style="background:linear-gradient(155deg,#090920,#12083a,#070720);border:1.5px solid rgba(124,77,255,.35);border-radius:20px;overflow:hidden;margin-bottom:12px;box-shadow:0 8px 40px rgba(124,77,255,.12);">
+      <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,.5),transparent);"></div>
       <div style="padding:18px 16px 15px;">
+
+        <!-- Oda başlık + etiketler -->
         <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
-          <div>
-            <div style="font-size:8px;font-weight:900;color:rgba(201,169,110,.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">🏛️ Aktif Çalışma Odası</div>
-            <div style="font-size:22px;font-weight:900;color:#f0d080;letter-spacing:-.3px;">${room.name}</div>
-            ${room.desc?`<div style="font-size:10px;color:rgba(240,208,128,.35);margin-top:2px;">${room.desc}</div>`:''}
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <div style="font-size:8px;font-weight:900;color:rgba(124,77,255,.5);letter-spacing:2px;text-transform:uppercase;">🏰 AKTİF ODA</div>
+              ${isPublic?'<span style="font-size:8px;background:rgba(67,160,71,.12);border:1px solid rgba(67,160,71,.3);border-radius:100px;padding:2px 8px;color:#81c784;font-weight:800;">🌐 Herkese Açık</span>':'<span style="font-size:8px;background:rgba(124,77,255,.12);border:1px solid rgba(124,77,255,.25);border-radius:100px;padding:2px 8px;color:var(--lib-pu2);font-weight:800;">🔗 Kodla Giriş</span>'}
+              ${isLocked?'<span style="font-size:8px;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.25);border-radius:100px;padding:2px 8px;color:#f5a623;font-weight:800;">🔒 Şifreli</span>':''}
+            </div>
+            <div style="font-size:21px;font-weight:900;color:#fff;letter-spacing:-.3px;line-height:1.2;">${room.name}</div>
+            ${room.desc?`<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">${room.desc}</div>`:''}
           </div>
-          <button onclick="libLeaveRoom()" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.2);border-radius:10px;padding:8px 13px;color:#ef9090;font-size:10px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0;margin-left:10px;">Ayrıl</button>
+          <button onclick="libLeaveRoom()" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.2);border-radius:10px;padding:8px 12px;color:#ef9090;font-size:10px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0;margin-left:10px;">Ayrıl</button>
         </div>
 
-        <!-- Stats -->
+        <!-- 3 stat -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px;">
-          ${[['👥',onlineMs.length,'Çevrimiçi'],['🔥',libFmtTime(totalMins),'Toplam Süre'],['✉️',members.length,'Üye']].map(([ico,val,lbl])=>`
+          ${[['👥',onlineMs.length,'Çevrimiçi'],['⏱',libFmtTime(totalMins),'Toplam'],['🧑‍💻',members.length,'Üye']].map(([ico,val,lbl])=>`
           <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:9px 6px;text-align:center;">
             <div style="font-size:14px;margin-bottom:2px;">${ico}</div>
-            <div style="font-size:15px;font-weight:900;color:#f0d080;line-height:1;">${val}</div>
-            <div style="font-size:8px;color:rgba(255,255,255,.25);margin-top:2px;">${lbl}</div>
+            <div style="font-size:14px;font-weight:900;color:var(--lib-pu2);line-height:1;">${val}</div>
+            <div style="font-size:8px;color:rgba(255,255,255,.22);margin-top:2px;">${lbl}</div>
           </div>`).join('')}
         </div>
 
         <!-- Oda kodu -->
-        <div style="background:rgba(201,169,110,.06);border:1px dashed rgba(201,169,110,.2);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+        <div style="background:rgba(124,77,255,.06);border:1px dashed rgba(124,77,255,.2);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:9px;margin-bottom:10px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:8px;font-weight:900;color:rgba(201,169,110,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Oda Kodu</div>
-            <div style="font-size:10px;color:#c9a96e;font-weight:800;word-break:break-all;font-family:monospace;">${shareCode}</div>
+            <div style="font-size:8px;font-weight:900;color:rgba(124,77,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Davet Kodu</div>
+            <div style="font-size:10px;color:var(--lib-pu2);font-weight:800;word-break:break-all;font-family:monospace;">${shareCode}</div>
           </div>
           <div style="display:flex;gap:6px;flex-shrink:0;">
-            <button onclick="libShare()" style="background:linear-gradient(135deg,#c9a96e,#a07840);border:none;border-radius:9px;padding:8px 12px;color:#fff;font-size:10px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">📤 Davet</button>
+            <button onclick="libShare()" style="background:linear-gradient(135deg,var(--pu),var(--pk));border:none;border-radius:9px;padding:8px 12px;color:#fff;font-size:10px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">📤 Davet</button>
             <button onclick="libCopyCode()" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:8px 12px;color:rgba(255,255,255,.4);font-size:9px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">📋</button>
           </div>
         </div>
 
         <!-- Sync -->
-        <button onclick="window._libSyncing=true;renderKutuphane();libSyncRoom().catch(()=>{}).finally(()=>{window._libSyncing=false;})"
-          style="width:100%;padding:9px;border-radius:10px;border:1px solid rgba(201,169,110,.18);background:rgba(201,169,110,.04);color:rgba(201,169,110,.5);font-size:10px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;">
+        <button onclick="window._libSyncing=true;renderKutuphane();libSyncRoom().catch(()=>{}).finally(()=>{window._libSyncing=false;renderKutuphane();})"
+          style="width:100%;padding:9px;border-radius:10px;border:1px solid rgba(124,77,255,.18);background:rgba(124,77,255,.04);color:rgba(124,77,255,.5);font-size:10px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;">
           <span style="${isSyncing?'animation:spin .6s linear infinite;display:inline-block;':''}">🔄</span>
           ${isSyncing?'Güncelleniyor…':'Şimdi Güncelle'}
-          <span style="margin-left:auto;font-size:8px;opacity:.35;">Otomatik: 60sn</span>
+          <span style="margin-left:auto;font-size:8px;opacity:.35;">Otomatik: 15sn</span>
         </button>
       </div>
     </div>
 
     <!-- Aktif Çalışanlar -->
     <div class="lib-section">👥 Aktif Çalışanlar</div>
-    ${onlineMs.length===0?`<div class="room-empty">Henüz kimse çevrimiçi değil 🕯️</div>`:''}
+    ${onlineMs.length===0?`<div class="room-empty">Henüz kimse çevrimiçi değil ✨</div>`:''}
     ${onlineMs.sort((a,b)=>(b.mins||0)-(a.mins||0)).map((m,i)=>{
       const elapsed=Date.now()-m.ts;
       const lastSeen=elapsed<60000?'Az önce':Math.round(elapsed/60000)+'dk önce';
       const pct=Math.round((m.mins||0)/maxMins*100);
       return`<div class="room-member-card ${m.isMe?'is-me':''} ${i===0?'is-leader':''}">
-        ${i===0?`<div style="position:absolute;top:0;right:0;background:linear-gradient(135deg,#c9a96e,#8a6030);padding:3px 11px;font-size:8px;font-weight:900;color:#fff;border-radius:0 16px 0 9px;letter-spacing:.5px;">👑 LİDER</div>`:''}
+        ${i===0?`<div style="position:absolute;top:0;right:0;background:linear-gradient(135deg,var(--pu),var(--pk));padding:3px 11px;font-size:8px;font-weight:900;color:#fff;border-radius:0 14px 0 9px;letter-spacing:.5px;">👑 LİDER</div>`:''}
         <div style="display:flex;align-items:center;gap:11px;">
-          <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#2a1808,#1a1005);border:2px solid rgba(201,169,110,${m.isMe?'.4':'.15'});display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${m.isMe?'⚔️':'📚'}</div>
+          <div style="width:44px;height:44px;border-radius:14px;background:rgba(124,77,255,${m.isMe?'.2':'.08'});border:2px solid rgba(124,77,255,${m.isMe?'.4':'.15'});display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${m.isMe?'⚔️':'📚'}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:900;color:#f0d080;">${m.name||'Arkadaş'}${m.isMe?` <span style="font-size:9px;opacity:.4;">(Sen)</span>`:''}</div>
+            <div style="font-size:13px;font-weight:900;color:#fff;">${m.name||'Arkadaş'}${m.isMe?` <span style="font-size:9px;opacity:.35;">(Sen)</span>`:''}</div>
             <div style="display:flex;align-items:center;gap:5px;margin-top:3px;">
-              ${m.studying?`<div style="display:inline-flex;align-items:center;gap:3px;background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.2);border-radius:100px;padding:2px 8px;font-size:8px;font-weight:800;color:#81c784;"><div style="width:5px;height:5px;border-radius:50%;background:#66bb6a;animation:studyTick 1.4s ease-in-out infinite;"></div>Çalışıyor</div>`:`<div style="font-size:8px;color:rgba(255,255,255,.2);">💤 Mola</div>`}
-              <div style="font-size:8px;color:rgba(255,255,255,.15);">· ${lastSeen}</div>
+              ${m.studying?`<div style="display:inline-flex;align-items:center;gap:3px;background:rgba(67,160,71,.1);border:1px solid rgba(67,160,71,.2);border-radius:100px;padding:2px 8px;font-size:8px;font-weight:800;color:#81c784;"><div style="width:5px;height:5px;border-radius:50%;background:#66bb6a;animation:studyTick 1.4s ease-in-out infinite;"></div>Çalışıyor</div>`:`<div style="font-size:8px;color:rgba(255,255,255,.2);">💤 Mola</div>`}
+              <div style="font-size:8px;color:rgba(255,255,255,.12);">· ${lastSeen}</div>
             </div>
             <div style="height:3px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;margin-top:7px;">
-              <div style="height:100%;width:${pct}%;background:${i===0?'linear-gradient(90deg,#c9a96e,#f0d080)':'rgba(201,169,110,.3)'};border-radius:100px;transition:width .6s;"></div>
+              <div style="height:100%;width:${pct}%;background:${i===0?'linear-gradient(90deg,var(--pu),var(--pk))':'rgba(124,77,255,.35)'};border-radius:100px;transition:width .6s;"></div>
             </div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:20px;font-weight:900;color:#f0d080;">${libFmtTime(m.mins||0)}</div>
-            <div style="font-size:8px;color:rgba(201,169,110,.35);">bugün</div>
+            <div style="font-size:19px;font-weight:900;color:var(--lib-pu2);">${libFmtTime(m.mins||0)}</div>
+            <div style="font-size:8px;color:rgba(124,77,255,.35);">bugün</div>
           </div>
         </div>
       </div>`;
     }).join('')}
-
     ${offlineMs.length>0?`
     <div class="lib-section" style="margin-top:14px;">💤 Çevrimdışı (${offlineMs.length})</div>
     ${offlineMs.map(m=>`
-      <div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:rgba(255,255,255,.015);border-radius:12px;margin-bottom:6px;border:1px solid rgba(255,255,255,.04);opacity:.4;">
-        <div style="width:32px;height:32px;border-radius:10px;background:#111;display:flex;align-items:center;justify-content:center;font-size:14px;">📚</div>
+      <div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:rgba(255,255,255,.01);border-radius:12px;margin-bottom:6px;border:1px solid rgba(255,255,255,.04);opacity:.35;">
+        <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-size:14px;">📚</div>
         <div style="flex:1;font-size:10px;color:rgba(255,255,255,.35);font-weight:700;">${m.name||'Arkadaş'}</div>
         <div style="font-size:9px;color:rgba(255,255,255,.2);">${libFmtTime(m.mins||0)}</div>
       </div>`).join('')}
     `:''}
-
     <div class="lib-section" style="margin-top:18px;">📚 Soru Kütüphanem</div>
     ${renderQLSection()}`;
     return;
   }
 
   // ── MAIN VIEW ──
-  const cf=window._libCreateForm;
+  const cf=window._libCreateForm||{show:false,name:'',desc:'',password:'',isPublic:false};
   const isCreating=window._libCreating||false;
   const now=new Date();
   const timeStr=now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
@@ -14659,99 +14569,14 @@ function renderKutuphane(){
   const hour=now.getHours();
   const timeEmoji=hour>=5&&hour<12?'🌅':hour>=12&&hour<18?'☀️':hour>=18&&hour<22?'🌆':'🌙';
 
-  // Kitap renkleri
-  const bookCols=['#8B2020','#1a4a8a','#1a5c1a','#4a1a6e','#8B4500','#2a4a3a','#5c1a2e','#1a3a5c','#6b3a00','#3a5c1a'];
-  const bookH=[38,28,42,32,36,26,44,30,38,28,34,32,40,28,36,30];
-  const books=Array.from({length:16},(_,i)=>`<div class="lib-book-new" style="width:${8+(i%5)*2}px;height:${bookH[i%16]}px;background:${bookCols[i%10]};opacity:${.55+.45*((i*11)%10/10)};"><div class="lib-book-spine"></div></div>`).join('');
-
   page.innerHTML=`
   <!-- HERO -->
   <div class="lib-hero" style="margin-bottom:14px;">
     <div class="lib-hero-bg"></div>
-
-    <!-- Pencere -->
-    <div class="lib-window">
-      <div class="lib-window-pane"></div>
-      <span class="lib-window-star" style="top:8px;left:7px;opacity:.7;">✦</span>
-      <span class="lib-window-star" style="top:5px;right:8px;opacity:.5;">✦</span>
-      <span class="lib-window-star" style="top:20px;left:50%;transform:translateX(-50%);opacity:.4;">·</span>
-    </div>
-
-    <!-- Masa lambası -->
-    <div class="lib-lamp">
-      <div class="lib-lamp-head"></div>
-      <div class="lib-lamp-glow"></div>
-      <div class="lib-lamp-stem"></div>
-      <div class="lib-lamp-base"></div>
-    </div>
-
-    <!-- Sıcak ambient ışık efekti (mumlardan yayılan) -->
-    <div id="lib-ambient" style="position:absolute;top:0;right:0;width:100px;height:80px;background:radial-gradient(ellipse at 80% 10%,rgba(255,170,40,.07) 0%,transparent 70%);pointer-events:none;animation:ambientGlow 2s ease-in-out infinite;animation-delay:.5s;"></div>
-    <!-- Mumlar -->
-    <div class="lib-candles">
-  <!-- SVG Mumlar — 3 farklı boy, gerçekçi alev animasyonu -->
-  <svg width="76" height="72" viewBox="-2 -12 76 72" style="overflow:visible;" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="wax1" cx="40%" cy="50%" r="60%"><stop offset="0%" stop-color="#fff8ee"/><stop offset="100%" stop-color="#c8a87a"/></radialGradient>
-      <radialGradient id="wax2" cx="40%" cy="50%" r="60%"><stop offset="0%" stop-color="#fff5e6"/><stop offset="100%" stop-color="#c09060"/></radialGradient>
-      <radialGradient id="glowG" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffcc44" stop-opacity=".6"/><stop offset="100%" stop-color="#ff8800" stop-opacity="0"/></radialGradient>
-      <filter id="blur2"><feGaussianBlur stdDeviation="1.5"/></filter>
-      <filter id="blur1"><feGaussianBlur stdDeviation=".8"/></filter>
-    </defs>
-
-    <!-- Mum 1 (sol, kısa h=22) -->
-    <g transform="translate(5,38)">
-      <ellipse cx="6" cy="-1" rx="9" ry="4" fill="url(#glowG)" filter="url(#blur2)" opacity=".7"><animate attributeName="opacity" values=".5;.9;.6;.8;.5" dur="1.7s" repeatCount="indefinite"/></ellipse>
-      <rect x="1" y="-22" width="10" height="22" rx="2" fill="url(#wax1)"/>
-      <ellipse cx="6" cy="-22" rx="5" ry="2" fill="#ffe8c0"/>
-      <line x1="6" y1="-22" x2="6" y2="-25" stroke="#555" stroke-width="1.2" stroke-linecap="round"/>
-      <g transform="translate(6,-27)" style="transform-origin:center bottom">
-        <animateTransform attributeName="transform" type="rotate" values="-2,0,6;3,0,6;-3,0,6;2,0,6;-2,0,6" dur="1.6s" repeatCount="indefinite" additive="sum"/>
-        <ellipse cx="0" cy="0" rx="3.5" ry="5" fill="#ffdd44" opacity=".9"/>
-        <ellipse cx="0" cy="1" rx="2" ry="3.5" fill="#fff5aa"/>
-        <ellipse cx="0" cy=".5" rx="1" ry="2" fill="#ffffff" opacity=".8"/>
-      </g>
-    </g>
-
-    <!-- Mum 2 (orta, uzun h=36) -->
-    <g transform="translate(27,38)">
-      <ellipse cx="7" cy="-1" rx="11" ry="5" fill="url(#glowG)" filter="url(#blur2)" opacity=".8"><animate attributeName="opacity" values=".6;1;.7;.9;.6" dur="2s" repeatCount="indefinite"/></ellipse>
-      <rect x="1" y="-36" width="12" height="36" rx="2" fill="url(#wax2)"/>
-      <ellipse cx="7" cy="-36" rx="6" ry="2.5" fill="#ffe5b8"/>
-      <line x1="7" y1="-36" x2="7" y2="-40" stroke="#444" stroke-width="1.4" stroke-linecap="round"/>
-      <g transform="translate(7,-43)" style="transform-origin:center bottom">
-        <animateTransform attributeName="transform" type="rotate" values="2,0,7;-4,0,7;3,0,7;-2,0,7;2,0,7" dur="2.1s" repeatCount="indefinite" additive="sum"/>
-        <ellipse cx="0" cy="0" rx="4.5" ry="7" fill="#ffcc33" opacity=".95"/>
-        <ellipse cx="0" cy="1.5" rx="2.5" ry="4.5" fill="#fff177"/>
-        <ellipse cx="0" cy="1" rx="1.2" ry="2.5" fill="#ffffff" opacity=".85"/>
-      </g>
-    </g>
-
-    <!-- Mum 3 (sağ, orta h=28) -->
-    <g transform="translate(52,38)">
-      <ellipse cx="5.5" cy="-1" rx="9" ry="4" fill="url(#glowG)" filter="url(#blur2)" opacity=".65"><animate attributeName="opacity" values=".45;.85;.55;.75;.45" dur="1.9s" repeatCount="indefinite"/></ellipse>
-      <rect x="1" y="-28" width="10" height="28" rx="2" fill="url(#wax1)"/>
-      <ellipse cx="5.5" cy="-28" rx="5" ry="2" fill="#ffe8c0"/>
-      <line x1="5.5" y1="-28" x2="5.5" y2="-31" stroke="#555" stroke-width="1.2" stroke-linecap="round"/>
-      <g transform="translate(5.5,-34)" style="transform-origin:center bottom">
-        <animateTransform attributeName="transform" type="rotate" values="-3,0,6;2,0,6;-2,0,6;4,0,6;-3,0,6" dur="1.85s" repeatCount="indefinite" additive="sum"/>
-        <ellipse cx="0" cy="0" rx="3.5" ry="5.5" fill="#ffdd44" opacity=".9"/>
-        <ellipse cx="0" cy="1" rx="2" ry="3.5" fill="#fff5aa"/>
-        <ellipse cx="0" cy=".5" rx="1" ry="2" fill="#ffffff" opacity=".8"/>
-      </g>
-    </g>
-  </svg>
-</div>
-
-    <!-- Kitaplık -->
-    <div class="lib-books-row">${books}</div>
-    <div class="lib-shelf-plank"></div>
-
-    <!-- İç içerik -->
     <div class="lib-hero-inner">
       <div class="lib-badge-row">
         <div class="lib-badge">${timeEmoji} ${timeStr}</div>
-        ${room?`<div class="lib-badge" style="background:rgba(76,175,80,.1);border-color:rgba(76,175,80,.25);color:#81c784;">● ${room.name}</div>`:''}
+        ${room?`<div class="lib-badge" style="background:rgba(67,160,71,.1);border-color:rgba(67,160,71,.25);color:#81c784;">● ${room.name}</div>`:''}
       </div>
       <div class="lib-title-new">Çalışma Odası</div>
       <div class="lib-subtitle-new">${dateStr}</div>
@@ -14766,7 +14591,7 @@ function renderKutuphane(){
         </div>
         <div class="lib-stat-new">
           <span class="lib-stat-v-new">${room?'✓':'—'}</span>
-          <span class="lib-stat-l-new">${room?'Odada':'Odada yok'}</span>
+          <span class="lib-stat-l-new">${room?'Odada':'Boşta'}</span>
         </div>
       </div>
     </div>
@@ -14775,46 +14600,111 @@ function renderKutuphane(){
   <!-- Aktif oda banner -->
   ${room?`
   <div class="active-room-banner" onclick="window._libView='room';libSyncRoom();renderKutuphane();">
-    <div class="active-room-icon">🏛️</div>
+    <div class="active-room-icon">🏰</div>
     <div style="flex:1;min-width:0;">
-      <div style="font-size:14px;font-weight:900;color:#f0d080;">${room.name}</div>
+      <div style="font-size:14px;font-weight:900;color:#fff;">${room.name}</div>
       <div class="active-room-live"><div class="active-room-live-dot"></div>Aktif oda · Girmek için tıkla</div>
     </div>
-    <div style="color:rgba(201,169,110,.4);font-size:22px;">›</div>
+    <div style="color:rgba(124,77,255,.4);font-size:22px;">›</div>
   </div>
   `:''}
 
-  <!-- Oda Yönetimi -->
-  <div class="lib-section">🏛️ Çalışma Odaları</div>
+  <!-- SECTION: Odaya Katıl -->
+  <div class="lib-section">🏰 Çalışma Odaları</div>
 
-  <!-- Odaya katıl -->
+  <!-- Şifre bekliyor mu? -->
+  ${window._libNeedsPassword&&window._libPendingJoin?`
+  <div style="background:rgba(245,166,35,.07);border:1.5px solid rgba(245,166,35,.25);border-radius:16px;padding:15px;margin-bottom:10px;">
+    <div style="font-size:10px;font-weight:900;color:#f5a623;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">🔒 Şifreli Oda</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:10px;">Bu oda şifrelidir. Şifreyi girerek devam et.</div>
+    <input class="lib-input" id="lib-pw-inp" type="password" placeholder="Oda şifresini gir…" value="${window._libJoinPassword||''}"
+      oninput="window._libJoinPassword=this.value" autocomplete="off"
+      style="border-color:rgba(245,166,35,.3);"
+      onkeydown="if(event.key==='Enter'){window._libJoinPassword=this.value;libJoinByCode('${window._libPendingJoin.shareCode}',this.value);}">
+    <div style="display:flex;gap:8px;">
+      <button class="lib-btn primary" style="flex:1;background:linear-gradient(135deg,#f5a623,#d4870a);"
+        onclick="window._libJoinPassword=document.getElementById('lib-pw-inp')?.value||'';libJoinByCode('${window._libPendingJoin.shareCode}',window._libJoinPassword);">
+        🔓 Giriş Yap
+      </button>
+      <button class="lib-btn ghost" onclick="window._libNeedsPassword=false;window._libPendingJoin=null;window._libJoinPassword='';renderKutuphane();">İptal</button>
+    </div>
+  </div>
+  `:''}
+
+  <!-- Kod ile katıl -->
   <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px;margin-bottom:9px;">
-    <div style="font-size:10px;font-weight:900;color:rgba(201,169,110,.55);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">📥 Odaya Katıl</div>
-    <input class="lib-input" id="lib-join-inp" placeholder="Oda kodu yapıştır…" value="${window._libJoinCode||''}" oninput="window._libJoinCode=this.value">
-    <button class="lib-btn primary" style="width:100%;" onclick="window._libJoinCode=document.getElementById('lib-join-inp')?.value||'';libJoinByCode(window._libJoinCode);">Katıl →</button>
+    <div style="font-size:10px;font-weight:900;color:rgba(124,77,255,.5);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">📥 Kod ile Katıl</div>
+    <input class="lib-input" id="lib-join-inp" placeholder="Oda kodunu yapıştır…"
+      value="${window._libJoinCode||''}" oninput="window._libJoinCode=this.value"
+      onkeydown="if(event.key==='Enter'){window._libJoinCode=this.value;libJoinByCode(window._libJoinCode,'');}">
+    <button class="lib-btn primary" style="width:100%;"
+      onclick="window._libJoinCode=document.getElementById('lib-join-inp')?.value||'';libJoinByCode(window._libJoinCode,'');">
+      Katıl →
+    </button>
   </div>
 
+  <!-- Oda oluştur formu / butonu -->
   ${cf.show?`
   <div class="room-create-form">
     <div class="room-create-title">✨ Yeni Oda Oluştur</div>
-    <input class="lib-input" id="lib-rname" placeholder="Oda adı (örn: Matematik Grubu 🔥)" value="${cf.name||''}" oninput="window._libCreateForm.name=this.value">
-    <input class="lib-input" id="lib-rdesc" placeholder="Açıklama (isteğe bağlı)" value="${cf.desc||''}" oninput="window._libCreateForm.desc=this.value" style="margin-bottom:12px;">
+    <input class="lib-input" id="lib-rname" placeholder="Oda adı (örn: Matematik Grubu 🔥)"
+      value="${cf.name||''}" oninput="window._libCreateForm.name=this.value">
+    <input class="lib-input" id="lib-rdesc" placeholder="Açıklama (isteğe bağlı)"
+      value="${cf.desc||''}" oninput="window._libCreateForm.desc=this.value">
+
+    <!-- Şifre seçeneği -->
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:10px 12px;background:rgba(255,255,255,.02);border-radius:11px;border:1px solid rgba(255,255,255,.06);cursor:pointer;"
+        onclick="window._libCreateForm.isPublic=!window._libCreateForm.isPublic;renderKutuphane();">
+        <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${cf.isPublic?'var(--pu)':'rgba(255,255,255,.2)'};background:${cf.isPublic?'var(--pu)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#fff;">${cf.isPublic?'✓':''}</div>
+        <div>
+          <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.7);">🌐 Herkese Açık Oda</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.3);">İsteyen herkes oda listesinden görebilir ve girip çıkabilir</div>
+        </div>
+      </div>
+
+      <div style="position:relative;">
+        <input class="lib-input" id="lib-rpw" type="password" placeholder="🔒 Şifre ekle (isteğe bağlı — boş bırakırsan şifresiz olur)"
+          value="${cf.password||''}" oninput="window._libCreateForm.password=this.value"
+          autocomplete="new-password" style="padding-right:38px;${cf.password?'border-color:rgba(245,166,35,.4);':''}" >
+        ${cf.password?`<div style="position:absolute;right:12px;top:50%;transform:translateY(-60%);font-size:14px;">🔒</div>`:''}
+      </div>
+      ${cf.password?`<div style="font-size:9px;color:rgba(245,166,35,.6);margin-top:-4px;margin-bottom:4px;padding:0 4px;">⚠️ Şifreyi odaya katılacaklara ayrıca iletmeyi unutma</div>`:''}
+    </div>
+
     <div style="display:flex;gap:8px;">
-      <button class="lib-btn primary" style="flex:1;${isCreating?'opacity:.6;pointer-events:none;':''}" onclick="if(!window._libCreating){window._libCreating=true;window._libCreateForm.name=document.getElementById('lib-rname')?.value||'';window._libCreateForm.desc=document.getElementById('lib-rdesc')?.value||'';renderKutuphane();libCreateRoom(window._libCreateForm.name,window._libCreateForm.desc).finally(()=>{window._libCreating=false;});}">
-        ${isCreating?'⏳ Oluşturuluyor…':'Oda Oluştur'}
+      <button class="lib-btn primary" style="flex:1;${isCreating?'opacity:.6;pointer-events:none;':''}"
+        onclick="if(!window._libCreating){
+          window._libCreating=true;
+          const n=document.getElementById('lib-rname')?.value||'';
+          const d=document.getElementById('lib-rdesc')?.value||'';
+          const pw=document.getElementById('lib-rpw')?.value||'';
+          window._libCreateForm.name=n;window._libCreateForm.desc=d;window._libCreateForm.password=pw;
+          renderKutuphane();
+          libCreateRoom(n,d,pw,window._libCreateForm.isPublic).finally(()=>{window._libCreating=false;});
+        }">
+        ${isCreating?'⏳ Oluşturuluyor…':'🏰 Oda Oluştur'}
       </button>
-      <button class="lib-btn ghost" onclick="window._libCreateForm.show=false;renderKutuphane();">İptal</button>
+      <button class="lib-btn ghost" onclick="window._libCreateForm={show:false,name:'',desc:'',password:'',isPublic:false};renderKutuphane();">İptal</button>
     </div>
   </div>
   `:`
-  <button style="width:100%;padding:12px;border-radius:14px;border:1.5px dashed rgba(201,169,110,.2);background:rgba(201,169,110,.03);color:rgba(201,169,110,.55);font-size:11px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;margin-bottom:10px;transition:all .2s;" onclick="window._libCreateForm={show:true,name:'',desc:''};renderKutuphane();">
-    + Yeni Oda Oluştur
+  <button style="width:100%;padding:13px;border-radius:14px;border:1.5px dashed rgba(124,77,255,.2);background:rgba(124,77,255,.03);color:rgba(124,77,255,.5);font-size:12px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;margin-bottom:10px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;"
+    onclick="window._libCreateForm={show:true,name:'',desc:'',password:'',isPublic:false};renderKutuphane();"
+    onmouseenter="this.style.background='rgba(124,77,255,.08)';this.style.borderColor='rgba(124,77,255,.35)'"
+    onmouseleave="this.style.background='rgba(124,77,255,.03)';this.style.borderColor='rgba(124,77,255,.2)'">
+    <span style="font-size:16px;">＋</span> Yeni Oda Oluştur
   </button>
   `}
 
   <div class="lib-info-box">
     <div class="lib-info-title">ℹ️ Nasıl Çalışır?</div>
-    <div class="lib-info-text">1. Oda oluştur veya arkadaşının kodunu yapıştır<br>2. Davet ile kodu arkadaşlarına ilet<br>3. Kronometren çalışırken süren <b style="color:rgba(201,169,110,.45);">otomatik güncellenir</b> 🔥</div>
+    <div class="lib-info-text">
+      · <b style="color:rgba(124,77,255,.6);">Herkese Açık</b> oda oluştur — isteyen direkt girer<br>
+      · <b style="color:rgba(245,166,35,.6);">Şifreli</b> oda oluştur — sadece şifreyi bilenler girebilir<br>
+      · Kod ile katıl — arkadaşın davet kodunu yapıştır<br>
+      · Kronometren çalışırken süren <b style="color:rgba(124,77,255,.5);">otomatik güncellenir</b> ⚡
+    </div>
   </div>
 
   <!-- Soru Kütüphanesi -->
@@ -14848,10 +14738,9 @@ function renderQLSection(){
       </div>
     </div>
   </div>
-  ${ql.folders.length===0?`<div class="room-empty" style="color:rgba(129,199,132,.25);border-color:rgba(76,175,80,.08);">📂 Henüz klasör yok — "Yeni Klasör" ile başla!</div>`:''}`;
+  ${ql.folders.length===0?`<div class="room-empty">📂 Henüz klasör yok — "Yeni Klasör" ile başla!</div>`:''}`;
 }
 
-// Restore room state on load
 if(S.activeRoom){window._libView='room';libSyncRoom();}
 
 
@@ -21041,6 +20930,84 @@ function hideChartTip(chartId){
   const g=document.getElementById(chartId+'-tip');
   if(g)g.style.display='none';
 }
+</script>
+
+
+<!-- ═══ TIMER FULLSCREEN OVERLAY ═══ -->
+<div id="timer-fs-overlay">
+  <div class="timer-fs-bg"></div>
+  <button class="timer-fs-close" onclick="timerExitFullscreen()" title="Kapat (ESC)">✕</button>
+  <div class="timer-fs-subject" id="fs-subject"></div>
+  <div class="timer-fs-digits" id="fs-digits">00:00:00</div>
+  <div class="timer-fs-sub">Bu oturumda</div>
+  <div class="timer-fs-bar-wrap"><div class="timer-fs-bar" id="fs-bar" style="width:0%"></div></div>
+  <div class="timer-fs-today" id="fs-today"></div>
+  <div class="timer-fs-controls">
+    <button class="timer-fs-btn play" id="fs-play-btn" onclick="toggleTimer();updateFsOverlay()">▶ Başlat</button>
+    <button class="timer-fs-btn reset" onclick="resetTimer();updateFsOverlay()">↺ Sıfırla</button>
+  </div>
+</div>
+<script>
+// ── Fullscreen logic ──
+function timerToggleFullscreen(){
+  const overlay=document.getElementById('timer-fs-overlay');
+  if(overlay.classList.contains('active')){timerExitFullscreen();}
+  else{timerEnterFullscreen();}
+}
+function timerEnterFullscreen(){
+  const overlay=document.getElementById('timer-fs-overlay');
+  overlay.classList.add('active');
+  document.body.style.overflow='hidden';
+  const el=document.documentElement;
+  if(el.requestFullscreen){el.requestFullscreen().catch(()=>{});}
+  else if(el.webkitRequestFullscreen){el.webkitRequestFullscreen();}
+  else if(el.mozRequestFullScreen){el.mozRequestFullScreen();}
+  const btn=document.getElementById('timer-fs-btn');
+  if(btn)btn.textContent='⊠';
+  updateFsOverlay();
+  clearInterval(window._fsUpdateInterval);
+  window._fsUpdateInterval=setInterval(updateFsOverlay,1000);
+}
+function timerExitFullscreen(){
+  const overlay=document.getElementById('timer-fs-overlay');
+  if(!overlay||!overlay.classList.contains('active'))return;
+  overlay.classList.remove('active');
+  document.body.style.overflow='';
+  if(document.fullscreenElement&&document.exitFullscreen){document.exitFullscreen().catch(()=>{});}
+  else if(document.webkitFullscreenElement&&document.webkitExitFullscreen){document.webkitExitFullscreen();}
+  const btn=document.getElementById('timer-fs-btn');
+  if(btn)btn.textContent='⛶';
+  clearInterval(window._fsUpdateInterval);
+}
+function updateFsOverlay(){
+  const overlay=document.getElementById('timer-fs-overlay');
+  if(!overlay||!overlay.classList.contains('active'))return;
+  const done=typeof _timerElapsed==='function'?_timerElapsed():0;
+  const hrs=Math.floor(done/3600),mins=Math.floor(done/60)%60,secs=done%60;
+  const ts=hrs.toString().padStart(2,'0')+':'+mins.toString().padStart(2,'0')+':'+secs.toString().padStart(2,'0');
+  const running=S&&S.timerRunning;
+  const el=document.getElementById('fs-digits');
+  if(el){el.textContent=ts;el.className='timer-fs-digits'+(running?' running':'');}
+  const pb=document.getElementById('fs-play-btn');
+  if(pb){pb.innerHTML=running?'⏸ Durdur':'▶ Başlat';}
+  const subjEl=document.getElementById('fs-subject');
+  if(subjEl){
+    const subjObj=S&&S._timerSubj&&typeof SUBJ!=='undefined'?SUBJ.find(x=>x.id===S._timerSubj):null;
+    subjEl.textContent=subjObj?subjObj.icon+' '+subjObj.name:(S&&S.timerRunning?'ÇALIŞIYOR':'');
+  }
+  const td=typeof toDS==='function'?toDS():new Date().toDateString();
+  const todayMins=(S&&S.dailyLog&&S.dailyLog[td])?(S.dailyLog[td].mins||0):0;
+  const goalMins=((S&&S.dailyGoalHours)||4)*60;
+  const pct=Math.min(100,(todayMins/goalMins)*100);
+  const bar=document.getElementById('fs-bar');
+  if(bar)bar.style.width=pct.toFixed(1)+'%';
+  const todayEl=document.getElementById('fs-today');
+  const th=Math.floor(todayMins/60),tm=todayMins%60;
+  if(todayEl)todayEl.textContent='Bugün: '+(th>0?th+'s ':'')+tm+'dk  ·  Hedef: '+((S&&S.dailyGoalHours)||4)+'s';
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')timerExitFullscreen();});
+document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement)timerExitFullscreen();});
+document.addEventListener('webkitfullscreenchange',function(){if(!document.webkitFullscreenElement)timerExitFullscreen();});
 </script>
 
 
