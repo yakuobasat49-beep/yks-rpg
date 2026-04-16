@@ -2058,6 +2058,9 @@ qs:[
 ]}
 ];
 
+// ── BADGE HELPER: Kümülatif ders dakikası (dailyLog toplamı) ──
+function _smLog(s,sid){let t=0;const dl=s.dailyLog||{};Object.values(dl).forEach(function(d){t+=((d.subjMins&&d.subjMins[sid])||0);});return t;}
+function _todaySM(s){const td=new Date().toDateString();return (s.dailyLog&&s.dailyLog[td]&&s.dailyLog[td].subjMins)||{};}
 const BDGS_S=[
 
 
@@ -2121,7 +2124,7 @@ const BDGS_S=[
 {id:'b_den3',icon:'📈',name:'3 Deneme',desc:'3 deneme sınavı gir',chk:s=>(s.denemeler||[]).length>=3},
 {id:'b_night_owl',icon:'🦉',name:'Gece Baykuşu',desc:'Gece 23:00+ çalış',chk:s=>new Date().getHours()>=23&&s.tasks>=1},
 {id:'b_early_bird',icon:'🐦',name:'Sabah Kuşu',desc:'Sabah 06:00-08:00 arası çalış',chk:s=>new Date().getHours()>=6&&new Date().getHours()<8&&s.tasks>=1},
-{id:'b_allders_day',icon:'🎒',name:'Tam Gün',desc:'Bir günde 4 farklı ders',chk:s=>Object.keys(s.subjectMinutes||{}).filter(k=>(s.subjectMinutes[k]||0)>0).length>=4},
+{id:'b_allders_day',icon:'🎒',name:'Tam Gün',desc:'Bir günde 4 farklı ders',chk:s=>Object.keys(_todaySM(s)).filter(function(k){return (_todaySM(s)[k]||0)>0;}).length>=4},
 {id:'b_ses_acik',icon:'🎵',name:'Odak Modu',desc:'Ses açıkken çalış',chk:s=>(s.dailyMins||0)>=30&&!!s.activeSound},
 {id:'b_perfect_week',icon:'🌈',name:'Mükemmel Hafta',desc:'7 gün üst üste çalış',chk:s=>s.streak>=7},
 {id:'b_first_deneme',icon:'📝',name:'İlk Deneme',desc:'İlk deneme sınavını gir',chk:s=>(s.denemeler||[]).length>=1},
@@ -2150,24 +2153,24 @@ const BDGS_S=[
 {id:'b_q_cog_25',icon:'🌍',name:'Coğrafya Öğrenci',desc:'Coğrafya dersinde 25 soru çöz',chk:s=>(s.subjects['cog']||{}).questions>=25},
 {id:'b_q_fels_10',icon:'🧠',name:'Felsefe Çaylak',desc:'Felsefe dersinde 10 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=10},
 {id:'b_q_fels_25',icon:'🧠',name:'Felsefe Öğrenci',desc:'Felsefe dersinde 25 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=25},
-{id:'b_min_mat_30',icon:'➕',name:'Matematik 30dk',desc:'Matematik dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['mat']||0)>=30},
-{id:'b_min_mat_60',icon:'➕',name:'Matematik 60dk',desc:'Matematik dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['mat']||0)>=60},
-{id:'b_min_tur_30',icon:'📝',name:'Türkçe 30dk',desc:'Türkçe dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['tur']||0)>=30},
-{id:'b_min_tur_60',icon:'📝',name:'Türkçe 60dk',desc:'Türkçe dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['tur']||0)>=60},
-{id:'b_min_fiz_30',icon:'⚡',name:'Fizik 30dk',desc:'Fizik dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['fiz']||0)>=30},
-{id:'b_min_fiz_60',icon:'⚡',name:'Fizik 60dk',desc:'Fizik dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['fiz']||0)>=60},
-{id:'b_min_kim_30',icon:'🧪',name:'Kimya 30dk',desc:'Kimya dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['kim']||0)>=30},
-{id:'b_min_kim_60',icon:'🧪',name:'Kimya 60dk',desc:'Kimya dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['kim']||0)>=60},
-{id:'b_min_bio_30',icon:'🌿',name:'Biyoloji 30dk',desc:'Biyoloji dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['bio']||0)>=30},
-{id:'b_min_bio_60',icon:'🌿',name:'Biyoloji 60dk',desc:'Biyoloji dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['bio']||0)>=60},
-{id:'b_min_geo_30',icon:'📐',name:'Geometri 30dk',desc:'Geometri dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['geo']||0)>=30},
-{id:'b_min_geo_60',icon:'📐',name:'Geometri 60dk',desc:'Geometri dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['geo']||0)>=60},
-{id:'b_min_tar_30',icon:'⚔️',name:'Tarih 30dk',desc:'Tarih dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['tar']||0)>=30},
-{id:'b_min_tar_60',icon:'⚔️',name:'Tarih 60dk',desc:'Tarih dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['tar']||0)>=60},
-{id:'b_min_cog_30',icon:'🌍',name:'Coğrafya 30dk',desc:'Coğrafya dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['cog']||0)>=30},
-{id:'b_min_cog_60',icon:'🌍',name:'Coğrafya 60dk',desc:'Coğrafya dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['cog']||0)>=60},
-{id:'b_min_fels_30',icon:'🧠',name:'Felsefe 30dk',desc:'Felsefe dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=30},
-{id:'b_min_fels_60',icon:'🧠',name:'Felsefe 60dk',desc:'Felsefe dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=60},
+{id:'b_min_mat_30',icon:'➕',name:'Matematik 30dk',desc:'Matematik dersinde 30 dk çalış',chk:s=>_smLog(s,'mat')>=30},
+{id:'b_min_mat_60',icon:'➕',name:'Matematik 60dk',desc:'Matematik dersinde 60 dk çalış',chk:s=>_smLog(s,'mat')>=60},
+{id:'b_min_tur_30',icon:'📝',name:'Türkçe 30dk',desc:'Türkçe dersinde 30 dk çalış',chk:s=>_smLog(s,'tur')>=30},
+{id:'b_min_tur_60',icon:'📝',name:'Türkçe 60dk',desc:'Türkçe dersinde 60 dk çalış',chk:s=>_smLog(s,'tur')>=60},
+{id:'b_min_fiz_30',icon:'⚡',name:'Fizik 30dk',desc:'Fizik dersinde 30 dk çalış',chk:s=>_smLog(s,'fiz')>=30},
+{id:'b_min_fiz_60',icon:'⚡',name:'Fizik 60dk',desc:'Fizik dersinde 60 dk çalış',chk:s=>_smLog(s,'fiz')>=60},
+{id:'b_min_kim_30',icon:'🧪',name:'Kimya 30dk',desc:'Kimya dersinde 30 dk çalış',chk:s=>_smLog(s,'kim')>=30},
+{id:'b_min_kim_60',icon:'🧪',name:'Kimya 60dk',desc:'Kimya dersinde 60 dk çalış',chk:s=>_smLog(s,'kim')>=60},
+{id:'b_min_bio_30',icon:'🌿',name:'Biyoloji 30dk',desc:'Biyoloji dersinde 30 dk çalış',chk:s=>_smLog(s,'bio')>=30},
+{id:'b_min_bio_60',icon:'🌿',name:'Biyoloji 60dk',desc:'Biyoloji dersinde 60 dk çalış',chk:s=>_smLog(s,'bio')>=60},
+{id:'b_min_geo_30',icon:'📐',name:'Geometri 30dk',desc:'Geometri dersinde 30 dk çalış',chk:s=>_smLog(s,'geo')>=30},
+{id:'b_min_geo_60',icon:'📐',name:'Geometri 60dk',desc:'Geometri dersinde 60 dk çalış',chk:s=>_smLog(s,'geo')>=60},
+{id:'b_min_tar_30',icon:'⚔️',name:'Tarih 30dk',desc:'Tarih dersinde 30 dk çalış',chk:s=>_smLog(s,'tar')>=30},
+{id:'b_min_tar_60',icon:'⚔️',name:'Tarih 60dk',desc:'Tarih dersinde 60 dk çalış',chk:s=>_smLog(s,'tar')>=60},
+{id:'b_min_cog_30',icon:'🌍',name:'Coğrafya 30dk',desc:'Coğrafya dersinde 30 dk çalış',chk:s=>_smLog(s,'cog')>=30},
+{id:'b_min_cog_60',icon:'🌍',name:'Coğrafya 60dk',desc:'Coğrafya dersinde 60 dk çalış',chk:s=>_smLog(s,'cog')>=60},
+{id:'b_min_fels_30',icon:'🧠',name:'Felsefe 30dk',desc:'Felsefe dersinde 30 dk çalış',chk:s=>_smLog(s,'fels')>=30},
+{id:'b_min_fels_60',icon:'🧠',name:'Felsefe 60dk',desc:'Felsefe dersinde 60 dk çalış',chk:s=>_smLog(s,'fels')>=60},
 {id:'b_sayisal_basl',icon:'🔬',name:'Sayısal Başlangıç',desc:'Sayısal derslerin her birinde 10 soru çöz (Mat, Fiz, Kim, Bio)',chk:s=>['mat','fiz','kim','bio'].every(id=>(s.subjects[id]||{}).questions>=10)},
 {id:'b_sozel_basl',icon:'📚',name:'Sözel Başlangıç',desc:'Sözel derslerin her birinde 10 soru çöz (Tur, Tar, Coğ, Fels)',chk:s=>['tur','tar','cog','fels'].every(id=>(s.subjects[id]||{}).questions>=10)},
 {id:'b_mat_geo',icon:'📐',name:'Mat-Geo İkili',desc:'Matematik ve Geometri derslerinde 50\'şer soru çöz',chk:s=>(s.subjects.mat||{}).questions>=50&&(s.subjects.geo||{}).questions>=50},
@@ -2364,7 +2367,7 @@ const BDGS_L=[
 {id:'b_super_hafta',icon:'🗓️',name:'Süper Hafta',desc:'7 günün 7\'sinde de çalış (mükemmel hafta)',chk:s=>s.streak>=7},
 {id:'b_ilk_500xp',icon:'🌱',name:'Filiz XP',desc:'İlk 500 XP\'ini kazan',chk:s=>s.xp>=500},
 {id:'b_sprint',icon:'🏃',name:'Sprint',desc:'3 günde 300+ dakika çalış',chk:s=>s.streak>=3&&(s.weekTotalMins||0)>=300},
-{id:'b_6ders_gun',icon:'📚',name:'6 Ders 1 Günde',desc:'Bir günde 6 farklı ders çalış',chk:s=>Object.keys(s.subjectMinutes||{}).filter(k=>(s.subjectMinutes[k]||0)>0).length>=6},
+{id:'b_6ders_gun',icon:'📚',name:'6 Ders 1 Günde',desc:'Bir günde 6 farklı ders çalış',chk:s=>Object.keys(_todaySM(s)).filter(function(k){return (_todaySM(s)[k]||0)>0;}).length>=6},
 {id:'b_netplus',icon:'📊',name:'Net Artışı',desc:'Son 2 TYT denemende net artışı yakala',chk:s=>{const d=(s.denemeler||[]).filter(x=>x.tur==='TYT');return d.length>=2&&d[d.length-1].totalNet>d[d.length-2].totalNet;}},
 {id:'b_goal_bos',icon:'🎯',name:'Hedef Belirleyici',desc:'İlk hedef üniversiteni seç',chk:s=>(s.unis||[]).some(u=>u.hedefDept!=null)},
 {id:'b_kombo_boss_den',icon:'💥',name:'Savaş+Deneme',desc:'Aynı gün hem boss yen hem deneme gir',chk:s=>s.bossesBeaten>=1&&(s.denemeler||[]).length>=1},
@@ -2421,42 +2424,42 @@ const BDGS_L=[
 {id:'b_q_fels_200',icon:'🧠',name:'Felsefe Usta',desc:'Felsefe dersinde 200 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=200},
 {id:'b_q_fels_500',icon:'🧠',name:'Felsefe Efsane',desc:'Felsefe dersinde 500 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=500},
 {id:'b_q_fels_1000',icon:'🧠',name:'Felsefe Efsanesi',desc:'Felsefe dersinde 1000 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=1000},
-{id:'b_min_mat_120',icon:'➕',name:'Matematik 120dk',desc:'Matematik dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['mat']||0)>=120},
-{id:'b_min_mat_300',icon:'➕',name:'Matematik 300dk',desc:'Matematik dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['mat']||0)>=300},
-{id:'b_min_mat_600',icon:'➕',name:'Matematik 600dk',desc:'Matematik dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['mat']||0)>=600},
-{id:'b_min_mat_1200',icon:'➕',name:'Matematik 1200dk',desc:'Matematik dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['mat']||0)>=1200},
-{id:'b_min_tur_120',icon:'📝',name:'Türkçe 120dk',desc:'Türkçe dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['tur']||0)>=120},
-{id:'b_min_tur_300',icon:'📝',name:'Türkçe 300dk',desc:'Türkçe dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['tur']||0)>=300},
-{id:'b_min_tur_600',icon:'📝',name:'Türkçe 600dk',desc:'Türkçe dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['tur']||0)>=600},
-{id:'b_min_tur_1200',icon:'📝',name:'Türkçe 1200dk',desc:'Türkçe dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['tur']||0)>=1200},
-{id:'b_min_fiz_120',icon:'⚡',name:'Fizik 120dk',desc:'Fizik dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['fiz']||0)>=120},
-{id:'b_min_fiz_300',icon:'⚡',name:'Fizik 300dk',desc:'Fizik dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['fiz']||0)>=300},
-{id:'b_min_fiz_600',icon:'⚡',name:'Fizik 600dk',desc:'Fizik dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['fiz']||0)>=600},
-{id:'b_min_fiz_1200',icon:'⚡',name:'Fizik 1200dk',desc:'Fizik dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['fiz']||0)>=1200},
-{id:'b_min_kim_120',icon:'🧪',name:'Kimya 120dk',desc:'Kimya dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['kim']||0)>=120},
-{id:'b_min_kim_300',icon:'🧪',name:'Kimya 300dk',desc:'Kimya dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['kim']||0)>=300},
-{id:'b_min_kim_600',icon:'🧪',name:'Kimya 600dk',desc:'Kimya dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['kim']||0)>=600},
-{id:'b_min_kim_1200',icon:'🧪',name:'Kimya 1200dk',desc:'Kimya dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['kim']||0)>=1200},
-{id:'b_min_bio_120',icon:'🌿',name:'Biyoloji 120dk',desc:'Biyoloji dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['bio']||0)>=120},
-{id:'b_min_bio_300',icon:'🌿',name:'Biyoloji 300dk',desc:'Biyoloji dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['bio']||0)>=300},
-{id:'b_min_bio_600',icon:'🌿',name:'Biyoloji 600dk',desc:'Biyoloji dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['bio']||0)>=600},
-{id:'b_min_bio_1200',icon:'🌿',name:'Biyoloji 1200dk',desc:'Biyoloji dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['bio']||0)>=1200},
-{id:'b_min_geo_120',icon:'📐',name:'Geometri 120dk',desc:'Geometri dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['geo']||0)>=120},
-{id:'b_min_geo_300',icon:'📐',name:'Geometri 300dk',desc:'Geometri dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['geo']||0)>=300},
-{id:'b_min_geo_600',icon:'📐',name:'Geometri 600dk',desc:'Geometri dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['geo']||0)>=600},
-{id:'b_min_geo_1200',icon:'📐',name:'Geometri 1200dk',desc:'Geometri dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['geo']||0)>=1200},
-{id:'b_min_tar_120',icon:'⚔️',name:'Tarih 120dk',desc:'Tarih dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['tar']||0)>=120},
-{id:'b_min_tar_300',icon:'⚔️',name:'Tarih 300dk',desc:'Tarih dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['tar']||0)>=300},
-{id:'b_min_tar_600',icon:'⚔️',name:'Tarih 600dk',desc:'Tarih dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['tar']||0)>=600},
-{id:'b_min_tar_1200',icon:'⚔️',name:'Tarih 1200dk',desc:'Tarih dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['tar']||0)>=1200},
-{id:'b_min_cog_120',icon:'🌍',name:'Coğrafya 120dk',desc:'Coğrafya dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['cog']||0)>=120},
-{id:'b_min_cog_300',icon:'🌍',name:'Coğrafya 300dk',desc:'Coğrafya dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['cog']||0)>=300},
-{id:'b_min_cog_600',icon:'🌍',name:'Coğrafya 600dk',desc:'Coğrafya dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['cog']||0)>=600},
-{id:'b_min_cog_1200',icon:'🌍',name:'Coğrafya 1200dk',desc:'Coğrafya dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['cog']||0)>=1200},
-{id:'b_min_fels_120',icon:'🧠',name:'Felsefe 120dk',desc:'Felsefe dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=120},
-{id:'b_min_fels_300',icon:'🧠',name:'Felsefe 300dk',desc:'Felsefe dersinde 300 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=300},
-{id:'b_min_fels_600',icon:'🧠',name:'Felsefe 600dk',desc:'Felsefe dersinde 600 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=600},
-{id:'b_min_fels_1200',icon:'🧠',name:'Felsefe 1200dk',desc:'Felsefe dersinde 1200 dk çalış',chk:s=>((s.subjectMinutes||{})['fels']||0)>=1200},
+{id:'b_min_mat_120',icon:'➕',name:'Matematik 120dk',desc:'Matematik dersinde 120 dk çalış',chk:s=>_smLog(s,'mat')>=120},
+{id:'b_min_mat_300',icon:'➕',name:'Matematik 300dk',desc:'Matematik dersinde 300 dk çalış',chk:s=>_smLog(s,'mat')>=300},
+{id:'b_min_mat_600',icon:'➕',name:'Matematik 600dk',desc:'Matematik dersinde 600 dk çalış',chk:s=>_smLog(s,'mat')>=600},
+{id:'b_min_mat_1200',icon:'➕',name:'Matematik 1200dk',desc:'Matematik dersinde 1200 dk çalış',chk:s=>_smLog(s,'mat')>=1200},
+{id:'b_min_tur_120',icon:'📝',name:'Türkçe 120dk',desc:'Türkçe dersinde 120 dk çalış',chk:s=>_smLog(s,'tur')>=120},
+{id:'b_min_tur_300',icon:'📝',name:'Türkçe 300dk',desc:'Türkçe dersinde 300 dk çalış',chk:s=>_smLog(s,'tur')>=300},
+{id:'b_min_tur_600',icon:'📝',name:'Türkçe 600dk',desc:'Türkçe dersinde 600 dk çalış',chk:s=>_smLog(s,'tur')>=600},
+{id:'b_min_tur_1200',icon:'📝',name:'Türkçe 1200dk',desc:'Türkçe dersinde 1200 dk çalış',chk:s=>_smLog(s,'tur')>=1200},
+{id:'b_min_fiz_120',icon:'⚡',name:'Fizik 120dk',desc:'Fizik dersinde 120 dk çalış',chk:s=>_smLog(s,'fiz')>=120},
+{id:'b_min_fiz_300',icon:'⚡',name:'Fizik 300dk',desc:'Fizik dersinde 300 dk çalış',chk:s=>_smLog(s,'fiz')>=300},
+{id:'b_min_fiz_600',icon:'⚡',name:'Fizik 600dk',desc:'Fizik dersinde 600 dk çalış',chk:s=>_smLog(s,'fiz')>=600},
+{id:'b_min_fiz_1200',icon:'⚡',name:'Fizik 1200dk',desc:'Fizik dersinde 1200 dk çalış',chk:s=>_smLog(s,'fiz')>=1200},
+{id:'b_min_kim_120',icon:'🧪',name:'Kimya 120dk',desc:'Kimya dersinde 120 dk çalış',chk:s=>_smLog(s,'kim')>=120},
+{id:'b_min_kim_300',icon:'🧪',name:'Kimya 300dk',desc:'Kimya dersinde 300 dk çalış',chk:s=>_smLog(s,'kim')>=300},
+{id:'b_min_kim_600',icon:'🧪',name:'Kimya 600dk',desc:'Kimya dersinde 600 dk çalış',chk:s=>_smLog(s,'kim')>=600},
+{id:'b_min_kim_1200',icon:'🧪',name:'Kimya 1200dk',desc:'Kimya dersinde 1200 dk çalış',chk:s=>_smLog(s,'kim')>=1200},
+{id:'b_min_bio_120',icon:'🌿',name:'Biyoloji 120dk',desc:'Biyoloji dersinde 120 dk çalış',chk:s=>_smLog(s,'bio')>=120},
+{id:'b_min_bio_300',icon:'🌿',name:'Biyoloji 300dk',desc:'Biyoloji dersinde 300 dk çalış',chk:s=>_smLog(s,'bio')>=300},
+{id:'b_min_bio_600',icon:'🌿',name:'Biyoloji 600dk',desc:'Biyoloji dersinde 600 dk çalış',chk:s=>_smLog(s,'bio')>=600},
+{id:'b_min_bio_1200',icon:'🌿',name:'Biyoloji 1200dk',desc:'Biyoloji dersinde 1200 dk çalış',chk:s=>_smLog(s,'bio')>=1200},
+{id:'b_min_geo_120',icon:'📐',name:'Geometri 120dk',desc:'Geometri dersinde 120 dk çalış',chk:s=>_smLog(s,'geo')>=120},
+{id:'b_min_geo_300',icon:'📐',name:'Geometri 300dk',desc:'Geometri dersinde 300 dk çalış',chk:s=>_smLog(s,'geo')>=300},
+{id:'b_min_geo_600',icon:'📐',name:'Geometri 600dk',desc:'Geometri dersinde 600 dk çalış',chk:s=>_smLog(s,'geo')>=600},
+{id:'b_min_geo_1200',icon:'📐',name:'Geometri 1200dk',desc:'Geometri dersinde 1200 dk çalış',chk:s=>_smLog(s,'geo')>=1200},
+{id:'b_min_tar_120',icon:'⚔️',name:'Tarih 120dk',desc:'Tarih dersinde 120 dk çalış',chk:s=>_smLog(s,'tar')>=120},
+{id:'b_min_tar_300',icon:'⚔️',name:'Tarih 300dk',desc:'Tarih dersinde 300 dk çalış',chk:s=>_smLog(s,'tar')>=300},
+{id:'b_min_tar_600',icon:'⚔️',name:'Tarih 600dk',desc:'Tarih dersinde 600 dk çalış',chk:s=>_smLog(s,'tar')>=600},
+{id:'b_min_tar_1200',icon:'⚔️',name:'Tarih 1200dk',desc:'Tarih dersinde 1200 dk çalış',chk:s=>_smLog(s,'tar')>=1200},
+{id:'b_min_cog_120',icon:'🌍',name:'Coğrafya 120dk',desc:'Coğrafya dersinde 120 dk çalış',chk:s=>_smLog(s,'cog')>=120},
+{id:'b_min_cog_300',icon:'🌍',name:'Coğrafya 300dk',desc:'Coğrafya dersinde 300 dk çalış',chk:s=>_smLog(s,'cog')>=300},
+{id:'b_min_cog_600',icon:'🌍',name:'Coğrafya 600dk',desc:'Coğrafya dersinde 600 dk çalış',chk:s=>_smLog(s,'cog')>=600},
+{id:'b_min_cog_1200',icon:'🌍',name:'Coğrafya 1200dk',desc:'Coğrafya dersinde 1200 dk çalış',chk:s=>_smLog(s,'cog')>=1200},
+{id:'b_min_fels_120',icon:'🧠',name:'Felsefe 120dk',desc:'Felsefe dersinde 120 dk çalış',chk:s=>_smLog(s,'fels')>=120},
+{id:'b_min_fels_300',icon:'🧠',name:'Felsefe 300dk',desc:'Felsefe dersinde 300 dk çalış',chk:s=>_smLog(s,'fels')>=300},
+{id:'b_min_fels_600',icon:'🧠',name:'Felsefe 600dk',desc:'Felsefe dersinde 600 dk çalış',chk:s=>_smLog(s,'fels')>=600},
+{id:'b_min_fels_1200',icon:'🧠',name:'Felsefe 1200dk',desc:'Felsefe dersinde 1200 dk çalış',chk:s=>_smLog(s,'fels')>=1200},
 {id:'b_sayisal_100',icon:'🏆',name:'Sayısal Uzman',desc:'Sayısal derslerin her birinde 100 soru çöz (Mat, Fiz, Kim, Bio)',chk:s=>['mat','fiz','kim','bio'].every(id=>(s.subjects[id]||{}).questions>=100)},
 {id:'b_sozel_100',icon:'📖',name:'Sözel Uzman',desc:'Sözel derslerin her birinde 100 soru çöz (Tur, Tar, Coğ, Fels)',chk:s=>['tur','tar','cog','fels'].every(id=>(s.subjects[id]||{}).questions>=100)},
 {id:'b_tum_100',icon:'👑',name:'9 Ders Uzmanı',desc:'Tüm derslerin her birinde 100 soru çöz',chk:s=>SUBJ.every(sb=>(s.subjects[sb.id]||{}).questions>=100)},
@@ -2493,10 +2496,10 @@ const BDGS_L=[
 {id:'b_ing_q500',icon:'🏆',name:'500 İngilizce Soru',desc:'İngilizce dersinde 500 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=500},
 {id:'b_ing_xp500',icon:'⚡',name:'İngilizce XP 500',desc:'İngilizce dersinden 500 XP kazan',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.xp||0)>=500},
 {id:'b_ing_xp2000',icon:'🌟',name:'İngilizce Ustası',desc:'İngilizce dersinden 2000 XP kazan',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.xp||0)>=2000},
-{id:'b_ing_min30',icon:'⏱️',name:'İngilizce 30dk',desc:'İngilizce dersinde 30 dk çalış',chk:s=>((s.subjectMinutes||{})['ing']||0)>=30},
-{id:'b_ing_min60',icon:'⏱️',name:'İngilizce 60dk',desc:'İngilizce dersinde 60 dk çalış',chk:s=>((s.subjectMinutes||{})['ing']||0)>=60},
-{id:'b_ing_min120',icon:'⏱️',name:'İngilizce 2 Saat',desc:'İngilizce dersinde 120 dk çalış',chk:s=>((s.subjectMinutes||{})['ing']||0)>=120},
-{id:'b_ing_min300',icon:'🔥',name:'İngilizce Maraton',desc:'İngilizce dersinde toplam 300 dk çalış',chk:s=>((s.subjectMinutes||{})['ing']||0)>=300},
+{id:'b_ing_min30',icon:'⏱️',name:'İngilizce 30dk',desc:'İngilizce dersinde 30 dk çalış',chk:s=>_smLog(s,'ing')>=30},
+{id:'b_ing_min60',icon:'⏱️',name:'İngilizce 60dk',desc:'İngilizce dersinde 60 dk çalış',chk:s=>_smLog(s,'ing')>=60},
+{id:'b_ing_min120',icon:'⏱️',name:'İngilizce 2 Saat',desc:'İngilizce dersinde 120 dk çalış',chk:s=>_smLog(s,'ing')>=120},
+{id:'b_ing_min300',icon:'🔥',name:'İngilizce Maraton',desc:'İngilizce dersinde toplam 300 dk çalış',chk:s=>_smLog(s,'ing')>=300},
 {id:'b_ydt_ilk',icon:'✏️',name:'İlk YDT Denemesi',desc:'İlk YDT denemeni gir',chk:s=>(s.denemeler||[]).some(d=>d.tur==='YDT')},
 {id:'b_ydt_full',icon:'📋',name:'YDT Hazır',desc:'5+ YDT denemesi gir',chk:s=>(s.denemeler||[]).filter(d=>d.tur==='YDT').length>=5},
 {id:'b_ydt_net50',icon:'📊',name:'YDT 50+ Net',desc:'YDT denemesinde 50+ net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='YDT'&&d.totalNet>=50)},
@@ -2548,8 +2551,8 @@ const BDGS_L=[
 {id:'b_hafta_sonu',icon:'🏖️',name:'Tatil Bozanı',desc:'Pazar günü en az 1 saat çalış',chk:s=>new Date().getDay()===0&&(s.dailyMins||0)>=60},
 {id:'b_100ders',icon:'📖',name:'100. Görev!',desc:'100 görev tamamladın, tebrikler!',chk:s=>s.tasks>=100},
 {id:'b_ilk_brans',icon:'⚡',name:'Branş Kaşifi',desc:'İlk branş denemeni gir',chk:s=>(s.denemeler||[]).some(d=>d.tur==='BRANS')},
-{id:'b_combo_3',icon:'🔥',name:'Üçlü Kombo',desc:'Aynı gün 3 farklı ders çalış',chk:s=>Object.keys(s.subjectMinutes||{}).filter(k=>(s.subjectMinutes[k]||0)>0).length>=3},
-{id:'b_combo_5',icon:'💥',name:'Beşli Kombo',desc:'Aynı gün 5 farklı ders çalış',chk:s=>Object.keys(s.subjectMinutes||{}).filter(k=>(s.subjectMinutes[k]||0)>0).length>=5},
+{id:'b_combo_3',icon:'🔥',name:'Üçlü Kombo',desc:'Aynı gün 3 farklı ders çalış',chk:s=>Object.keys(_todaySM(s)).filter(function(k){return (_todaySM(s)[k]||0)>0;}).length>=3},
+{id:'b_combo_5',icon:'💥',name:'Beşli Kombo',desc:'Aynı gün 5 farklı ders çalış',chk:s=>Object.keys(_todaySM(s)).filter(function(k){return (_todaySM(s)[k]||0)>0;}).length>=5},
 {id:'b_hizli_sorcu',icon:'⚡',name:'Hızlı Sorcu',desc:'15 dakikada 20+ soru çöz',chk:s=>s.questions>=20&&(s.dailyMins||0)<=15&&s.tasks>=1},
 {id:'b_puan_ustu',icon:'🎯',name:'Puan Avcısı',desc:'Toplam 50+ net yap',chk:s=>(s.totalNet||0)>=50},
 {id:'b_ilk_hafta',icon:'🎉',name:'İlk Hafta!',desc:'7 gün boyunca uygulamayı kullan',chk:s=>s.streak>=7},
@@ -2566,8 +2569,8 @@ const BDGS_L=[
 {id:'b_ing_grammar',icon:'✍️',name:'Grammar Guru',desc:'İngilizce dersinde 200 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=200},
 {id:'b_ing_fluent',icon:'🗣️',name:'Fluent Learner',desc:'İngilizce dersinde 1000 soru çöz',chk:s=>(s.subjects&&s.subjects.ing&&s.subjects.ing.questions||0)>=1000},
 {id:'b_ing_topic5',icon:'🗺️',name:'İngilizce 5 Konu',desc:'İngilizce dersinde 5 konu tamamla',chk:s=>Object.values((s.subjects&&s.subjects.ing&&s.subjects.ing.topics)||{}).filter(Boolean).length>=5},
-{id:'b_ing_min600',icon:'⏰',name:'İngilizce Maraton II',desc:'İngilizce dersinde toplam 600 dk çalış (10 saat!)',chk:s=>((s.subjectMinutes||{})['ing']||0)>=600},
-{id:'b_ing_min1200',icon:'🏅',name:'İngilizce Efsane',desc:'İngilizce dersinde toplam 1200 dk çalış (20 saat!)',chk:s=>((s.subjectMinutes||{})['ing']||0)>=1200},
+{id:'b_ing_min600',icon:'⏰',name:'İngilizce Maraton II',desc:'İngilizce dersinde toplam 600 dk çalış (10 saat!)',chk:s=>_smLog(s,'ing')>=600},
+{id:'b_ing_min1200',icon:'🏅',name:'İngilizce Efsane',desc:'İngilizce dersinde toplam 1200 dk çalış (20 saat!)',chk:s=>_smLog(s,'ing')>=1200},
 {id:'b_ydt_net80',icon:'🥇',name:'YDT 80+ Net',desc:'Bir YDT denemesinde 80 veya üzeri net yap',chk:s=>(s.denemeler||[]).some(d=>d.tur==='YDT'&&d.totalNet>=80)},
 {id:'b_ydt_10deneme',icon:'📋',name:'YDT Uzmanı',desc:'10 veya daha fazla YDT denemesi gir',chk:s=>(s.denemeler||[]).filter(d=>d.tur==='YDT').length>=10},
 // ── EĞLENCELI BAŞARIMLAR ──
@@ -2576,8 +2579,8 @@ const BDGS_L=[
 {id:'b_fun_100soru_gun',icon:'💯',name:'Yüzlük Club',desc:'Bir günde tam 100 soru çöz',chk:s=>(s.dailyQuestions||0)>=100},
 {id:'b_fun_200soru_gun',icon:'⚡',name:'Soru Makinesi',desc:'Bir günde 200 soru çöz — inanılmaz!',chk:s=>(s.dailyQuestions||0)>=200},
 {id:'b_fun_hizli_seviye',icon:'🚀',name:'Roket',desc:'İlk 3 günde 1000 XP kazan',chk:s=>s.xp>=1000&&(s.streak||0)<=3},
-{id:'b_fun_sadece_mat',icon:'🔢',name:'Sayı Bağımlısı',desc:'Günlük çalışmanın %80\'i matematik olsun (en az 30dk)',chk:s=>{const m=(s.subjectMinutes&&s.subjectMinutes.mat)||0;const total=Object.values(s.subjectMinutes||{}).reduce((a,b)=>a+b,0);return total>=30&&m/total>=0.8;}},
-{id:'b_fun_5ders',icon:'🎒',name:'Çok Yönlü',desc:'Bir günde 5 farklı ders çalış',chk:s=>Object.keys(s.subjectMinutes||{}).filter(k=>(s.subjectMinutes[k]||0)>0).length>=5},
+{id:'b_fun_sadece_mat',icon:'🔢',name:'Sayı Bağımlısı',desc:'Günlük çalışmanın %80\'i matematik olsun (en az 30dk)',chk:s=>{const _sm=_todaySM(s);const m=(_sm.mat||0);const total=Object.values(_sm).reduce(function(a,b){return a+b;},0);return total>=30&&m/total>=0.8;}},
+{id:'b_fun_5ders',icon:'🎒',name:'Çok Yönlü',desc:'Bir günde 5 farklı ders çalış',chk:s=>Object.keys(_todaySM(s)).filter(function(k){return (_todaySM(s)[k]||0)>0;}).length>=5},
 {id:'b_fun_sessiz_kahraman',icon:'🤫',name:'Sessiz Kahraman',desc:'Hiç arkadaş eklemeden 5000 XP kazan',chk:s=>s.xp>=5000&&!(s.friendScores&&s.friendScores.length)},
 {id:'b_fun_ilk_giris',icon:'👋',name:'Hoş Geldin!',desc:'YKS RPG\'ye ilk kez gir — macera başlıyor!',chk:s=>true},
 {id:'b_fun_gece_kusu',icon:'🦉',name:'Gece Kuşu',desc:'Gece 23:00-00:00 arasında çalış',chk:s=>new Date().getHours()===23&&s.tasks>=1},
@@ -4826,7 +4829,7 @@ function _timerTick(){
         addMins(5,null);
         addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:null,correct:0,wrong:0,questions:0,mins:5,topic:null});
       }
-      if(_newSlots>0){save();updateTimerDOM();toast(`✅ ${_newSlots*5}dk kaydedildi! Plan sekmesinden ders dağılımını ayarlayabilirsin 📊`);}
+      if(_newSlots>0){save();chkBdgs();updateTimerDOM();toast(`✅ ${_newSlots*5}dk kaydedildi! Plan sekmesinden ders dağılımını ayarlayabilirsin 📊`);}
     }
   }
 
@@ -7374,87 +7377,63 @@ let fbConnected=false,fbPollInterval=null;
 // ── Merkezi Oda Listesi (Public Rooms Index) ──
 // Ortak index bin ID — ilk kullanıcı oluşturur, diğerleri bul mekanizmasıyla ulaşır
 // Yerel cache: localStorage'da saklanır, bulunamazsa otomatik aranır/oluşturulur
-const ROOMS_INDEX_NAME='yks-rpg-rooms-index-v1';
-let _roomsIndexBinId=localStorage.getItem('jb_rooms_index')||null;
-let _roomsIndexPromise=null;
+// ═══════════════════════════════════════════════════════════════
+// 🌐 FIRESTORE TABANLI PUBLIC ROOMS SİSTEMİ
+// Tüm kullanıcılar aynı Firestore koleksiyonunu görür
+// ═══════════════════════════════════════════════════════════════
 
-async function getRoomsIndexBinId(){
-  if(_roomsIndexBinId)return _roomsIndexBinId;
-  if(_roomsIndexPromise)return _roomsIndexPromise;
-  _roomsIndexPromise=(async()=>{
-    try{
-      // Önce mevcut binleri ara — aynı isme sahip bin varsa onu kullan
-      const searchR=await fetch(`${JB_BASE}/b?page=1&count=20`,{
-        headers:{'X-Master-Key':JB_KEY}
-      });
-      if(searchR.ok){
-        const sd=await searchR.json();
-        const bins=(sd.result||sd||[]);
-        const found=Array.isArray(bins)?bins.find(b=>(b.metadata?.name||b.name||'')===ROOMS_INDEX_NAME):null;
-        if(found){
-          const id=found.metadata?.id||found.id;
-          if(id){localStorage.setItem('jb_rooms_index',id);_roomsIndexBinId=id;return id;}
-        }
-      }
-    }catch(e){}
-    // Bulunamazsa yeni oluştur
-    try{
-      const r=await fetch(`${JB_BASE}/b`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY,'X-Bin-Private':'false','X-Bin-Name':ROOMS_INDEX_NAME},
-        body:JSON.stringify({rooms:[],_v:1})
-      });
-      if(r.ok){
-        const d=await r.json();
-        const id=d.metadata?.id;
-        if(id){localStorage.setItem('jb_rooms_index',id);_roomsIndexBinId=id;return id;}
-      }
-    }catch(e){}
-    return null;
-  })();
-  try{return await _roomsIndexPromise;}finally{_roomsIndexPromise=null;}
-}
-
-// Herkese açık oda listesini çek
+// Herkese açık oda listesini Firestore'dan çek
 async function fetchPublicRooms(){
-  const indexId=await getRoomsIndexBinId();
-  if(!indexId)return[];
+  // Firestore hazır değilse bekle
+  if(!window._fbDb||!window._fbFirestoreExtra){
+    // Fallback: boş liste
+    return [];
+  }
   try{
-    const data=await readBin(indexId);
-    return(data?.rooms||[]).filter(r=>r.isPublic).sort((a,b)=>(b.ts||0)-(a.ts||0));
-  }catch(e){return[];}
+    const{collection,getDocs,query,orderBy,limit}=window._fbFirestoreExtra;
+    const snap=await getDocs(query(
+      collection(window._fbDb,'publicRooms'),
+      orderBy('ts','desc'),
+      limit(50)
+    ));
+    const rooms=[];
+    snap.forEach(d=>rooms.push({binId:d.id,...d.data()}));
+    return rooms;
+  }catch(e){
+    console.warn('[fetchPublicRooms]',e.message);
+    return[];
+  }
 }
 
-// Yeni odayı index'e kaydet (oluşturma sonrası çağrılır)
+// Yeni odayı Firestore'a kaydet
 async function registerRoomInIndex(binId,name,desc,isPublic,hasPassword){
-  if(!isPublic)return;
-  const indexId=await getRoomsIndexBinId();
-  if(!indexId)return;
+  if(!isPublic||!binId)return;
+  // Firestore hazır değilse bekle (max 5sn)
+  for(let i=0;i<10;i++){
+    if(window._fbDb&&window._fbFirestore)break;
+    await new Promise(r=>setTimeout(r,500));
+  }
+  if(!window._fbDb||!window._fbFirestore){console.warn('Firestore hazır değil, registerRoomInIndex atlandı');return;}
   try{
-    const data=(await readBin(indexId))||{rooms:[]};
-    if(!data.rooms)data.rooms=[];
-    const existing=data.rooms.findIndex(r=>r.binId===binId);
-    const entry={binId,name,desc,isPublic,hasPassword,ts:Date.now(),memberCount:1};
-    if(existing>=0)data.rooms[existing]=entry;
-    else data.rooms.push(entry);
-    if(data.rooms.length>80)data.rooms=data.rooms.slice(-80);
-    await fetch(`${JB_BASE}/b/${indexId}`,{method:'PUT',
-      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
-      body:JSON.stringify(data)});
-  }catch(e){}
+    const{doc,setDoc}=window._fbFirestore;
+    const createdBy=(_fbUser&&_fbUser.uid)||S.friendCode||'anon';
+    const createdByName=S.myName||(_fbUser&&_fbUser.displayName)||'YKS Savaşçısı';
+    await setDoc(doc(window._fbDb,'publicRooms',binId),{
+      binId,name,desc:desc||'',isPublic:true,hasPassword:!!hasPassword,
+      ts:Date.now(),memberCount:1,
+      createdBy,createdByName
+    });
+  }catch(e){console.warn('[registerRoomInIndex]',e.message);}
 }
 
-// Odayı index'ten sil
+// Odayı Firestore'dan sil
 async function unregisterRoomFromIndex(binId){
-  const indexId=await getRoomsIndexBinId();
-  if(!indexId)return;
+  if(!binId)return;
+  if(!window._fbDb||!window._fbFirestoreExtra)return;
   try{
-    const data=(await readBin(indexId))||{rooms:[]};
-    data.rooms=(data.rooms||[]).filter(r=>r.binId!==binId);
-    await fetch(`${JB_BASE}/b/${indexId}`,{method:'PUT',
-      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
-      body:JSON.stringify(data)});
-  }catch(e){}
+    const{doc,deleteDoc}=window._fbFirestoreExtra;
+    await deleteDoc(doc(window._fbDb,'publicRooms',binId));
+  }catch(e){console.warn('[unregisterRoomFromIndex]',e.message);}
 }
 
 // Her kullanıcının kendi bin'i var, binId localStorage'da tutulur
@@ -8362,7 +8341,7 @@ function startDrag(sid,e){
       // Kümülatif subjectMinutes'ı da güncelle (fark kadar)
       S.subjectMinutes[s.id]=Math.max(0,(S.subjectMinutes[s.id]||0)+diff);
     });
-    save();
+    save();chkBdgs();
     if(S.curTab==='plan')renderPlan();
   };
   document.addEventListener('mousemove',move,{passive:false});
@@ -14649,12 +14628,14 @@ async function libCreateRoom(name,desc,password,isPublic){
   if(!name||!name.trim()){toast('Oda adı girin!');window._libCreating=false;return;}
   const code=Math.random().toString(36).substring(2,8).toUpperCase();
   const myCode=S.friendCode||'GUEST'+Date.now();
+  const myUid=(_fbUser&&_fbUser.uid)||null;
   const hasPassword=!!(password&&password.trim());
   const pub=!!isPublic;
   const initData={
     code,name:name.trim(),desc:(desc||'').trim(),
     createdAt:Date.now(),
-    createdBy:myCode, // ✨ YENİ: Silinebilirlik kontrolü için
+    createdBy:myCode,
+    createdByUid:myUid,
     isPublic:pub,
     passwordHash:hasPassword?btoa(password.trim()):'',
     members:{
@@ -14675,7 +14656,7 @@ async function libCreateRoom(name,desc,password,isPublic){
     if(!binId){toast('Oda oluşturulamadı :(');return;}
     S.activeRoom={code,binId,name:name.trim(),desc:(desc||'').trim(),
                   isPublic:pub,hasPassword:hasPassword,joinedAt:Date.now(),
-                  createdBy:myCode}; // ✨ State'e de ekle
+                  createdBy:myCode,createdByUid:myUid};
     window._libRoomData=initData;
     window._libView='room';
     window._libCreateForm={show:false,name:'',desc:'',password:'',isPublic:false};
@@ -14763,31 +14744,54 @@ async function libLeaveRoom(){
   }catch(e){}
 }
 
-// ✨ YENİ: ODA SİLME FONKSİYONU
+// ✨ ODA SİLME FONKSİYONU — oda sahibi veya oturumu açık olan oluşturucu silebilir
 async function libDeleteRoom(){
   if(!S.activeRoom){toast('Aktif oda yok');return;}
   const{binId,name}=S.activeRoom;
   const myCode=S.friendCode||'GUEST';
-  if(!confirm(`"${name}" odasını kalıcı olarak sil? Tüm üyeler çıkacak.`))return;
+  const myUid=_fbUser&&_fbUser.uid;
+
+  // createdBy kontrolü — code veya uid bazında
+  const isOwnerByCode=S.activeRoom.createdBy===myCode;
+  const isOwnerByUid=myUid&&S.activeRoom.createdByUid===myUid;
+  // Oda verilerini Firestore'dan da kontrol et
+  let isOwner=isOwnerByCode||isOwnerByUid;
+  if(!isOwner&&window._libRoomData){
+    isOwner=window._libRoomData.createdBy===myCode||(myUid&&window._libRoomData.createdByUid===myUid);
+  }
+  if(!isOwner){toast('Sadece oda sahibi silebilir! 🔒');return;}
+  if(!confirm(`"${name}" odasını kalıcı olarak sil?\nTüm üyeler odadan çıkacak.`))return;
   toast('Oda siliniyor…');
   try{
-    // Odayı sil
+    // JSONBin'den sil
     const delR=await fetch(`${JB_BASE}/b/${binId}`,{
       method:'DELETE',
-      headers:{'X-Master-Key':JB_KEY}
+      headers:{'X-Master-Key':JB_KEY,'X-Access-Key':JB_KEY}
     });
-    if(!delR.ok){toast('Silme başarısız :(');return;}
-    // Ortak listesinden kaldır
+    // JSONBin delete başarısız olsa bile devam et (oda zaten erişilemez olacak)
+    if(!delR.ok) console.warn('[libDeleteRoom] JSONBin DELETE status:',delR.status);
+    // Firestore public rooms listesinden kaldır
     await unregisterRoomFromIndex(binId).catch(()=>{});
     S.activeRoom=null;
     window._libRoomData=null;
     window._libView='main';
     save();
     toast('Oda silindi 🗑️');
+    // Public oda listesini tazele
+    window._pubRooms=null;
+    loadPublicRooms();
     renderKutuphane();
   }catch(e){
     console.warn('Oda silme hatası:',e);
-    toast('Bağlantı hatası');
+    // Hata olsa bile local state'i temizle
+    S.activeRoom=null;
+    window._libRoomData=null;
+    window._libView='main';
+    save();
+    toast('Oda kaldırıldı (yerel) 🗑️');
+    window._pubRooms=null;
+    loadPublicRooms();
+    renderKutuphane();
   }
 }
 
@@ -14899,6 +14903,236 @@ if(!window._libPendingJoin)window._libPendingJoin=null;
 if(!window._pubRooms)window._pubRooms=null; // null=yüklenmedi, []=boş
 if(!window._pubRoomsLoading)window._pubRoomsLoading=false;
 
+// ═══════════════════════════════════════════════════════════════
+// 👥 ODA ARKADAŞ DAVET SİSTEMİ
+// ═══════════════════════════════════════════════════════════════
+
+// Arkadaşını odaya davet et — popup göster
+function libShowInviteFriends(){
+  if(!S.activeRoom){toast('Aktif oda yok!');return;}
+  if(!_fbUser||!window._fbDb){
+    // Giriş yapmamışsa sadece kodu paylaş
+    libShare();
+    return;
+  }
+  const friends=S.friendScores||[];
+  const shareCode=libRoomShareCode();
+  const roomName=S.activeRoom.name;
+
+  // Giriş yapmış arkadaşlar (uid'si olanlar)
+  const fbFriends=friends.filter(f=>f.uid);
+  const nonFbFriends=friends.filter(f=>!f.uid);
+
+  const ov=document.createElement('div');
+  ov.id='room-invite-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9998;display:flex;align-items:flex-end;justify-content:center;';
+  ov.innerHTML=`
+    <div style="width:100%;max-width:500px;background:#12122a;border-radius:20px 20px 0 0;border:1px solid rgba(124,77,255,.3);border-bottom:none;padding:20px 16px 32px;max-height:75vh;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:14px;font-weight:900;color:#fff;">👥 Arkadaşını Davet Et</div>
+        <button onclick="document.getElementById('room-invite-overlay').remove()" style="background:rgba(255,255,255,.08);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:14px;cursor:pointer;">✕</button>
+      </div>
+      <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:14px;">🏰 <b style="color:rgba(124,77,255,.8);">${roomName}</b> odasına davet gönder — arkadaşın site içinde bildirim alacak.</div>
+      <div style="overflow-y:auto;flex:1;">
+        ${fbFriends.length===0&&nonFbFriends.length===0?`
+          <div style="text-align:center;padding:20px;color:rgba(255,255,255,.25);font-size:11px;">
+            <div style="font-size:32px;margin-bottom:8px;opacity:.4;">👥</div>
+            Henüz arkadaşın yok.<br>Plan sekmesinden arkadaş ekle!
+          </div>
+        `:''}
+        ${fbFriends.length>0?`
+          <div style="font-size:9px;font-weight:900;color:rgba(124,77,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📱 Uygulama Kullanıcıları</div>
+          ${fbFriends.map(f=>{
+            const alreadyIn=window._libRoomData&&window._libRoomData.members&&window._libRoomData.members[f.code||f.uid];
+            return`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:7px;">
+              <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,rgba(124,77,255,.3),rgba(224,64,251,.2));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⚔️</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;font-weight:800;color:#fff;">${f.name||'Arkadaş'}</div>
+                <div style="font-size:9px;color:rgba(124,77,255,.5);">Lv.${f.lvl||1} · ${f.xp||0} XP</div>
+              </div>
+              ${alreadyIn
+                ?`<div style="font-size:9px;background:rgba(67,160,71,.12);border:1px solid rgba(67,160,71,.25);border-radius:100px;padding:4px 10px;color:#81c784;font-weight:800;">✓ İçeride</div>`
+                :`<button onclick="libSendRoomInvite('${f.uid}','${(f.name||'Arkadaş').replace(/'/g,"\\'")}')" id="inv-btn-${f.uid}" style="background:linear-gradient(135deg,rgba(67,160,71,.2),rgba(67,160,71,.1));border:1px solid rgba(67,160,71,.35);border-radius:9px;padding:7px 12px;color:#81c784;font-size:10px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;white-space:nowrap;">📨 Davet Et</button>`
+              }
+            </div>`;
+          }).join('')}
+        `:''}
+        ${nonFbFriends.length>0?`
+          <div style="font-size:9px;font-weight:900;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;margin-top:${fbFriends.length>0?'12px':'0'};">🔗 Kod ile Eklenenler</div>
+          ${nonFbFriends.map(f=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:12px;margin-bottom:7px;opacity:.7;">
+              <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📚</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,.6);">${f.name||'Arkadaş'}</div>
+                <div style="font-size:9px;color:rgba(255,255,255,.25);">Uygulama hesabı yok</div>
+              </div>
+              <div style="font-size:9px;color:rgba(255,255,255,.2);">Kodu paylaş →</div>
+            </div>
+          `).join('')}
+        `:''}
+      </div>
+      <!-- Link ile paylaş bölümü -->
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07);">
+        <div style="font-size:9px;color:rgba(255,255,255,.3);margin-bottom:8px;">Veya oda kodunu paylaş:</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="libShare();document.getElementById('room-invite-overlay').remove();" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(124,77,255,.3);background:rgba(124,77,255,.1);color:#a78bfa;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">📤 Kodu Paylaş</button>
+          <button onclick="libCopyCode();document.getElementById('room-invite-overlay').remove();" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">📋 Kopyala</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+}
+
+// Firestore üzerinden oda daveti gönder
+async function libSendRoomInvite(targetUid,targetName){
+  if(!S.activeRoom||!_fbUser||!window._fbDb||!window._fbFirestore){
+    toast('Davet gönderilemedi!');return;
+  }
+  const btn=document.getElementById('inv-btn-'+targetUid);
+  if(btn){btn.disabled=true;btn.textContent='⏳ Gönderiliyor…';}
+  try{
+    const{doc,setDoc}=window._fbFirestore;
+    const shareCode=libRoomShareCode();
+    const notifRef=doc(window._fbDb,'roomInvites',targetUid,'invites',_fbUser.uid+'_'+S.activeRoom.binId);
+    await setDoc(notifRef,{
+      fromUid:_fbUser.uid,
+      fromName:S.myName||_fbUser.displayName||'YKS Savaşçısı',
+      roomName:S.activeRoom.name,
+      roomBinId:S.activeRoom.binId,
+      shareCode:shareCode,
+      hasPassword:S.activeRoom.hasPassword||false,
+      ts:Date.now(),
+      read:false
+    });
+    if(btn){btn.style.background='rgba(67,160,71,.2)';btn.style.color='#81c784';btn.textContent='✓ Gönderildi!';}
+    toast(`📨 ${targetName} davet edildi!`);
+  }catch(e){
+    console.warn('[libSendRoomInvite]',e.message);
+    if(btn){btn.disabled=false;btn.textContent='📨 Davet Et';}
+    toast('Davet gönderilemedi :(');
+  }
+}
+
+// Gelen oda davetlerini yükle ve kontrol et
+async function loadRoomInvites(){
+  if(!_fbUser||!window._fbDb||!window._fbFirestoreExtra)return;
+  try{
+    const{collection,getDocs,deleteDoc,doc}=window._fbFirestoreExtra;
+    const snap=await getDocs(collection(window._fbDb,'roomInvites',_fbUser.uid,'invites'));
+    const invites=[];
+    snap.forEach(d=>invites.push({id:d.id,...d.data()}));
+    if(invites.length>0){
+      window._pendingRoomInvites=invites;
+      showRoomInviteNotifications(invites);
+    }
+  }catch(e){}
+}
+
+// Gelen davetleri göster
+function showRoomInviteNotifications(invites){
+  // Birden fazla varsa en yenisini göster
+  const latest=invites.sort((a,b)=>(b.ts||0)-(a.ts||0))[0];
+  if(!latest)return;
+  // Mevcut oda varsa atla
+  if(S.activeRoom)return;
+
+  const ov=document.createElement('div');
+  ov.id='room-invite-notif';
+  ov.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9990;width:calc(100% - 32px);max-width:460px;';
+  ov.innerHTML=`
+    <div style="background:#12122a;border:1.5px solid rgba(67,160,71,.4);border-radius:16px;padding:14px 14px 12px;box-shadow:0 8px 30px rgba(0,0,0,.5);">
+      <div style="display:flex;align-items:flex-start;gap:11px;">
+        <div style="font-size:26px;flex-shrink:0;margin-top:2px;">🏰</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:900;color:#fff;margin-bottom:2px;">Çalışma Odası Daveti!</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.55);">
+            <b style="color:#81c784;">${latest.fromName||'Arkadaşın'}</b> seni 
+            <b style="color:#a78bfa;">"${latest.roomName||'Çalışma Odası'}"</b> odasına davet etti!
+          </div>
+          ${invites.length>1?`<div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:3px;">+${invites.length-1} davet daha</div>`:''}
+        </div>
+        <button onclick="document.getElementById('room-invite-notif').remove();dismissRoomInvites();" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:16px;cursor:pointer;flex-shrink:0;padding:0;line-height:1;">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:11px;">
+        <button onclick="acceptRoomInvite('${latest.shareCode}','${latest.id}')" style="flex:1;padding:9px;border-radius:10px;border:none;background:linear-gradient(135deg,#43a047,#2e7d32);color:#fff;font-size:11px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">✓ Katıl</button>
+        <button onclick="document.getElementById('room-invite-notif').remove();dismissRoomInvites();" style="padding:9px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">Reddet</button>
+        ${invites.length>1?`<button onclick="showAllRoomInvites()" style="padding:9px 14px;border-radius:10px;border:1px solid rgba(124,77,255,.3);background:rgba(124,77,255,.08);color:#a78bfa;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">Tümü</button>`:''}
+      </div>
+    </div>
+  `;
+  // Varsa eskisini kaldır
+  const old=document.getElementById('room-invite-notif');
+  if(old)old.remove();
+  document.body.appendChild(ov);
+  // 15 saniye sonra otomatik kapat
+  setTimeout(()=>{const el=document.getElementById('room-invite-notif');if(el)el.remove();},15000);
+}
+
+// Tüm oda davetlerini göster (birden fazla varsa)
+function showAllRoomInvites(){
+  const invites=window._pendingRoomInvites||[];
+  if(!invites.length)return;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9995;display:flex;align-items:flex-end;justify-content:center;';
+  ov.innerHTML=`
+    <div style="width:100%;max-width:500px;background:#12122a;border-radius:20px 20px 0 0;border:1px solid rgba(124,77,255,.3);border-bottom:none;padding:20px 16px 32px;max-height:60vh;overflow-y:auto;">
+      <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:14px;">🏰 Oda Davetleri (${invites.length})</div>
+      ${invites.map(inv=>`
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(67,160,71,.2);border-radius:12px;padding:12px;margin-bottom:8px;">
+          <div style="font-size:11px;font-weight:800;color:#fff;margin-bottom:3px;">${inv.roomName||'Çalışma Odası'}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.45);margin-bottom:10px;">${inv.fromName||'Arkadaşın'} davet etti</div>
+          <div style="display:flex;gap:7px;">
+            <button onclick="this.closest('[style]').parentNode.remove();this.closest('.overlay')||document.body.querySelector('[style*=\"z-index:9995\"]')?.remove();acceptRoomInvite('${inv.shareCode}','${inv.id}')" style="flex:1;padding:8px;border-radius:9px;border:none;background:linear-gradient(135deg,#43a047,#2e7d32);color:#fff;font-size:11px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">✓ Katıl</button>
+            <button onclick="dismissSingleInvite('${inv.id}');this.closest('[style*=\"border:1px solid\"]').remove();" style="padding:8px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.35);font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;">Reddet</button>
+          </div>
+        </div>
+      `).join('')}
+      <button onclick="this.closest('[style*=\"z-index:9995\"]').remove();" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.35);font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;margin-top:4px;">Kapat</button>
+    </div>
+  `;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+}
+
+// Daveti kabul et ve odaya katıl
+async function acceptRoomInvite(shareCode,inviteId){
+  const notif=document.getElementById('room-invite-notif');
+  if(notif)notif.remove();
+  await dismissSingleInvite(inviteId);
+  window._libJoinCode=shareCode;
+  // Kütüphane sekmesine geç
+  S.curTab='kutuphane';
+  window._libView='main';
+  renderAll();
+  await libJoinByCode(shareCode,'');
+}
+
+// Tek bir daveti Firestore'dan sil
+async function dismissSingleInvite(inviteId){
+  if(!inviteId||!_fbUser||!window._fbFirestoreExtra)return;
+  try{
+    const{doc,deleteDoc}=window._fbFirestoreExtra;
+    await deleteDoc(doc(window._fbDb,'roomInvites',_fbUser.uid,'invites',inviteId));
+    window._pendingRoomInvites=(window._pendingRoomInvites||[]).filter(i=>i.id!==inviteId);
+  }catch(e){}
+}
+
+// Tüm davetleri reddet ve sil
+async function dismissRoomInvites(){
+  const invites=window._pendingRoomInvites||[];
+  for(const inv of invites){
+    await dismissSingleInvite(inv.id).catch(()=>{});
+  }
+  window._pendingRoomInvites=[];
+}
+
+// Açılışta oda davetlerini kontrol et
+setTimeout(loadRoomInvites, 5000);
+// Her 60 saniyede bir kontrol et
+setInterval(loadRoomInvites, 60000);
+
 // Açılışta ve kütüphane sekmesi açılınca public odaları yükle
 async function loadPublicRooms(){
   if(window._pubRoomsLoading)return;
@@ -14911,14 +15145,19 @@ async function loadPublicRooms(){
   finally{window._pubRoomsLoading=false;}
   if(S.curTab==='kutuphane')renderKutuphane();
 }
-// Sayfa yüklenince ilk kez çek
-setTimeout(loadPublicRooms,2000);
+// Sayfa yüklenince — Firestore hazır olana kadar kısa bekle
+setTimeout(()=>{
+  // Firestore hazır değilse 3 sn daha bekle
+  if(!window._fbDb){setTimeout(loadPublicRooms,3000);}
+  else loadPublicRooms();
+},2000);
 
 // ── RENDER ──
 function renderKutuphane(){
   const page=document.getElementById('page');if(!page)return;
-  // Kütüphane açılınca public oda listesini taze çek
-  if(window._pubRooms===null&&!window._pubRoomsLoading)loadPublicRooms();
+  // Kütüphane açılınca public oda listesini 30sn'den eskiyse tazele
+  const stale=!window._pubRoomsTs||(Date.now()-window._pubRoomsTs)>30000;
+  if((window._pubRooms===null||stale)&&!window._pubRoomsLoading)loadPublicRooms();
   const ql=window._libQL;
   const room=S.activeRoom;
   const rd=window._libRoomData;
@@ -14986,7 +15225,12 @@ function renderKutuphane(){
             ${room.desc?`<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">${room.desc}</div>`:''}
           </div>
           <div style="display:flex;gap:6px;flex-shrink:0;">
-            ${room.createdBy===(S.friendCode||'GUEST')?`<button onclick="libDeleteRoom()" style="background:rgba(229,57,53,.2);border:1px solid rgba(229,57,53,.35);border-radius:10px;padding:8px 12px;color:#ef9090;font-size:10px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;" onmouseover="this.style.background='rgba(229,57,53,.3)'" onmouseout="this.style.background='rgba(229,57,53,.2)'">🗑️ Sil</button>`:''}
+            ${(()=>{
+              const myCode=S.friendCode||'GUEST';
+              const myUid=window._fbUser&&window._fbUser.uid;
+              const isOwner=(room.createdBy&&room.createdBy===myCode)||(myUid&&room.createdByUid===myUid)||(rd&&((rd.createdBy===myCode)||(myUid&&rd.createdByUid===myUid)));
+              return isOwner?`<button onclick="libDeleteRoom()" style="background:rgba(229,57,53,.2);border:1px solid rgba(229,57,53,.35);border-radius:10px;padding:8px 12px;color:#ef9090;font-size:10px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;" onmouseover="this.style.background='rgba(229,57,53,.3)'" onmouseout="this.style.background='rgba(229,57,53,.2)'">🗑️ Sil</button>`:'';
+            })()}
             <button onclick="libLeaveRoom()" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.2);border-radius:10px;padding:8px 12px;color:#ef9090;font-size:10px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0;">Ayrıl</button>
           </div>
         </div>
@@ -15015,10 +15259,15 @@ function renderKutuphane(){
 
         <!-- Sync -->
         <button onclick="window._libSyncing=true;renderKutuphane();libSyncRoom().catch(()=>{}).finally(()=>{window._libSyncing=false;renderKutuphane();})"
-          style="width:100%;padding:9px;border-radius:10px;border:1px solid rgba(124,77,255,.18);background:rgba(124,77,255,.04);color:rgba(124,77,255,.5);font-size:10px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;">
+          style="width:100%;padding:9px;border-radius:10px;border:1px solid rgba(124,77,255,.18);background:rgba(124,77,255,.04);color:rgba(124,77,255,.5);font-size:10px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:7px;">
           <span style="${isSyncing?'animation:spin .6s linear infinite;display:inline-block;':''}">🔄</span>
           ${isSyncing?'Güncelleniyor…':'Şimdi Güncelle'}
-          <span style="margin-left:auto;font-size:8px;opacity:.35;">Otomatik: 15sn</span>
+          <span style="margin-left:auto;font-size:8px;opacity:.35;">Otomatik: 10sn</span>
+        </button>
+
+        <!-- Arkadaşını Davet Et -->
+        <button onclick="libShowInviteFriends()" style="width:100%;padding:9px;border-radius:10px;border:1px solid rgba(67,160,71,.25);background:rgba(67,160,71,.06);color:#81c784;font-size:10px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;">
+          👥 Arkadaşını Bu Odaya Davet Et
         </button>
       </div>
     </div>
@@ -20904,7 +21153,7 @@ const db   = getFirestore(app);
 window._fbAuth = auth;
 window._fbDb   = db;
 window._fbAuth2    = { signInWithPopup, signOut, GoogleAuthProvider };
-window._fbFirestore = { doc, setDoc, getDoc };
+window._fbFirestore = { doc, setDoc, getDoc, deleteDoc };
 window._fbFirestoreExtra = { collection, getDocs, query, orderBy, limit, deleteDoc, doc, addDoc };
 
 const overlay = document.getElementById('fb-login-overlay');
