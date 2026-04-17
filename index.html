@@ -4754,7 +4754,7 @@ function timerCardHTML(){
       <div id="timer-today-pct" style="font-size:8px;color:var(--t3);margin-top:4px;text-align:right;">${barPct.toFixed(0)}% / ${S.dailyGoalHours||4} saat hedef</div>
       <div style="font-size:8px;color:rgba(124,77,255,0.7);margin-top:3px;display:flex;align-items:center;gap:4px;">
         <span>⚡</span>
-        <span>Kronometer her <b style="color:rgba(124,77,255,0.9);">5 dakika</b>da bir bugünkü çalışmana otomatik <b style="color:rgba(124,77,255,0.9);">+5 dakika</b> ekler</span>
+        <span>Kronometer her <b style="color:rgba(124,77,255,0.9);">5 dakika</b>da bir <b style="color:rgba(124,77,255,0.9);">+5 dakika</b> ve <b style="color:#f5a623;">+5 XP</b> kazandırır</span>
       </div>
     </div>
 
@@ -4830,13 +4830,17 @@ function _timerTick(){
     if(done>=_nextSlot){
       const _newSlots=Math.floor((done-(S._lastMinSave||0))/300);
       S._lastMinSave=(S._lastMinSave||0)+_newSlots*300;
+      const _oxTimer=S.xp;
       for(let _si=0;_si<_newSlots;_si++){
         addMins(5,S._timerSubj||null);
-        addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:S._timerSubj||null,correct:0,wrong:0,questions:0,mins:5,topic:null});
+        S.xp+=5;addWXP(5);
+        if(S.dailyLog&&S.dailyLog[toDS()])S.dailyLog[toDS()].xp=(S.dailyLog[toDS()].xp||0)+5;
+        addLog('⏱️','Kronometer: 5dk çalışma',5,{type:'minute',subjId:S._timerSubj||null,correct:0,wrong:0,questions:0,mins:5,topic:null});
       }
       if(_newSlots>0){
+        maybeLU(_oxTimer);
         save();chkBdgs();updateTimerDOM();
-        const _toastMsg=S._timerSubj?`✅ ${_newSlots*5}dk kaydedildi! (${SUBJ.find(x=>x.id===S._timerSubj)?.name||''}) 📊`:`✅ ${_newSlots*5}dk kaydedildi! Plan sekmesinden ders dağılımını ayarlayabilirsin 📊`;
+        const _toastMsg=S._timerSubj?`✅ ${_newSlots*5}dk kaydedildi! +${_newSlots*5} XP (${SUBJ.find(x=>x.id===S._timerSubj)?.name||''}) ⏱️`:`✅ ${_newSlots*5}dk kaydedildi! +${_newSlots*5} XP ⏱️`;
         toast(_toastMsg);
         // Arkadaşların XP'sini güncelle
         if(typeof pullFriends==='function') pullFriends().then(()=>{if(S.curTab==='home')renderHome();}).catch(()=>{});
@@ -5067,11 +5071,15 @@ document.addEventListener('visibilitychange',function(){
     if(nowDone>lastSave){
       const missedSlots=Math.floor((nowDone-lastSave)/300);
       if(missedSlots>0){
+      const _oxBg=S.xp;
         for(let i=1;i<=missedSlots;i++){
           addMins(5,S._timerSubj||null);
-          addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:S._timerSubj||null,correct:0,wrong:0,questions:0,mins:5,topic:null});
+          S.xp+=5;addWXP(5);
+          if(S.dailyLog&&S.dailyLog[toDS()])S.dailyLog[toDS()].xp=(S.dailyLog[toDS()].xp||0)+5;
+          addLog('⏱️','Kronometer: 5dk çalışma',5,{type:'minute',subjId:S._timerSubj||null,correct:0,wrong:0,questions:0,mins:5,topic:null});
         }
         S._lastMinSave=lastSave+missedSlots*300;
+        maybeLU(_oxBg);
         save();chkBdgs();
         if(typeof pullFriends==='function') pullFriends().then(()=>{if(S.curTab==='home')renderHome();}).catch(()=>{});
         if(typeof pushPresence==='function') pushPresence().catch(()=>{});
