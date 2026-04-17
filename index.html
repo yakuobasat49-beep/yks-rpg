@@ -4808,7 +4808,7 @@ function _timerTick(){
     const _prevLastSave=S._lastMinSave||0;
     const _remainSlots=Math.floor((_prevDone-_prevLastSave)/300);
     if(_remainSlots>0){
-      for(let _rs=0;_rs<_remainSlots;_rs++) addMins(5,null);
+      for(let _rs=0;_rs<_remainSlots;_rs++) addMins(5,S._timerSubj||null);
     }
     // Yeni gün için sıfırla
     S.timerSecs=0;S.timerBaseSecs=0;S.timerStartTs=Date.now();
@@ -4826,10 +4826,17 @@ function _timerTick(){
       const _newSlots=Math.floor((done-(S._lastMinSave||0))/300);
       S._lastMinSave=(S._lastMinSave||0)+_newSlots*300;
       for(let _si=0;_si<_newSlots;_si++){
-        addMins(5,null);
-        addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:null,correct:0,wrong:0,questions:0,mins:5,topic:null});
+        addMins(5,S._timerSubj||null);
+        addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:S._timerSubj||null,correct:0,wrong:0,questions:0,mins:5,topic:null});
       }
-      if(_newSlots>0){save();chkBdgs();updateTimerDOM();toast(`✅ ${_newSlots*5}dk kaydedildi! Plan sekmesinden ders dağılımını ayarlayabilirsin 📊`);}
+      if(_newSlots>0){
+        save();chkBdgs();updateTimerDOM();
+        const _toastMsg=S._timerSubj?`✅ ${_newSlots*5}dk kaydedildi! (${SUBJ.find(x=>x.id===S._timerSubj)?.name||''}) 📊`:`✅ ${_newSlots*5}dk kaydedildi! Plan sekmesinden ders dağılımını ayarlayabilirsin 📊`;
+        toast(_toastMsg);
+        // Arkadaşların XP'sini güncelle
+        if(typeof pullFriends==='function') pullFriends().then(()=>{if(S.curTab==='home')renderHome();}).catch(()=>{});
+        if(typeof pushPresence==='function') pushPresence().catch(()=>{});
+      }
     }
   }
 
@@ -5056,11 +5063,13 @@ document.addEventListener('visibilitychange',function(){
       const missedSlots=Math.floor((nowDone-lastSave)/300);
       if(missedSlots>0){
         for(let i=1;i<=missedSlots;i++){
-          addMins(5,null);
-          addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:null,correct:0,wrong:0,questions:0,mins:5,topic:null});
+          addMins(5,S._timerSubj||null);
+          addLog('⏱️','Kronometer: 5dk çalışma',0,{type:'minute',subjId:S._timerSubj||null,correct:0,wrong:0,questions:0,mins:5,topic:null});
         }
         S._lastMinSave=lastSave+missedSlots*300;
-        save();
+        save();chkBdgs();
+        if(typeof pullFriends==='function') pullFriends().then(()=>{if(S.curTab==='home')renderHome();}).catch(()=>{});
+        if(typeof pushPresence==='function') pushPresence().catch(()=>{});
         if(missedSlots>0) toast(`✅ ${missedSlots*5}dk kaydedildi (arka plan)`);
       }
     }
@@ -14857,6 +14866,7 @@ function qlCreateFolder(){
   const ql=window._libQL;
   ql.folders.push({id:'f_'+(++ql.seq),name:name.trim(),photos:[]});
   ql.view='folder';ql.activeFolder=ql.folders[ql.folders.length-1].id;
+  window._libView='folder';
   _saveLibQL();renderKutuphane();
 }
 function qlDeleteFolder(fid){
