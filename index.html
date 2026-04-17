@@ -2059,7 +2059,12 @@ qs:[
 ];
 
 // ── BADGE HELPER: Kümülatif ders dakikası (dailyLog toplamı) ──
-function _smLog(s,sid){let t=0;const dl=s.dailyLog||{};Object.values(dl).forEach(function(d){t+=((d.subjMins&&d.subjMins[sid])||0);});return t;}
+function _smLog(s,sid){
+  // subjectMinutes kümülatif sayacını kullan (dailyLog 180 günde prune'lanır, rozet kontrolü yanlış sonuç verir)
+  if(s.subjectMinutes&&s.subjectMinutes[sid]!=null)return s.subjectMinutes[sid]||0;
+  // fallback: eski veri için dailyLog toplamı
+  let t=0;const dl=s.dailyLog||{};Object.values(dl).forEach(function(d){t+=((d.subjMins&&d.subjMins[sid])||0);});return t;
+}
 function _todaySM(s){const td=new Date().toDateString();return (s.dailyLog&&s.dailyLog[td]&&s.dailyLog[td].subjMins)||{};}
 const BDGS_S=[
 
