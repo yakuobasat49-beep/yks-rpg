@@ -3115,9 +3115,9 @@ const BDGS_L=[
 {id:'b_super_100net_100boss',icon:'🏆',name:'100 Net 100 Boss',desc:'100 net + 100 boss',chk:s=>(s.totalNet||0)>=100&&s.bossesBeaten>=10},
 {id:'b_super_marathon',icon:'🏃',name:'Süper Maraton',desc:'Bir günde 8 saat + bir haftada 40 saat',chk:s=>(s.dailyMins||0)>=480&&(s.weekTotalMins||0)>=2400},
 {id:'b_super_scholar',icon:'🎓',name:'YKS Bilgesi',desc:'1000 soru + 100 saat + 30 net + 5 deneme',chk:s=>s.questions>=1000&&(s.totalMinutes||0)>=6000&&(s.totalNet||0)>=30&&(s.denemeler||[]).length>=5},
-{id:'b_super_allstar',icon:'⭐',name:'Tüm Yıldız',desc:'50 görev + 100 soru + 30 gün seri + 1 boss',chk:s=>s.tasks>=50&&s.questions>=100&&s.streak>=30&&s.bossesBeaten>=1},
+{id:'b_super_allstar',icon:'⭐',name:'Tüm Yıldız',desc:'50 görev + 100 soru + 5 boss + 1 deneme',chk:s=>s.tasks>=50&&s.questions>=100&&s.bossesBeaten>=5&&(s.denemeler||[]).length>=1},
 {id:'b_super_nonstop',icon:'⚡',name:'Dur Dur Yok',desc:'10 gün üst üste 2+ saat çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();var arr=[];for(var i=0;i<10;i++){var d=new Date(today);d.setDate(today.getDate()-i);arr.push(d.toDateString());}return arr.every(function(k){return (dl[k]&&dl[k].mins||0)>=120;});}},
-{id:'b_super_pro',icon:'💡',name:'Pro Öğrenci',desc:'200 saat + 200 soru + 30 seri + 3 deneme',chk:s=>(s.totalMinutes||0)>=12000&&s.questions>=200&&s.streak>=30&&(s.denemeler||[]).length>=3},
+{id:'b_super_pro',icon:'💡',name:'Pro Öğrenci',desc:'200 saat + 500 soru + 10 deneme + 50 net',chk:s=>(s.totalMinutes||0)>=12000&&s.questions>=500&&(s.denemeler||[]).length>=10&&(s.totalNet||0)>=50},
 
 // ════════════════════════════════════════════════════════════════
 // GELİŞİM İZLEYİCİ ROZETLERİ
@@ -3134,7 +3134,7 @@ const BDGS_L=[
 {id:'b_msg_almost_there',icon:'🎯',name:'Az Kaldı!',desc:'25. seviyeye ulaş',chk:s=>getLvl(s.xp)>=25},
 {id:'b_msg_legend',icon:'🌟',name:'Efsane Öğrenci',desc:'50 deneme + 500 saat + 50 seri',chk:s=>(s.denemeler||[]).length>=50&&(s.totalMinutes||0)>=30000&&s.streak>=50},
 {id:'b_msg_unstoppable',icon:'🔥',name:'Durdurulamaz',desc:'180 günlük seri kur',chk:s=>s.streak>=180},
-{id:'b_msg_goat',icon:'🐐',name:'GOAT',desc:'30. seviye + 50 deneme + 1000 saat + 365 seri',chk:s=>getLvl(s.xp)>=30&&(s.denemeler||[]).length>=50&&(s.totalMinutes||0)>=60000&&s.streak>=365},
+{id:'b_msg_goat',icon:'🐐',name:'GOAT',desc:'30. seviye + 50 deneme + 1000 saat + 10.000 soru',chk:s=>getLvl(s.xp)>=30&&(s.denemeler||[]).length>=50&&(s.totalMinutes||0)>=60000&&s.questions>=10000},
 
 // ════════════════════════════════════════════════════════════════
 // DERS MINUTE TIER — 450dk (7.5 saat)
@@ -3207,16 +3207,33 @@ const BDGS_L=[
 // ════════════════════════════════════════════════════════════════
 // SON BÜYÜK ROZETLERİ
 // ════════════════════════════════════════════════════════════════
-{id:'b_ultimate_1',icon:'🌌',name:'Nihai Hedef I',desc:'500 soru + 100 saat + 30 seri',chk:s=>s.questions>=500&&(s.totalMinutes||0)>=6000&&s.streak>=30},
-{id:'b_ultimate_2',icon:'🌠',name:'Nihai Hedef II',desc:'2000 soru + 500 saat + 90 seri + 10 deneme',chk:s=>s.questions>=2000&&(s.totalMinutes||0)>=30000&&s.streak>=90&&(s.denemeler||[]).length>=10},
-{id:'b_ultimate_3',icon:'⭐',name:'Nihai Hedef III',desc:'5000 soru + 1000 saat + 180 seri + 30 deneme',chk:s=>s.questions>=5000&&(s.totalMinutes||0)>=60000&&s.streak>=180&&(s.denemeler||[]).length>=30},
+{id:'b_ultimate_1',icon:'🌌',name:'Nihai Hedef I',desc:'500 soru + 100 saat + 5 deneme + 25 net',chk:s=>s.questions>=500&&(s.totalMinutes||0)>=6000&&(s.denemeler||[]).length>=5&&(s.totalNet||0)>=25},
+{id:'b_ultimate_2',icon:'🌠',name:'Nihai Hedef II',desc:'2000 soru + 500 saat + 20 deneme + 200 net',chk:s=>s.questions>=2000&&(s.totalMinutes||0)>=30000&&(s.denemeler||[]).length>=20&&(s.totalNet||0)>=200},
+{id:'b_ultimate_3',icon:'⭐',name:'Nihai Hedef III',desc:'5000 soru + 1000 saat + 50 deneme + 500 net',chk:s=>s.questions>=5000&&(s.totalMinutes||0)>=60000&&(s.denemeler||[]).length>=50&&(s.totalNet||0)>=500},
 {id:'b_toprak_calisi',icon:'🌱',name:'Toprağa Basmak',desc:'Zemin sağlam — 14 gün + 10 görev',chk:s=>s.streak>=14&&s.tasks>=10},
 {id:'b_umut_yolculugu',icon:'🌟',name:'Umut Yolculuğu',desc:'YKS\'ye 1 adım daha yakın — 50 soru',chk:s=>s.questions>=50&&s.streak>=5},
 {id:'b_azimkar',icon:'🔥',name:'Azimkâr',desc:'45 gün seri + 50 soru + 3 boss',chk:s=>s.streak>=45&&s.questions>=50&&s.bossesBeaten>=3},
 {id:'b_caliskan_ari',icon:'🐝',name:'Çalışkan Arı',desc:'Her gün düzenli çalış — 21 gün seri',chk:s=>s.streak>=21},
 {id:'b_mutluluk_formulu',icon:'😊',name:'Mutluluk Formülü',desc:'1000 XP + 30 seri + 10 görev',chk:s=>s.xp>=1000&&s.streak>=30&&s.tasks>=10},
-{id:'b_hedefine_kos',icon:'🏃',name:'Hedefe Koş!',desc:'Hedef üniversite seç + 100 soru çöz',chk:s=>(s.unis||[]).some(function(u){return u.hedefDept!=null;})&&s.questions>=100},
-{id:'b_yks_azmi',icon:'💪',name:'YKS Azmi',desc:'60 gün seri + 60 saat toplam + 60 net',chk:s=>s.streak>=60&&(s.totalMinutes||0)>=3600&&(s.totalNet||0)>=60},
+{id:'b_hedefine_kos',icon:'🏃',name:'Hedefe Koş!',desc:'Hedef üniversite seç + 500 soru + 5 deneme + 50 net',chk:s=>(s.unis||[]).some(function(u){return u.hedefDept!=null;})&&s.questions>=500&&(s.denemeler||[]).length>=5&&(s.totalNet||0)>=50},
+{id:'b_yks_azmi',icon:'💪',name:'YKS Azmi',desc:'1000 XP + 200 soru + 60 net + 10 boss',chk:s=>s.xp>=1000&&s.questions>=200&&(s.totalNet||0)>=60&&s.bossesBeaten>=10},
+// ── YENİ KOMBO ROZETLERİ (streak'siz) ──
+{id:'b_combo_trilyon',icon:'🔱',name:'Üçlü Tehdit',desc:'300 soru + 30 boss + 30 deneme',chk:s=>s.questions>=300&&s.bossesBeaten>=30&&(s.denemeler||[]).length>=30},
+{id:'b_combo_fen_ustasi',icon:'🔬',name:'Fen Ustası',desc:'Her fen dersinde 300 soru (Mat, Fiz, Kim, Bio)',chk:s=>['mat','fiz','kim','bio'].every(function(id){return (s.subjects[id]&&s.subjects[id].questions||0)>=300;}),},
+{id:'b_combo_sozel_ustasi',icon:'📖',name:'Sözel Usta',desc:'Her sözel dersinde 300 soru (Tur, Tar, Coğ, Fels)',chk:s=>['tur','tar','cog','fels'].every(function(id){return (s.subjects[id]&&s.subjects[id].questions||0)>=300;})},
+{id:'b_combo_grand_slam',icon:'🎯',name:'Grand Slam',desc:'100 net + 20 deneme + 1000 soru + 20 boss',chk:s=>(s.totalNet||0)>=100&&(s.denemeler||[]).length>=20&&s.questions>=1000&&s.bossesBeaten>=20},
+{id:'b_combo_tam_paket',icon:'📦',name:'Tam Paket',desc:'2000 soru + 200 saat + 50 deneme + 200 net',chk:s=>s.questions>=2000&&(s.totalMinutes||0)>=12000&&(s.denemeler||[]).length>=50&&(s.totalNet||0)>=200},
+{id:'b_combo_xp_avcisi',icon:'🎮',name:'XP Avcısı',desc:'50K XP + 2000 görev + 100 boss',chk:s=>s.xp>=50000&&s.tasks>=2000&&s.bossesBeaten>=100},
+{id:'b_combo_okul_efsanesi',icon:'🏫',name:'Okul Efsanesi',desc:'20. seviye + 3000 soru + 30 boss + 30 deneme',chk:s=>getLvl(s.xp)>=20&&s.questions>=3000&&s.bossesBeaten>=30&&(s.denemeler||[]).length>=30},
+{id:'b_combo_demir_azim',icon:'⚒️',name:'Demir Azim',desc:'300 görev + 500 soru + 30 deneme + 50 net',chk:s=>s.tasks>=300&&s.questions>=500&&(s.denemeler||[]).length>=30&&(s.totalNet||0)>=50},
+{id:'b_combo_tam_formul',icon:'🧮',name:'Tam Formül',desc:'25K XP + 3000 soru + 300 net + 10. seviye',chk:s=>s.xp>=25000&&s.questions>=3000&&(s.totalNet||0)>=300&&getLvl(s.xp)>=10},
+{id:'b_combo_beyin_firtinasi',icon:'🧠',name:'Beyin Fırtınası',desc:'5000 soru + 50 boss + 30 deneme + 25K XP',chk:s=>s.questions>=5000&&s.bossesBeaten>=50&&(s.denemeler||[]).length>=30&&s.xp>=25000},
+{id:'b_combo_kitaplik',icon:'📚',name:'Kitaplık Kurucusu',desc:'10 banka oluştur + 1000 soru + 50 saat',chk:s=>(s.soruBankalari||[]).length>=10&&s.questions>=1000&&(s.totalMinutes||0)>=3000},
+{id:'b_combo_soz_verdi',icon:'🤝',name:'Söz Verdi Tuttu',desc:'5 banka bitir + 20 deneme + 200 net + hedef üniversite',chk:s=>(s.soruBankalari||[]).filter(function(b){return b.topics.length>0&&b.topics.every(function(t){return t.done;});}).length>=5&&(s.denemeler||[]).length>=20&&(s.totalNet||0)>=200&&(s.unis||[]).some(function(u){return u.hedefDept!=null;})},
+{id:'b_combo_caliskan',icon:'🐜',name:'Çalışkan Karınca',desc:'1000 görev + 500 saat + 5000 soru',chk:s=>s.tasks>=1000&&(s.totalMinutes||0)>=30000&&s.questions>=5000},
+{id:'b_combo_deneme_fabrika',icon:'🏭',name:'Deneme Fabrikası',desc:'50 deneme + 500 net + 5000 soru',chk:s=>(s.denemeler||[]).length>=50&&(s.totalNet||0)>=500&&s.questions>=5000},
+{id:'b_combo_boss_koleksiyon',icon:'👾',name:'Boss Koleksiyoneri',desc:'50 boss + 5000 XP + 20 deneme',chk:s=>s.bossesBeaten>=50&&s.xp>=5000&&(s.denemeler||[]).length>=20},
+
 ];
 const ALL_BDGS=[...BDGS_S,...BDGS_L];
 
@@ -4495,12 +4512,14 @@ function getBadgeTrophy(b){
   const m=(typeof getTrophyMeta==='function')?getTrophyMeta(b):{tierEn:'bronze',tier:'BRONZ',color:'#e0a878',glow:'rgba(200,140,90,0.3)'};
   const tierEn=m.tierEn||'bronze';
   const bgMap={
+    diamond:'linear-gradient(135deg,#001a22,#003040,#000d14)',
     platinum:'linear-gradient(135deg,#1a0035,#3a0068,#0d0020)',
     gold:'linear-gradient(135deg,#1a0e00,#352000,#0d0900)',
+    iron:'linear-gradient(135deg,#0e0f10,#1c1f22,#070809)',
     silver:'linear-gradient(135deg,#080e18,#101e30,#060a12)',
     bronze:'linear-gradient(160deg,#0a0a1a,#16090a,#0a0a12)',
   };
-  const iconMap={platinum:'🏆',gold:'🥇',silver:'🥈',bronze:'🥉'};
+  const iconMap={diamond:'💎',platinum:'🏆',gold:'🥇',iron:'🛡️',silver:'🥈',bronze:'🥉'};
   return{
     type:m.tier||'BRONZ',
     icon:iconMap[tierEn]||'🥉',
@@ -4698,6 +4717,11 @@ function playTrophySound(tierType){
       // Tek ding
       bell(880, 0.0, 1.1, 0.22);
 
+    } else if(tierType === 'ELMAS'){
+      /* Elmas sesi — en prestijli */
+      try{ const ac=new AudioContext(); const now=ac.currentTime; const osc=ac.createOscillator(); const gain=ac.createGain(); osc.connect(gain); gain.connect(ac.destination); osc.type='sine'; osc.frequency.setValueAtTime(1200,now); osc.frequency.exponentialRampToValueAtTime(1800,now+0.15); osc.frequency.exponentialRampToValueAtTime(1400,now+0.35); gain.gain.setValueAtTime(0.25,now); gain.gain.exponentialRampToValueAtTime(0.001,now+0.8); osc.start(now); osc.stop(now+0.8); }catch(e){}
+    } else if(tierType === 'DEMİR'){
+      try{ const ac=new AudioContext(); const now=ac.currentTime; const osc=ac.createOscillator(); const gain=ac.createGain(); osc.connect(gain); gain.connect(ac.destination); osc.type='square'; osc.frequency.setValueAtTime(400,now); osc.frequency.exponentialRampToValueAtTime(350,now+0.2); gain.gain.setValueAtTime(0.1,now); gain.gain.exponentialRampToValueAtTime(0.001,now+0.4); osc.start(now); osc.stop(now+0.4); }catch(e){}
     } else if(tierType === 'GÜMÜŞ'){
       // İki nota
       bell(880, 0.00, 1.1, 0.20);
@@ -4807,8 +4831,8 @@ function popBdg(){
     // Update confirm button color
     const confirmBtn=boxEl.querySelector('button');
     if(confirmBtn){
-      const btnColors={PLATİN:'linear-gradient(135deg,#7c00cc,#b040ff)',ALTIN:'linear-gradient(135deg,#c67c00,#f5a623)',GÜMÜŞ:'linear-gradient(135deg,#3a6080,#6090b8)',BRONZ:'linear-gradient(135deg,#6b3a10,#a05a28)'};
-      const btnText={PLATİN:'#f0e0ff',ALTIN:'#1a0e00',GÜMÜŞ:'#e8f4ff',BRONZ:'#fff0e0'};
+      const btnColors={ELMAS:'linear-gradient(135deg,#006080,#00bcd4)',PLATİN:'linear-gradient(135deg,#7c00cc,#b040ff)',ALTIN:'linear-gradient(135deg,#c67c00,#f5a623)',DEMİR:'linear-gradient(135deg,#374245,#607d8b)',GÜMÜŞ:'linear-gradient(135deg,#3a6080,#6090b8)',BRONZ:'linear-gradient(135deg,#6b3a10,#a05a28)'};
+      const btnText={ELMAS:'#001a22',PLATİN:'#f0e0ff',ALTIN:'#1a0e00',DEMİR:'#e8f0f2',GÜMÜŞ:'#e8f4ff',BRONZ:'#fff0e0'};
       confirmBtn.style.background=btnColors[trophy.type]||btnColors.BRONZ;
       confirmBtn.style.color=btnText[trophy.type]||'#fff';
     }
@@ -16423,11 +16447,18 @@ function renderFeed(items){
 
   // Tier görsel tanımları — her tier için kart stili
   const tierStyles={
+    diamond:{
+      card:'background:linear-gradient(135deg,rgba(0,180,220,0.22),rgba(0,30,50,0.97));border:1.5px solid rgba(34,211,238,0.7);box-shadow:0 0 28px rgba(34,211,238,0.35),0 2px 10px rgba(0,0,0,0.6);',
+      avatar:'border:2.5px solid rgba(100,240,255,0.95);box-shadow:0 0 18px rgba(34,211,238,0.8);',
+      shimmer:true,
+      particles:true,
+      label:'background:linear-gradient(90deg,rgba(0,180,220,0.35),rgba(100,240,255,0.15));border:1px solid rgba(34,211,238,0.7);color:#a5f3fc;',
+    },
     platinum:{
       card:'background:linear-gradient(135deg,rgba(120,0,220,0.28),rgba(40,10,70,0.96));border:1.5px solid rgba(200,120,255,0.65);box-shadow:0 0 22px rgba(180,80,255,0.28),0 2px 8px rgba(0,0,0,0.5);',
       avatar:'border:2.5px solid rgba(220,160,255,0.9);box-shadow:0 0 14px rgba(180,80,255,0.7);',
       shimmer:true,
-      particles:true,
+      particles:false,
       label:'background:linear-gradient(90deg,rgba(180,80,255,0.35),rgba(220,160,255,0.2));border:1px solid rgba(200,120,255,0.6);color:#e8c7ff;',
     },
     gold:{
@@ -16436,6 +16467,13 @@ function renderFeed(items){
       shimmer:false,
       particles:false,
       label:'background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.5);color:#ffd97d;',
+    },
+    iron:{
+      card:'background:linear-gradient(135deg,rgba(50,60,65,0.28),rgba(12,14,16,0.96));border:1px solid rgba(120,144,156,0.45);box-shadow:0 0 8px rgba(120,144,156,0.15),0 1px 5px rgba(0,0,0,0.35);',
+      avatar:'border:2px solid rgba(144,164,174,0.75);box-shadow:0 0 8px rgba(120,144,156,0.35);',
+      shimmer:false,
+      particles:false,
+      label:'background:rgba(100,120,130,0.18);border:1px solid rgba(120,144,156,0.4);color:#b0bec5;',
     },
     silver:{
       card:'background:linear-gradient(135deg,rgba(30,60,90,0.28),rgba(10,15,22,0.96));border:1.5px solid rgba(160,210,240,0.5);box-shadow:0 0 10px rgba(140,200,230,0.18),0 2px 6px rgba(0,0,0,0.35);',
@@ -16460,9 +16498,9 @@ function renderFeed(items){
     if(item.type==='badge'){
       const _t=item.badgeTier||'bronze';
       const _ts=tierStyles[_t]||tierStyles.bronze;
-      const _tc={platinum:'#e8c7ff',gold:'#ffd97d',silver:'#c8dff0',bronze:'#e0a878'}[_t]||'#e0a878';
-      const _cup={platinum:'🏆',gold:'🥇',silver:'🥈',bronze:'🥉'}[_t]||'🥉';
-      const _tierLabel={platinum:'PLATİN',gold:'ALTIN',silver:'GÜMÜŞ',bronze:'BRONZ'}[_t]||'BRONZ';
+      const _tc={diamond:'#a5f3fc',platinum:'#e8c7ff',gold:'#ffd97d',iron:'#b0bec5',silver:'#c8dff0',bronze:'#e0a878'}[_t]||'#e0a878';
+      const _cup={diamond:'💎',platinum:'🏆',gold:'🥇',iron:'🛡️',silver:'🥈',bronze:'🥉'}[_t]||'🥉';
+      const _tierLabel={diamond:'ELMAS',platinum:'PLATİN',gold:'ALTIN',iron:'DEMİR',silver:'GÜMÜŞ',bronze:'BRONZ'}[_t]||'BRONZ';
 
       // Avatar çerçevesi
       const _frameId=item.frame||'default';
@@ -17496,75 +17534,86 @@ renderStats=function(){
 // 5. ROZETLER SEKMESİ — PlayStation Trophy Tarzı
 // ══════════════════════════════════════════════════
 function getTrophyMeta(b){
-  const P={tier:'PLATİN',tierEn:'platinum',color:'#e8c7ff',glow:'rgba(200,120,255,0.5)',bg:'linear-gradient(135deg,rgba(120,0,220,0.22),rgba(180,80,255,0.08))',border:'rgba(180,100,255,0.55)',cup:'🏆'};
-  const G={tier:'ALTIN',tierEn:'gold',color:'#ffd97d',glow:'rgba(245,166,35,0.45)',bg:'linear-gradient(135deg,rgba(100,65,0,0.25),rgba(245,166,35,0.08))',border:'rgba(245,166,35,0.5)',cup:'🥇'};
-  const S={tier:'GÜMÜŞ',tierEn:'silver',color:'#c8dff0',glow:'rgba(160,210,240,0.35)',bg:'linear-gradient(135deg,rgba(20,60,100,0.22),rgba(120,180,220,0.08))',border:'rgba(140,190,220,0.45)',cup:'🥈'};
-  const B={tier:'BRONZ',tierEn:'bronze',color:'#e0a878',glow:'rgba(200,140,90,0.3)',bg:'linear-gradient(135deg,rgba(80,40,10,0.2),rgba(200,140,90,0.07))',border:'rgba(180,120,70,0.38)',cup:'🥉'};
+  // Elmas > Platin > Altın > Demir > Gümüş > Bronz
+  const E={tier:'ELMAS',tierEn:'diamond', color:'#a5f3fc',glow:'rgba(34,211,238,0.55)', bg:'linear-gradient(135deg,rgba(0,180,220,0.22),rgba(0,80,120,0.10))',border:'rgba(34,211,238,0.6)',cup:'💎'};
+  const P={tier:'PLATİN',     tierEn:'platinum',color:'#e8c7ff',glow:'rgba(200,120,255,0.5)', bg:'linear-gradient(135deg,rgba(120,0,220,0.22),rgba(180,80,255,0.08))',border:'rgba(180,100,255,0.55)',cup:'🏆'};
+  const G={tier:'ALTIN',      tierEn:'gold',    color:'#ffd97d',glow:'rgba(245,166,35,0.45)', bg:'linear-gradient(135deg,rgba(100,65,0,0.25),rgba(245,166,35,0.08))',border:'rgba(245,166,35,0.5)',cup:'🥇'};
+  const D={tier:'DEMİR',      tierEn:'iron',    color:'#b0bec5',glow:'rgba(144,164,174,0.4)', bg:'linear-gradient(135deg,rgba(40,50,55,0.25),rgba(80,100,110,0.08))',border:'rgba(120,144,156,0.45)',cup:'🛡️'};
+  const S={tier:'GÜMÜŞ',      tierEn:'silver',  color:'#c8dff0',glow:'rgba(160,210,240,0.35)',bg:'linear-gradient(135deg,rgba(20,60,100,0.22),rgba(120,180,220,0.08))',border:'rgba(140,190,220,0.45)',cup:'🥈'};
+  const B={tier:'BRONZ',      tierEn:'bronze',  color:'#e0a878',glow:'rgba(200,140,90,0.3)',  bg:'linear-gradient(135deg,rgba(80,40,10,0.2),rgba(200,140,90,0.07))',border:'rgba(180,120,70,0.38)',cup:'🥉'};
 
   const id=b.id;
 
-  // ── Dakika bazlı ders rozetleri (b_min_xxx_NNN ve b_ing_minNNN) ──
+  // ── Dakika bazlı ders rozetleri ──
+  // b_min_xxx_NNN: 60→Bronz, 60-120→Gümüş, 180-300→Demir, 450→Demir, 600-900→Altın, 1200+→Platin
   const minM=id.match(/(?:b_min_[a-z]+_|b_ing_min)(\d+)$/);
-  if(minM){const m=+minM[1];if(m>=900)return G;if(m>=450)return S;if(m>=100)return S;return B;}
+  if(minM){const m=+minM[1];if(m>=1200)return P;if(m>=600||m===900)return G;if(m>=300||m===450)return D;if(m>=100||m===180||m===120)return S;return B;}
 
   // ── SEVİYE ──
-  if(id==='b_lv30')return G;
-  if(id==='b_lv28'||id==='b_lv25'||id==='b_lv20')return G;
-  if(id==='b_lv18'||id==='b_lv15'||id==='b_lv12')return S;
-  if(id==='b_lv10'||id==='b_lv7'||id==='b_lv5'||id==='b_lv3'||id==='b_lv2')return B;
+  if(id==='b_lv30')return P;
+  if(id==='b_lv28'||id==='b_lv25')return G;
+  if(id==='b_lv20'||id==='b_lv18')return G;
+  if(id==='b_lv15'||id==='b_lv12')return D;
+  if(id==='b_lv10'||id==='b_lv7')return S;
+  if(id==='b_lv5'||id==='b_lv3'||id==='b_lv2')return B;
 
   // ── GENEL BOSS ──
-  if(id==='b_boss50')return P;
+  if(id==='b_boss50')return E;
   if(id==='b_boss30')return P;
-  if(id==='b_boss20')return G;
-  if(id==='b_boss15')return G;
+  if(id==='b_boss20'||id==='b_boss15')return G;
   if(id==='b_boss12'||id==='b_boss11'||id==='b_boss10')return G;
-  if(id==='b_boss9'||id==='b_boss8'||id==='b_boss7'||id==='b_boss6')return S;
-  if(id==='b_boss5'||id==='b_boss4'||id==='b_boss3'||id==='b_boss2'||id==='b_boss1')return B;
+  if(id==='b_boss9'||id==='b_boss8'||id==='b_boss7')return D;
+  if(id==='b_boss6'||id==='b_boss5'||id==='b_boss4')return S;
+  if(id==='b_boss3'||id==='b_boss2'||id==='b_boss1')return B;
 
   // ── DERS BOSS ──
   if(id.match(/^b_boss_[a-z]+_15$/))return G;
   if(id.match(/^b_boss_[a-z]+_10$/))return G;
-  if(id.match(/^b_boss_[a-z]+_8$/))return S;
+  if(id.match(/^b_boss_[a-z]+_8$/))return D;
   if(id.match(/^b_boss_[a-z]+_5$/))return S;
   if(id.match(/^b_boss_[a-z]+_3$/))return B;
   if(id.match(/^b_boss_[a-z]+_1$/))return B;
 
   // ── BANKA (oluştur) ──
-  if(id==='b_banka50')return G;
-  if(id==='b_banka30'||id==='b_banka20')return G;
-  if(id==='b_banka15'||id==='b_banka10')return S;
-  if(id==='b_banka5'||id==='b_banka3'||id==='b_banka2'||id==='b_banka1')return B;
+  if(id==='b_banka50')return P;
+  if(id==='b_banka30')return G;
+  if(id==='b_banka20')return G;
+  if(id==='b_banka15')return D;
+  if(id==='b_banka10')return D;
+  if(id==='b_banka5')return S;
+  if(id==='b_banka3'||id==='b_banka2'||id==='b_banka1')return B;
 
   // ── BANKA TAMAMLA (done) ──
-  if(id==='b_bankadone20')return P;
+  if(id==='b_bankadone20')return E;
   if(id==='b_bankadone10')return P;
   if(id==='b_bankadone5')return G;
-  if(id==='b_bankadone3')return S;
-  if(id==='b_bankadone2'||id==='b_bankadone1')return B;
+  if(id==='b_bankadone3')return D;
+  if(id==='b_bankadone2')return S;
+  if(id==='b_bankadone1')return B;
 
   // ── DERS BANKA TAMAMLA ──
   if(id.match(/^b_banka_[a-z]+_10$/))return P;
   if(id.match(/^b_banka_[a-z]+_5$/))return G;
-  if(id.match(/^b_banka_[a-z]+_3$/))return S;
+  if(id.match(/^b_banka_[a-z]+_3$/))return D;
   if(id.match(/^b_banka_[a-z]+_1$/))return B;
 
   // ── KONU TAMAMLAMA (ders bazlı) ──
   if(id.match(/^b_topic_[a-z]+_100$/))return P;
   if(id.match(/^b_topic_[a-z]+_75$/))return G;
-  if(id.match(/^b_topic_[a-z]+_50$/))return S;
+  if(id.match(/^b_topic_[a-z]+_50$/))return D;
   if(id.match(/^b_topic_[a-z]+_25$/))return B;
 
   // ── GENEL KONU ──
-  if(id==='b_all_topics_full')return P;
-  if(id==='b_all_topics'||id==='b_topic_all_25')return S;
+  if(id==='b_all_topics_full')return E;
+  if(id==='b_all_topics')return G;
+  if(id==='b_topic_all_25')return D;
 
-  // ── DERS BAZLI SORU (pattern) ──
+  // ── DERS BAZLI SORU ──
   if(id.match(/^b_q_[a-z]+_1000$/))return P;
-  if(id.match(/^b_q_[a-z]+_750$/))return P;
+  if(id.match(/^b_q_[a-z]+_750$/))return G;
   if(id.match(/^b_q_[a-z]+_500$/))return G;
-  if(id.match(/^b_q_[a-z]+_300$/))return G;
-  if(id.match(/^b_q_[a-z]+_200$/))return S;
+  if(id.match(/^b_q_[a-z]+_300$/))return D;
+  if(id.match(/^b_q_[a-z]+_200$/))return D;
   if(id.match(/^b_q_[a-z]+_150$/))return S;
   if(id.match(/^b_q_[a-z]+_100$/))return S;
   if(id.match(/^b_q_[a-z]+_75$/))return B;
@@ -17573,186 +17622,205 @@ function getTrophyMeta(b){
   if(id.match(/^b_q_[a-z]+_10$/))return B;
 
   // ── TOPLAM SORU ──
-  if(id==='b_q10000')return P;
-  if(id==='b_q7500'||id==='b_q5000')return P;
-  if(id==='b_q3000'||id==='b_q2000'||id==='b_q1500'||id==='b_q1000')return G;
-  if(id==='b_q750'||id==='b_q500'||id==='b_q350'||id==='b_q300'||id==='b_q200'||id==='b_q175')return S;
-  if(id==='b_q150'||id==='b_q125'||id==='b_q100'||id==='b_q75'||id==='b_q50'||id==='b_q25'||id==='b_q10'||id==='b_q5')return B;
+  if(id==='b_q10000'||id==='b_q7500')return E;
+  if(id==='b_q5000'||id==='b_q3000')return P;
+  if(id==='b_q2000'||id==='b_q1500'||id==='b_q1000')return G;
+  if(id==='b_q750'||id==='b_q500'||id==='b_q350'||id==='b_q300')return D;
+  if(id==='b_q200'||id==='b_q175'||id==='b_q150'||id==='b_q125')return S;
+  if(id==='b_q100'||id==='b_q75'||id==='b_q50'||id==='b_q25'||id==='b_q10'||id==='b_q5')return B;
 
   // ── SERİ (streak) ──
-  if(id==='b_str365')return P;
-  if(id==='b_str300'||id==='b_str250')return P;
-  if(id==='b_str200'||id==='b_str180'||id==='b_str120'||id==='b_str90')return G;
-  if(id==='b_str60'||id==='b_str45'||id==='b_str30')return S;
-  if(id==='b_str21'||id==='b_str14'||id==='b_str10'||id==='b_str7'||id==='b_str5'||id==='b_str3')return B;
-  if(id==='b_streak_rec100')return P;
-  if(id==='b_streak_rec30')return G;
+  if(id==='b_str365'||id==='b_str300'||id==='b_str250')return E;
+  if(id==='b_str200'||id==='b_str180'||id==='b_str120')return P;
+  if(id==='b_str90'||id==='b_str60')return G;
+  if(id==='b_str45'||id==='b_str30')return D;
+  if(id==='b_str21'||id==='b_str14'||id==='b_str10')return S;
+  if(id==='b_str7'||id==='b_str5'||id==='b_str3')return B;
+  if(id==='b_streak_rec100')return E;
+  if(id==='b_streak_rec30')return D;
 
   // ── XP ──
-  if(id==='b_xp500000')return P;
-  if(id==='b_xp100000'||id==='b_xp75000')return P;
-  if(id==='b_xp50000'||id==='b_xp25000'||id==='b_xp20000'||id==='b_xp15000'||id==='b_xp_milestone')return G;
-  if(id==='b_xp10000'||id==='b_xp7500'||id==='b_xp5000'||id==='b_xp3000'||id==='b_xp2000'||id==='b_xp1000')return S;
-  if(id==='b_xp500'||id==='b_xp250'||id==='b_xp100')return B;
+  if(id==='b_xp500000')return E;
+  if(id==='b_xp100000'||id==='b_xp75000')return E;
+  if(id==='b_xp50000'||id==='b_xp25000'||id==='b_xp20000')return P;
+  if(id==='b_xp15000'||id==='b_xp10000'||id==='b_xp_milestone')return G;
+  if(id==='b_xp7500'||id==='b_xp5000'||id==='b_xp3000'||id==='b_xp2000')return D;
+  if(id==='b_xp1000'||id==='b_xp500')return S;
+  if(id==='b_xp250'||id==='b_xp100')return B;
 
   // ── NET ──
-  if(id==='b_net_master'||id==='b_net1000'||id==='b_net750')return P;
-  if(id==='b_net500'||id==='b_net300'||id==='b_net200')return G;
-  if(id==='b_net150'||id==='b_net100'||id==='b_net75'||id==='b_net50')return S;
-  if(id==='b_net30'||id==='b_net20'||id==='b_net15'||id==='b_net10'||id==='b_net5')return B;
+  if(id==='b_net_master'||id==='b_net1000'||id==='b_net750')return E;
+  if(id==='b_net500'||id==='b_net300')return P;
+  if(id==='b_net200'||id==='b_net150')return G;
+  if(id==='b_net100'||id==='b_net75'||id==='b_net50')return D;
+  if(id==='b_net30'||id==='b_net20'||id==='b_net15')return S;
+  if(id==='b_net10'||id==='b_net5')return B;
 
   // ── DENEME ──
-  if(id==='b_den50')return G;
+  if(id==='b_den50')return P;
   if(id==='b_den30'||id==='b_den20')return G;
-  if(id==='b_den10'||id==='b_den5')return S;
+  if(id==='b_den10'||id==='b_den5')return D;
   if(id==='b_den3'||id==='b_den1'||id==='b_first_deneme')return B;
 
   // ── DENEME NET (tek denemede) ──
-  if(id==='b_den_net100')return P;
-  if(id==='b_den_mat_30')return S;
-  if(id==='b_den_mat_20'||id==='b_den_fiz_15'||id==='b_den_kim_15'||id==='b_den_bio_15')return B;
+  if(id==='b_den_net100')return E;
+  if(id==='b_den_mat_30')return D;
+  if(id==='b_den_mat_20'||id==='b_den_fiz_15'||id==='b_den_kim_15'||id==='b_den_bio_15')return S;
   if(id==='b_den_tur_20'||id==='b_den_tar_15'||id==='b_den_cog_12')return B;
 
   // ── TYT NET ──
-  if(id==='b_tyt_net110')return P;
-  if(id==='b_tyt_net100')return G;
-  if(id==='b_tyt_net80')return S;
-  if(id==='b_tyt_net50')return B;
+  if(id==='b_tyt_net110')return E;
+  if(id==='b_tyt_net100')return P;
+  if(id==='b_tyt_net80')return G;
+  if(id==='b_tyt_net50')return D;
 
   // ── AYT NET ──
-  if(id==='b_ayt_net75')return P;
-  if(id==='b_ayt_net65')return G;
-  if(id==='b_ayt_net50')return S;
-  if(id==='b_ayt_net30')return B;
+  if(id==='b_ayt_net75')return E;
+  if(id==='b_ayt_net65')return P;
+  if(id==='b_ayt_net50')return G;
+  if(id==='b_ayt_net30')return D;
 
   // ── YDT ──
-  if(id==='b_ydt_net75')return P;
-  if(id==='b_ydt_net80'||id==='b_ydt_net65')return G;
-  if(id==='b_ydt_net50')return S;
-  if(id==='b_ydt_full'||id==='b_ydt_10deneme')return G;
-  if(id==='b_ydt_yukselen')return S;
+  if(id==='b_ydt_net75')return E;
+  if(id==='b_ydt_net80'||id==='b_ydt_net65')return P;
+  if(id==='b_ydt_net50'||id==='b_ydt_full'||id==='b_ydt_10deneme')return G;
+  if(id==='b_ydt_yukselen')return D;
   if(id==='b_ydt_ilk')return B;
 
   // ── İNGİLİZCE ──
   if(id==='b_ing_konu_all'||id==='b_ing_tam')return G;
-  if(id==='b_ing_konu10'||id==='b_ing_fluent')return S;
+  if(id==='b_ing_konu10'||id==='b_ing_fluent')return D;
   if(id==='b_ing_topic5'||id==='b_ing_grammar'||id==='b_ing_vocab'||id==='b_ing_ilk')return B;
   if(id==='b_ing_q500')return G;
-  if(id==='b_ing_q200')return S;
+  if(id==='b_ing_q200')return D;
   if(id==='b_ing_q50')return B;
   if(id==='b_ing_xp2000')return G;
-  if(id==='b_ing_xp500')return S;
+  if(id==='b_ing_xp500')return D;
 
   // ── GÜNLÜK DAKİKA ──
-  if(id==='b_daily_720')return P;   // 12 saat → PLATİN
-  if(id==='b_daily600'||id==='b_daily_420'||id==='b_daily480'||id==='b_daily360')return G;
-  if(id==='b_daily300'||id==='b_daily240'||id==='b_daily180'||id==='b_daily120')return S;
+  if(id==='b_daily_720')return E;    // 12 saat
+  if(id==='b_daily_420'||id==='b_daily480'||id==='b_daily600')return P; // 7-10 saat
+  if(id==='b_daily360')return G;     // 6 saat
+  if(id==='b_daily300'||id==='b_daily240')return D; // 4-5 saat
+  if(id==='b_daily180'||id==='b_daily120')return S; // 2-3 saat
   if(id==='b_daily90'||id==='b_daily60'||id==='b_daily30')return B;
-  if(id==='b_daily8'||id==='b_daily4')return S; // eski format (saat)
+  if(id==='b_daily8')return P; if(id==='b_daily4')return D;
 
   // ── GÜNLÜK XP ──
-  if(id==='b_daily_1000xp')return P;
-  if(id==='b_daily_xp200')return S;
+  if(id==='b_daily_1000xp')return E;
+  if(id==='b_daily_xp200')return D;
   if(id==='b_daily_xp100'||id==='b_daily_xp50')return B;
 
   // ── GÜNLÜK SORU ──
-  if(id==='b_daily_q50')return S;
+  if(id==='b_daily_q50')return D;
   if(id==='b_daily_q20'||id==='b_daily_q10')return B;
 
-  // ── ART ARDA GÜNLÜK ÇALIŞMA SERILERI ──
-  if(id==='b_daily_2h_7streak')return G;
-  if(id==='b_daily_1h_14streak')return G;
-  if(id==='b_daily_30dk_30streak')return S;
-  if(id==='b_daily_4h_3streak')return S;
+  // ── ART ARDA GÜNLÜK SERİLERİ ──
+  if(id==='b_daily_1h_14streak')return P;
+  if(id==='b_daily_2h_7streak'||id==='b_daily_30dk_30streak')return G;
+  if(id==='b_daily_4h_3streak')return D;
 
   // ── HAFTALIK DAKİKA ──
-  if(id==='b_week_4800'||id==='b_week_4200'||id==='b_week_3600')return P; // 60-80 saat → PLATİN
-  if(id==='b_week3000')return P;     // 50 saat → PLATİN
-  if(id==='b_week2400')return G;     // 40 saat → ALTIN
-  if(id==='b_week_1500'||id==='b_week1800')return G;
-  if(id==='b_week_720'||id==='b_week1200')return S;
-  if(id==='b_week900')return S;      // 15 saat → GÜMÜŞ
-  if(id==='b_week_420'||id==='b_week600')return B;
-  if(id==='b_week_120'||id==='b_week300'||id==='b_week180'||id==='b_week60')return B;
+  if(id==='b_week_4800'||id==='b_week_4200'||id==='b_week_3600')return E; // 60-80 saat
+  if(id==='b_week3000')return P;    // 50 saat
+  if(id==='b_week2400'||id==='b_week_1500'||id==='b_week1800')return G;
+  if(id==='b_week_720'||id==='b_week1200'||id==='b_week900')return D;
+  if(id==='b_week_420'||id==='b_week600'||id==='b_week_120'||id==='b_week300'||id==='b_week180'||id==='b_week60')return S;
 
   // ── HAFTALIK XP ──
-  if(id==='b_week_xp5000')return P;
+  if(id==='b_week_xp5000')return E;
 
   // ── GÖREV SAYISI ──
-  if(id==='b_task2000'||id==='b_task1000')return P;
-  if(id==='b_task750'||id==='b_task500'||id==='b_task300')return G;
-  if(id==='b_task200'||id==='b_task150'||id==='b_task100'||id==='b_task75')return S;
-  if(id==='b_task50'||id==='b_task30'||id==='b_task20'||id==='b_task10'||id==='b_task5'||id==='b_task1')return B;
+  if(id==='b_task2000'||id==='b_task1000')return E;
+  if(id==='b_task750'||id==='b_task500')return P;
+  if(id==='b_task300'||id==='b_task200')return G;
+  if(id==='b_task150'||id==='b_task100'||id==='b_task75')return D;
+  if(id==='b_task50'||id==='b_task30'||id==='b_task20')return S;
+  if(id==='b_task10'||id==='b_task5'||id==='b_task1')return B;
 
   // ── AKTİVİTE LOG ──
-  if(id==='b_log500'||id==='b_log250')return G;
-  if(id==='b_log100')return S;
-  if(id==='b_log50')return B;
+  if(id==='b_log500')return P;
+  if(id==='b_log250')return G;
+  if(id==='b_log100')return D;
+  if(id==='b_log50')return S;
 
   // ── SUPER ROZETLER ──
-  if(id==='b_super_500saat_1yil'||id==='b_super_allsubj10h')return P;
-  if(id==='b_super_marathon'||id==='b_super_nonstop'||id==='b_super_pro'||id==='b_super_5banka_5fasikul'||id==='b_super_100net_100boss'||id==='b_super_scholar')return G;
-  if(id==='b_super_allsubj1h'||id==='b_super_25ders_cepte'||id==='b_super_allstar'||id==='b_super_hafta')return S;
+  if(id==='b_super_500saat_1yil'||id==='b_super_allsubj10h')return E;
+  if(id==='b_super_marathon'||id==='b_super_nonstop'||id==='b_super_pro'||id==='b_super_5banka_5fasikul')return P;
+  if(id==='b_super_100net_100boss'||id==='b_super_scholar')return G;
+  if(id==='b_super_allsubj1h'||id==='b_super_25ders_cepte'||id==='b_super_allstar'||id==='b_super_hafta')return D;
 
   // ── ULTIMATE ROZETLER ──
-  if(id==='b_ultimate_3'||id==='b_ultimate_2')return P;
+  if(id==='b_ultimate_3')return E;
+  if(id==='b_ultimate_2')return P;
   if(id==='b_ultimate_1')return G;
 
   // ── YKS BÜYÜK BAŞARIMLAR ──
-  if(id==='b_yks_sampiyon')return P;
-  if(id==='b_yks_hazir'||id==='b_yks_savasci')return G;
+  if(id==='b_yks_sampiyon')return E;
+  if(id==='b_yks_hazir')return P;
+  if(id==='b_yks_savasci')return G;
 
   // ── SAYISAL / SÖZEL KOMBO ──
-  if(id==='b_sayisal_500')return P;
-  if(id==='b_ayt_say_focus'||id==='b_ayt_soz_focus')return S;
-  if(id==='b_tyt_focus'||id==='b_sayisal_basl'||id==='b_sozel_basl'||id==='b_mat_geo'||id==='b_fiz_kim')return B;
+  if(id==='b_sayisal_500')return E;
+  if(id==='b_ayt_say_focus'||id==='b_ayt_soz_focus')return D;
+  if(id==='b_tyt_focus')return S;
+  if(id==='b_sayisal_basl'||id==='b_sozel_basl'||id==='b_mat_geo'||id==='b_fiz_kim')return B;
 
   // ── DOĞRULUK (İSABET) ──
   if(id==='b_accuracy_pro')return G;
-  if(id==='b_accuracy_high')return S;
+  if(id==='b_accuracy_high')return D;
 
   // ── MESAJ / MOTİVASYON ROZETLER ──
-  if(id==='b_msg_goat'||id==='b_msg_legend'||id==='b_msg_unstoppable')return P;
+  if(id==='b_msg_goat')return E;
+  if(id==='b_msg_legend'||id==='b_msg_unstoppable')return P;
   if(id==='b_msg_almost_there')return G;
-  if(id==='b_msg_halfway'||id==='b_msg_keep_going')return S;
+  if(id==='b_msg_halfway'||id==='b_msg_keep_going')return D;
   if(id==='b_msg_start')return B;
 
   // ── ÖZEL / AZIM ROZETLER ──
-  if(id==='b_yks_azmi'||id==='b_hedefine_kos')return G;
-  if(id==='b_azimkar'||id==='b_caliskan_ari'||id==='b_mutluluk_formulu'||id==='b_perfect_week'||id==='b_rutin_streak')return S;
-  if(id==='b_toprak_calisi'||id==='b_umut_yolculugu'||id==='b_improve_daily5'||id==='b_improve_month_growth')return B;
+  if(id==='b_yks_azmi'||id==='b_hedefine_kos')return P;
+  if(id==='b_azimkar'||id==='b_caliskan_ari')return G;
+  if(id==='b_mutluluk_formulu'||id==='b_perfect_week'||id==='b_rutin_streak')return D;
+  if(id==='b_toprak_calisi'||id==='b_umut_yolculugu'||id==='b_improve_daily5'||id==='b_improve_month_growth')return S;
 
   // ── ZAMAN ROZETLER ──
-  if(id==='b_gece_sabah_combo')return S;
-  if(id==='b_morning_evening'||id==='b_time_3days_row')return S;
+  if(id==='b_gece_sabah_combo')return D;
+  if(id==='b_morning_evening'||id==='b_time_3days_row')return D;
+  if(id==='b_calendar_every_day')return D;
   if(id==='b_time_weekend_3h'||id==='b_time_afternoon'||id==='b_time_midnight')return B;
-  if(id==='b_calendar_every_day')return S;
   if(id==='b_calendar_monday'||id==='b_calendar_sunday')return B;
 
   // ── ARKADAŞ ──
   if(id==='b_friends_10')return G;
-  if(id==='b_friends_5')return S;
+  if(id==='b_friends_5')return D;
   if(id==='b_friends_3'||id==='b_arkadas_ekle')return B;
 
   // ── ÜNİVERSİTE ──
   if(id==='b_uni_hedef_net')return G;
-  if(id==='b_uni_5')return S;
+  if(id==='b_uni_5')return D;
   if(id==='b_uni_3'||id==='b_hedef_uni'||id==='b_uni_dept'||id==='b_uni_hedef'||id==='b_uni_foto')return B;
 
   // ── HEDEF ──
   if(id==='b_goal_done25')return G;
-  if(id==='b_goal_done10'||id==='b_goal_create10')return S;
-  if(id==='b_goal_done5'||id==='b_goal_create5')return B;
+  if(id==='b_goal_done10'||id==='b_goal_create10')return D;
+  if(id==='b_goal_done5'||id==='b_goal_create5')return S;
 
-  // ── EFSANELER / PLATİN ──
-  if(id==='b_legend'||id==='b_efsanevi'||id==='b_allboss_banka'||id==='b_net_master'||id==='b_tum_100')return P;
-  if(id==='b_msg_goat'||id==='b_msg_legend')return P;
+  // ── YENİ KOMBO ROZETLERİ ──
+  if(id==='b_combo_trilyon'||id==='b_combo_xp_avcisi'||id==='b_combo_beyin_firtinasi'||id==='b_combo_caliskan'||id==='b_combo_deneme_fabrika')return E;
+  if(id==='b_combo_tam_paket'||id==='b_combo_grand_slam'||id==='b_combo_okul_efsanesi'||id==='b_combo_boss_koleksiyon'||id==='b_combo_soz_verdi'||id==='b_combo_tam_formul')return P;
+  if(id==='b_combo_fen_ustasi'||id==='b_combo_sozel_ustasi'||id==='b_combo_kitaplik')return G;
+  if(id==='b_combo_demir_azim')return D;
+
+  // ── EFSANELER ──
+  if(id==='b_legend'||id==='b_efsanevi'||id==='b_tum_100')return E;
+  if(id==='b_allboss_banka')return P;
+  if(id==='b_all_topics_full')return E;
 
   // ── Pattern bazlı genel kurallar ──
-  if(id.includes('_king')||id.endsWith('_efsanesi'))return G;
-  if(id.endsWith('_efsane'))return G;
-  if(id.includes('_ustasi')||id.includes('_usta')||id.includes('_uzman'))return S;
-  if(id.includes('_fatihi'))return S;
+  if(id.includes('_king'))return P;
+  if(id.endsWith('_efsanesi')||id.endsWith('_efsane'))return G;
+  if(id.includes('_ustasi')||id.includes('_usta')||id.includes('_uzman'))return D;
+  if(id.includes('_fatihi'))return D;
   if(id.includes('_baslangic')||id.endsWith('_ilk'))return B;
 
   // ── Default ──
@@ -17769,8 +17837,8 @@ function renderBadges(){
   const pct=Math.round(totalEarned/totalAll*100);
 
   // Trophy sayıları — kazanılan ve toplam
-  const tCounts={platinum:0,gold:0,silver:0,bronze:0};
-  const tTotals={platinum:0,gold:0,silver:0,bronze:0};
+  const tCounts={diamond:0,platinum:0,gold:0,iron:0,silver:0,bronze:0};
+  const tTotals={diamond:0,platinum:0,gold:0,iron:0,silver:0,bronze:0};
   earned.forEach(b=>{tCounts[getTrophyMeta(b).tierEn]++;});
   ALL.forEach(b=>{tTotals[getTrophyMeta(b).tierEn]++;});
 
@@ -17893,16 +17961,28 @@ function renderBadges(){
     </div>
 
     <!-- Trophy sayıları -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px;">
       ${[
+        {cup:'💎',label:'Elmas',key:'diamond',color:'#a5f3fc',bg:'rgba(0,180,220,0.12)',border:'rgba(34,211,238,0.3)'},
         {cup:'🏆',label:'Platin',key:'platinum',color:'#d4b4ff',bg:'rgba(140,60,255,0.12)',border:'rgba(160,80,255,0.25)'},
         {cup:'🥇',label:'Altın',key:'gold',color:'#ffd97d',bg:'rgba(245,166,35,0.1)',border:'rgba(245,166,35,0.25)'},
+      ].map(t=>`
+        <div style="background:${t.bg};border:1px solid ${t.border};border-radius:9px;padding:7px 4px;text-align:center;">
+          <div style="font-size:16px;">${t.cup}</div>
+          <div style="font-size:13px;font-weight:900;color:${t.color};">${tCounts[t.key]}</div>
+          <div style="font-size:7px;color:rgba(255,255,255,0.35);font-weight:700;">${t.label}</div>
+          <div style="font-size:7px;color:rgba(255,255,255,0.22);margin-top:1px;">/ ${tTotals[t.key]}</div>
+        </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:14px;">
+      ${[
+        {cup:'🛡️',label:'Demir',key:'iron',color:'#b0bec5',bg:'rgba(80,100,110,0.1)',border:'rgba(120,144,156,0.25)'},
         {cup:'🥈',label:'Gümüş',key:'silver',color:'#b8d0e8',bg:'rgba(100,160,210,0.1)',border:'rgba(120,170,210,0.2)'},
         {cup:'🥉',label:'Bronz',key:'bronze',color:'#d4956a',bg:'rgba(180,120,80,0.1)',border:'rgba(160,100,60,0.2)'},
       ].map(t=>`
-        <div style="background:${t.bg};border:1px solid ${t.border};border-radius:9px;padding:8px 4px;text-align:center;">
-          <div style="font-size:18px;">${t.cup}</div>
-          <div style="font-size:14px;font-weight:900;color:${t.color};">${tCounts[t.key]}</div>
+        <div style="background:${t.bg};border:1px solid ${t.border};border-radius:9px;padding:7px 4px;text-align:center;">
+          <div style="font-size:16px;">${t.cup}</div>
+          <div style="font-size:13px;font-weight:900;color:${t.color};">${tCounts[t.key]}</div>
           <div style="font-size:7px;color:rgba(255,255,255,0.35);font-weight:700;">${t.label}</div>
           <div style="font-size:7px;color:rgba(255,255,255,0.22);margin-top:1px;">/ ${tTotals[t.key]}</div>
         </div>`).join('')}
@@ -23010,8 +23090,8 @@ function showFirstPrompt(){
     d.innerHTML='<div style="font-size:12px;font-weight:900;color:#fff;margin-bottom:5px;">🔔 Chrome Bildirimleri</div>'
       +'<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:11px;line-height:1.55;">Arkadaşların rozet kazandığında veya sıralamada üst sıralara çıktığında bildirim almak ister misin?</div>'
       +'<div style="display:flex;gap:8px;">'
-      +'<button onclick="window.toggleNotifBell().then(()=>document.getElementById('notif-prompt')?.remove())" style="flex:1;padding:9px;border-radius:9px;border:none;background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">✅ Evet, açık</button>'
-      +'<button onclick="localStorage.setItem('yksNotifEnabled','false');document.getElementById('notif-prompt')?.remove();" style="flex:1;padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">❌ Hayır</button>'
+      +'<button onclick="window.toggleNotifBell().then(()=>document.getElementById(&quot;notif-prompt&quot;)?.remove())" style="flex:1;padding:9px;border-radius:9px;border:none;background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">✅ Evet, açık</button>'
+      +'<button onclick="localStorage.setItem(&quot;yksNotifEnabled&quot;,&quot;false&quot;);document.getElementById(&quot;notif-prompt&quot;)?.remove();" style="flex:1;padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">❌ Hayır</button>'
       +'</div>';
     document.body.appendChild(d);
     setTimeout(()=>d.remove(),18000);
