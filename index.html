@@ -191,6 +191,7 @@ input::placeholder{color:var(--t3);}
 @keyframes atkPulse{0%{transform:scale(1);}50%{transform:scale(0.95);}100%{transform:scale(1);}}
 @keyframes scanline{0%{transform:translateY(-100%);}100%{transform:translateY(100vh);}}
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes ironPulse{0%,100%{box-shadow:inset 0 0 0 1px rgba(144,164,174,0.15);}50%{box-shadow:inset 0 0 0 1px rgba(144,164,174,0.45),0 0 12px rgba(120,144,156,0.2);}}
 @keyframes platShimmer{0%{left:-100%;}60%{left:150%;}100%{left:150%;}}
 .boss-arena{position:relative;border-radius:16px;overflow:hidden;margin-bottom:0;}
 .boss-arena::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.012) 3px,rgba(255,255,255,0.012) 4px);pointer-events:none;border-radius:16px;}
@@ -4650,11 +4651,13 @@ function setSoundVolume(v){
 // PlayStation tarzı rozet bildirimi sesi
 // ═══ TROPHY SES MOTORU (Orijinal, PS5'e benzer) ═══
 function playTrophySound(tierType){
+  if(typeof S!=='undefined'&&S.badgeSoundEnabled===false)return;
   try{
     const ctx = new(window.AudioContext || window.webkitAudioContext)();
     const master = ctx.createGain();
     master.gain.setValueAtTime(0.001, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.72, ctx.currentTime + 0.01);
+    const _bvol=typeof S!=='undefined'&&S.badgeSoundVolume!=null?S.badgeSoundVolume:0.7;
+    master.gain.linearRampToValueAtTime(0.72*_bvol, ctx.currentTime + 0.01);
     master.connect(ctx.destination);
 
     const t = ctx.currentTime;
@@ -4718,10 +4721,17 @@ function playTrophySound(tierType){
       bell(880, 0.0, 1.1, 0.22);
 
     } else if(tierType === 'ELMAS'){
-      /* Elmas sesi — en prestijli */
-      try{ const ac=new AudioContext(); const now=ac.currentTime; const osc=ac.createOscillator(); const gain=ac.createGain(); osc.connect(gain); gain.connect(ac.destination); osc.type='sine'; osc.frequency.setValueAtTime(1200,now); osc.frequency.exponentialRampToValueAtTime(1800,now+0.15); osc.frequency.exponentialRampToValueAtTime(1400,now+0.35); gain.gain.setValueAtTime(0.25,now); gain.gain.exponentialRampToValueAtTime(0.001,now+0.8); osc.start(now); osc.stop(now+0.8); }catch(e){}
+      // Elmas = Platin ile aynı ses (en prestijli)
+      bell(523,  0.00, 1.5, 0.20);
+      bell(659,  0.18, 1.4, 0.22);
+      bell(784,  0.36, 1.4, 0.24);
+      bell(1047, 0.54, 2.0, 0.30);
+
     } else if(tierType === 'DEMİR'){
-      try{ const ac=new AudioContext(); const now=ac.currentTime; const osc=ac.createOscillator(); const gain=ac.createGain(); osc.connect(gain); gain.connect(ac.destination); osc.type='square'; osc.frequency.setValueAtTime(400,now); osc.frequency.exponentialRampToValueAtTime(350,now+0.2); gain.gain.setValueAtTime(0.1,now); gain.gain.exponentialRampToValueAtTime(0.001,now+0.4); osc.start(now); osc.stop(now+0.4); }catch(e){}
+      // Demir = Gümüş ile aynı ses
+      bell(880, 0.00, 1.1, 0.20);
+      bell(1108, 0.20, 1.0, 0.22);
+
     } else if(tierType === 'GÜMÜŞ'){
       // İki nota
       bell(880, 0.00, 1.1, 0.20);
@@ -5415,6 +5425,7 @@ function timerCardHTML(){
         <span id="vol-lbl" style="font-size:9px;color:var(--pu);font-weight:800;min-width:28px;">${Math.round((S.soundVolume||0.5)*100)}%</span>
       </div>`:'<div style="font-size:9px;color:var(--t3);text-align:center;padding:4px 0;">Yukarıdan bir ses seç 🎧</div>'}</div>
     </div>
+
 
     <!-- Friends mini panel -->
     ${(S.friendScores||[]).length?(function(){
@@ -16464,7 +16475,8 @@ function renderFeed(items){
     gold:{
       card:'background:linear-gradient(135deg,rgba(100,65,0,0.3),rgba(25,18,5,0.96));border:1.5px solid rgba(245,180,35,0.65);box-shadow:0 0 16px rgba(245,166,35,0.25),0 2px 8px rgba(0,0,0,0.4);',
       avatar:'border:2.5px solid rgba(255,210,80,0.9);box-shadow:0 0 12px rgba(245,166,35,0.6);',
-      shimmer:false,
+      shimmer:true,
+      shimmerColor:'rgba(255,210,80,0.07)',
       particles:false,
       label:'background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.5);color:#ffd97d;',
     },
@@ -16473,6 +16485,7 @@ function renderFeed(items){
       avatar:'border:2px solid rgba(144,164,174,0.75);box-shadow:0 0 8px rgba(120,144,156,0.35);',
       shimmer:false,
       particles:false,
+      ironPulse:true,
       label:'background:rgba(100,120,130,0.18);border:1px solid rgba(120,144,156,0.4);color:#b0bec5;',
     },
     silver:{
@@ -16516,9 +16529,12 @@ function renderFeed(items){
         ${nm} <span style="color:${_tc};">${_badgeIcon} <b>${item.badgeName||'rozet'}</b></span>${_tierBadge} rozetini kazandı!
       </div>`;
 
-      // PLATİN özel animasyonlu arka plan shimmer
-      const _shimmerEl=_ts.shimmer?`<div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(220,160,255,0.04) 10px,rgba(220,160,255,0.04) 20px);pointer-events:none;border-radius:11px;"></div>
-      <div style="position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(220,160,255,0.08),transparent);animation:platShimmer 2.8s ease-in-out infinite;pointer-events:none;"></div>`:'';
+      // Tier özel efektler
+      const _shimColor=_ts.shimmerColor||'rgba(220,160,255,0.08)';
+      const _shimStripe=_ts.shimmerColor?'transparent':('rgba(220,160,255,0.04)');
+      const _shimmerEl=_ts.shimmer?`<div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,${_shimStripe} 10px,${_shimStripe} 20px);pointer-events:none;border-radius:11px;"></div>
+      <div style="position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,${_shimColor},transparent);animation:platShimmer 2.8s ease-in-out infinite;pointer-events:none;"></div>`:
+      _ts.ironPulse?`<div style="position:absolute;inset:0;border-radius:11px;box-shadow:inset 0 0 0 1px rgba(144,164,174,0.15);animation:ironPulse 3s ease-in-out infinite;pointer-events:none;"></div>`:'';
 
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;margin-bottom:6px;position:relative;overflow:hidden;${_ts.card}">
         ${_shimmerEl}
@@ -16877,6 +16893,52 @@ function renderSettings(){
 
   // ── HESAP YÖNETİMİ ──
   const isLoggedIn = window._fbAuth && window._fbAuth.currentUser;
+  // Rozet Sesi Kartı
+  const _bsOn = S.badgeSoundEnabled !== false;
+  const _bsVol = Math.round((S.badgeSoundVolume ?? 0.7) * 100);
+  html += sCard('🏆','Rozet Sesi',`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:${_bsOn?'10px':'0'};">
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:2px;">Rozet kazanınca ses çal</div>
+        <div style="font-size:9px;color:var(--t3);">Her tier için farklı melodi</div>
+      </div>
+      <button onclick="S.badgeSoundEnabled=S.badgeSoundEnabled===false?true:false;save();renderSettings();" style="
+        width:44px;height:26px;border-radius:13px;border:none;cursor:pointer;transition:all .2s;
+        background:${_bsOn?'rgba(124,77,255,0.7)':'rgba(255,255,255,0.1)'};
+        position:relative;flex-shrink:0;">
+        <div style="position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:all .2s;
+          left:${_bsOn?'21px':'3px'};box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
+      </button>
+    </div>
+    ${_bsOn?`
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.03);border-radius:9px;padding:9px 12px;margin-bottom:8px;">
+      <div style="flex:1;">
+        <div style="font-size:9px;color:var(--t3);margin-bottom:5px;">Ses seviyesi</div>
+        <input type="range" min="0" max="1" step="0.05" value="${S.badgeSoundVolume??0.7}"
+          oninput="S.badgeSoundVolume=parseFloat(this.value);save();document.getElementById('rs-badge-vol-lbl').textContent=Math.round(this.value*100)+'%';"
+          style="width:100%;height:4px;accent-color:var(--gold);cursor:pointer;"/>
+      </div>
+      <span id="rs-badge-vol-lbl" style="font-size:9px;color:var(--gold);font-weight:800;min-width:28px;">${_bsVol}%</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
+      ${[
+        {tier:'BRONZ',cup:'🥉',col:'#e0a878'},
+        {tier:'GÜMÜŞ',cup:'🥈',col:'#c8dff0'},
+        {tier:'DEMİR',cup:'🛡️',col:'#b0bec5'},
+        {tier:'ALTIN',cup:'🥇',col:'#ffd97d'},
+        {tier:'PLATİN',cup:'🏆',col:'#e8c7ff'},
+        {tier:'ELMAS',cup:'💎',col:'#a5f3fc'},
+      ].map(t=>`<button onclick="playTrophySound('${t.tier}')" style="
+        padding:7px 4px;border-radius:8px;border:1px solid ${t.col}44;
+        background:rgba(255,255,255,0.03);cursor:pointer;font-family:'Nunito',sans-serif;
+        display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .15s;"
+        onmousedown="this.style.transform='scale(.95)'" onmouseup="this.style.transform=''">
+        <span style="font-size:14px;">${t.cup}</span>
+        <span style="font-size:7px;font-weight:800;color:${t.col};">${t.tier}</span>
+      </button>`).join('')}
+    </div>`:'<div style="font-size:9px;color:var(--t3);text-align:center;padding:4px 0;margin-top:4px;">Ses kapalı 🔇</div>'}
+  `);
+
   html += sCard('🔐','Hesap Yönetimi',
     (isLoggedIn ? 
       sRow('👤 Giriş yapıldı',`Google: <b>${window._fbAuth.currentUser.email}</b>`, actionBtn('Çıkış Yap','rgba(229,57,53,0.85)','googleSignOut()')) :
@@ -17557,6 +17619,9 @@ function getTrophyMeta(b){
   if(id==='b_lv10'||id==='b_lv7')return S;
   if(id==='b_lv5'||id==='b_lv3'||id==='b_lv2')return B;
 
+  // ── DERS BOSS TÜM ──
+  if(id.match(/^b_boss_[a-z]+_all$/))return G;
+
   // ── GENEL BOSS ──
   if(id==='b_boss50')return E;
   if(id==='b_boss30')return P;
@@ -17609,6 +17674,8 @@ function getTrophyMeta(b){
   if(id==='b_topic_all_25')return D;
 
   // ── DERS BAZLI SORU ──
+  if(id.match(/^b_q_[a-z]+_5000$/))return E;
+  if(id.match(/^b_q_[a-z]+_2000$/))return P;
   if(id.match(/^b_q_[a-z]+_1000$/))return P;
   if(id.match(/^b_q_[a-z]+_750$/))return G;
   if(id.match(/^b_q_[a-z]+_500$/))return G;
@@ -17705,6 +17772,19 @@ function getTrophyMeta(b){
   if(id==='b_daily180'||id==='b_daily120')return S; // 2-3 saat
   if(id==='b_daily90'||id==='b_daily60'||id==='b_daily30')return B;
   if(id==='b_daily8')return P; if(id==='b_daily4')return D;
+
+  // ── TOPLAM SAAT (total minutes) ──
+  if(id==='b_total_2000saat'||id==='b_total_1000saat')return E;
+  if(id==='b_total_500saat')return G;
+  if(id==='b_total_200saat'||id==='b_total_100saat')return D;
+  if(id==='b_total_50saat')return S;
+  if(id==='b_total_25saat'||id==='b_total_10saat')return B;
+
+  // ── TIMER OTURUM ──
+  if(id==='b_timer_sessions500')return G;
+  if(id==='b_timer_sessions100')return D;
+  if(id==='b_timer_xp1000')return S;
+  if(id==='b_timer_xp250')return B;
 
   // ── GÜNLÜK XP ──
   if(id==='b_daily_1000xp')return E;
@@ -22963,6 +23043,41 @@ window.renderKutuphane=function(){
 window._premiumFeaturesV1Active=true;
 </script>
 
+
+// Arkadaş XP'lerini leaderboard'dan gerçek zamanlı güncelle
+async function syncFriendXP(){
+  if(!window._fbDb||!window._fbFirestoreExtra||!S.friendScores||!S.friendScores.length)return;
+  try{
+    const{collection,getDocs,query,orderBy,limit}=window._fbFirestoreExtra;
+    const snap=await getDocs(query(collection(window._fbDb,'leaderboard'),orderBy('xp','desc'),limit(300)));
+    let updated=false;
+    snap.docs.forEach(d=>{
+      const uid=d.id;
+      const data=d.data();
+      const fi=S.friendScores.findIndex(f=>f.uid===uid||f.code===uid);
+      if(fi!==-1){
+        if(data.xp!=null&&S.friendScores[fi].xp!==data.xp){S.friendScores[fi].xp=data.xp;updated=true;}
+        if(data.name)S.friendScores[fi].name=data.name;
+        if(data.streak!=null)S.friendScores[fi].streak=data.streak;
+        if(data.level!=null)S.friendScores[fi].level=data.level;
+        if(data.ts!=null)S.friendScores[fi].ts=data.ts;
+        if(data.online!=null)S.friendScores[fi].online=data.online;
+        if(data.mins!=null)S.friendScores[fi].mins=data.mins;
+      }
+    });
+    if(updated){save();if(S.curTab==='home')renderHome();if(S.curTab==='settings')renderSettings();}
+  }catch(e){console.warn('[syncFriendXP]',e);}
+}
+
+// Her 30 saniyede arkadaş XP güncelle (giriş yapıldıysa)
+let _friendXpInterval=null;
+function startFriendXpSync(){
+  if(_friendXpInterval)clearInterval(_friendXpInterval);
+  _friendXpInterval=setInterval(()=>{
+    if(window._fbUser&&S.friendScores&&S.friendScores.length)syncFriendXP();
+  },30000);
+}
+
 <!-- ═══ CHROME PUSH BİLDİRİM SİSTEMİ ═══ -->
 <script>
 (function(){
@@ -23117,6 +23232,9 @@ if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded
 else { setTimeout(init,1200); }
 
 window._yksNotif={ enable:requestAndStart, disable:disableNotifs };
+
+// Arkadaş XP sync'i başlat
+if(typeof startFriendXpSync==='function') startFriendXpSync();
 
 })();
 </script>
