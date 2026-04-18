@@ -2596,6 +2596,627 @@ const BDGS_L=[
 {id:'b_fun_azim',icon:'💪',name:'Azim',desc:'Sıfırdan 10. seviyeye ulaş — daha başlıyoruz!',chk:s=>getLvl(s.xp)>=10},
 {id:'b_fun_bilge',icon:'🧙',name:'Bilge',desc:'20. seviyeye ulaş — artık ustasın',chk:s=>getLvl(s.xp)>=20},
 {id:'b_fun_efsanevi',icon:'🌠',name:'Efsanevi',desc:'30. seviyeye ulaş — en yüksek unvan!',chk:s=>getLvl(s.xp)>=30},
+
+// ── GELİŞİM & İLERLEME ──────────────────────────────────────────────────
+{id:'b_imp_beat_yesterday',icon:'📈',name:'Dünü Geçtim',desc:'Bugün dünden daha fazla dakika çalış (dün en az 30dk)',chk:s=>{var dl=s.dailyLog||{};var today=new Date();var todayKey=today.toDateString();var yest=new Date(today);yest.setDate(today.getDate()-1);var yestKey=yest.toDateString();var todayMins=(dl[todayKey]&&dl[todayKey].mins)||0;var yestMins=(dl[yestKey]&&dl[yestKey].mins)||0;return yestMins>=30&&todayMins>yestMins;}},
+{id:'b_imp_3day_rise',icon:'🔺',name:'3 Gün Tırmanış',desc:'3 gün üst üste her gün öncekinden fazla çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();var keys=[0,1,2,3].map(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return d.toDateString();});var mins=keys.map(function(k){return (dl[k]&&dl[k].mins)||0;});return mins[0]>mins[1]&&mins[1]>mins[2]&&mins[2]>=30;}},
+{id:'b_imp_week_growth',icon:'📊',name:'Haftalık Büyüme',desc:'Bu hafta geçen haftadan en az 60dk daha fazla çalış',chk:s=>{if(!s.weekHistory||s.weekHistory.length<1)return false;var sorted=[].concat(s.weekHistory).sort(function(a,b){return new Date(b.wk)-new Date(a.wk);});var lastWeek=sorted[0];return lastWeek&&(s.weekTotalMins||0)>=(lastWeek.totalMins||0)+60;}},
+{id:'b_imp_3week_rise',icon:'🚀',name:'3 Hafta Tırmanış',desc:'3 hafta üst üste haftalık çalışma süresini artır',chk:s=>{if(!s.weekHistory||s.weekHistory.length<2)return false;var sorted=[].concat(s.weekHistory).sort(function(a,b){return new Date(b.wk)-new Date(a.wk);});var w1=s.weekTotalMins||0;var w2=sorted[0].totalMins||0;var w3=sorted.length>=2?(sorted[1].totalMins||0):0;return w1>w2&&w2>w3&&w3>=60;}},
+
+// ── TOPLAM ÇALIŞMA ───────────────────────────────────────────────────────
+{id:'b_total_10saat',icon:'⏰',name:'10 Saat Toplam',desc:'Toplamda 600 dakika çalış',chk:s=>(s.totalMinutes||0)>=600},
+{id:'b_total_25saat',icon:'🕰️',name:'25 Saat Toplam',desc:'Toplamda 1500 dakika çalış',chk:s=>(s.totalMinutes||0)>=1500},
+{id:'b_total_50saat',icon:'⌛',name:'50 Saat Toplam',desc:'Toplamda 3000 dakika çalış',chk:s=>(s.totalMinutes||0)>=3000},
+{id:'b_total_100saat',icon:'🏅',name:'100 Saat Toplam',desc:'Toplamda 6000 dakika çalış',chk:s=>(s.totalMinutes||0)>=6000},
+{id:'b_total_200saat',icon:'🥇',name:'200 Saat Toplam',desc:'Toplamda 12000 dakika çalış',chk:s=>(s.totalMinutes||0)>=12000},
+{id:'b_total_500saat',icon:'💎',name:'500 Saat Efsanesi',desc:'Toplamda 30000 dakika çalış',chk:s=>(s.totalMinutes||0)>=30000},
+
+// ── DÜZENLİ ÇALIŞMA ─────────────────────────────────────────────────────
+{id:'b_full_week_work',icon:'🗓️',name:'Tam Hafta',desc:'7 gün üst üste her gün en az 15dk çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2,3,4,5,6].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=15;});}},
+{id:'b_daily1h_5streak',icon:'🔑',name:'Disiplin 5 Gün',desc:'5 gün üst üste en az 60 dakika çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2,3,4].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=60;});}},
+{id:'b_daily2h_3streak',icon:'🔥',name:'2 Saat 3 Gün',desc:'3 gün üst üste en az 120 dakika çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=120;});}},
+{id:'b_daily3h_5streak',icon:'⚡',name:'3 Saat 5 Gün',desc:'5 gün üst üste en az 180 dakika çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2,3,4].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=180;});}},
+
+// ── DENGE & ÇEŞİTLİLİK ──────────────────────────────────────────────────
+{id:'b_say_complete_day',icon:'🔬',name:'SAY Günü',desc:'Aynı günde Mat, Fiz, Kim ve Bio çalış',chk:s=>{var sm=_todaySM(s);return (sm.mat||0)>0&&(sm.fiz||0)>0&&(sm.kim||0)>0&&(sm.bio||0)>0;}},
+{id:'b_soz_complete_day',icon:'📚',name:'SÖZ Günü',desc:'Aynı günde Türkçe, Tarih, Coğrafya ve Felsefe çalış',chk:s=>{var sm=_todaySM(s);return (sm.tur||0)>0&&(sm.tar||0)>0&&(sm.cog||0)>0&&(sm.fels||0)>0;}},
+{id:'b_deep_5subj',icon:'🌐',name:'Çok Disiplinli',desc:'5 farklı derste toplamda 600dk+ çalış',chk:s=>{var sm=s.subjectMinutes||{};return Object.values(sm).filter(function(v){return v>=600;}).length>=5;}},
+{id:'b_all_subj_300',icon:'🎓',name:'Tam Donanım',desc:'Her derste (9 ders) en az 300 dakika çalış',chk:s=>{var sm=s.subjectMinutes||{};return ['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].every(function(id){return (sm[id]||0)>=300;});}},
+{id:'b_all_subj_600',icon:'👑',name:'Her Derste Usta',desc:'Her derste (9 ders) en az 600 dakika çalış',chk:s=>{var sm=s.subjectMinutes||{};return ['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].every(function(id){return (sm[id]||0)>=600;});}},
+
+// ── HAFTALIK XP ──────────────────────────────────────────────────────────
+{id:'b_week_xp500',icon:'💰',name:'Haftalık 500 XP',desc:'Bir haftada 500 XP kazan',chk:s=>(s.weeklyXp||[]).reduce(function(a,b){return a+b;},0)>=500},
+{id:'b_week_xp1000',icon:'💵',name:'Haftalık 1000 XP',desc:'Bir haftada 1000 XP kazan',chk:s=>(s.weeklyXp||[]).reduce(function(a,b){return a+b;},0)>=1000},
+{id:'b_week_xp2000',icon:'💶',name:'Haftalık 2000 XP',desc:'Bir haftada 2000 XP kazan',chk:s=>(s.weeklyXp||[]).reduce(function(a,b){return a+b;},0)>=2000},
+{id:'b_week_xp5000',icon:'💎',name:'Haftalık 5000 XP',desc:'Bir haftada 5000 XP kazan',chk:s=>(s.weeklyXp||[]).reduce(function(a,b){return a+b;},0)>=5000},
+
+// ── DENEME GELİŞİMİ ─────────────────────────────────────────────────────
+{id:'b_den_improve',icon:'📈',name:'Net Artışı',desc:'Son iki denemede netini artır',chk:s=>{var dens=s.denemeler||[];if(dens.length<2)return false;var sorted=[].concat(dens).sort(function(a,b){return (b.ts||0)-(a.ts||0);});return (sorted[0].totalNet||0)>(sorted[1].totalNet||0);}},
+{id:'b_den_improve3',icon:'🏹',name:'3 Deneme Tırmanış',desc:'3 deneme üst üste net artışı yap',chk:s=>{var dens=s.denemeler||[];if(dens.length<3)return false;var sorted=[].concat(dens).sort(function(a,b){return (b.ts||0)-(a.ts||0);});return (sorted[0].totalNet||0)>(sorted[1].totalNet||0)&&(sorted[1].totalNet||0)>(sorted[2].totalNet||0);}},
+{id:'b_den_improve5',icon:'🎯',name:'5 Deneme Tırmanış',desc:'5 deneme üst üste net artışı yap',chk:s=>{var dens=s.denemeler||[];if(dens.length<5)return false;var sorted=[].concat(dens).sort(function(a,b){return (b.ts||0)-(a.ts||0);});var ok=true;for(var i=0;i<4;i++){if((sorted[i].totalNet||0)<=(sorted[i+1].totalNet||0)){ok=false;break;}}return ok;}},
+
+// ── ÖZEL & EĞLENCELİ ────────────────────────────────────────────────────
+{id:'b_month_end',icon:'📅',name:'Ay Sonu Azmi',desc:'Ayın son 3 gününde çalış',chk:s=>{var d=new Date();var last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();var dl=s.dailyLog&&s.dailyLog[d.toDateString()];return d.getDate()>=last-2&&(dl&&dl.mins||0)>=30;}},
+{id:'b_timer_60cont',icon:'⏱️',name:'1 Saat Kesintisiz',desc:'Kronometreyi durdurmadan 60 dakika çalıştır',chk:s=>(s.timerSecs||0)>=3600&&s.timerRunning===true},
+{id:'b_timer_120cont',icon:'⏳',name:'2 Saat Kesintisiz',desc:'Kronometreyi durdurmadan 120 dakika çalıştır',chk:s=>(s.timerSecs||0)>=7200&&s.timerRunning===true},
+{id:'b_comeback',icon:'🔄',name:'Geri Döndüm',desc:'3+ gün ara verip tekrar çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();var todayKey=today.toDateString();var todayMins=(dl[todayKey]&&dl[todayKey].mins)||0;if(todayMins<15)return false;var gap=0;for(var i=1;i<=7;i++){var d=new Date(today);d.setDate(today.getDate()-i);var m=(dl[d.toDateString()]&&dl[d.toDateString()].mins)||0;if(m<15)gap++;else break;}return gap>=3;}},
+{id:'b_xp_timer_combo',icon:'⚔️',name:'Çalış & Kazan',desc:'Aynı gün hem kronometreden hem görevden XP kazan',chk:s=>{var dl=s.dailyLog&&s.dailyLog[new Date().toDateString()];return !!(dl&&dl.mins>=30&&dl.questions>=5);}},
+
+// ════════════════════════════════════════════════════════════════
+// DERS DAKİKA ROZET BLOĞU — Genişletilmiş (1800dk → 6000dk)
+// ════════════════════════════════════════════════════════════════
+{id:'b_min_mat_1800',icon:'➕',name:'Matematik 30 Saat',desc:'Matematik dersinde 30 saat çalış',chk:s=>_smLog(s,'mat')>=1800},
+{id:'b_min_mat_2400',icon:'➕',name:'Matematik 40 Saat',desc:'Matematik dersinde 40 saat çalış',chk:s=>_smLog(s,'mat')>=2400},
+{id:'b_min_mat_3000',icon:'➕',name:'Matematik 50 Saat',desc:'Matematik dersinde 50 saat çalış',chk:s=>_smLog(s,'mat')>=3000},
+{id:'b_min_mat_4800',icon:'➕',name:'Matematik 80 Saat',desc:'Matematik dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'mat')>=4800},
+{id:'b_min_mat_6000',icon:'➕',name:'Matematik 100 Saat',desc:'Matematik dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'mat')>=6000},
+{id:'b_min_fiz_1800',icon:'⚡',name:'Fizik 30 Saat',desc:'Fizik dersinde 30 saat çalış',chk:s=>_smLog(s,'fiz')>=1800},
+{id:'b_min_fiz_2400',icon:'⚡',name:'Fizik 40 Saat',desc:'Fizik dersinde 40 saat çalış',chk:s=>_smLog(s,'fiz')>=2400},
+{id:'b_min_fiz_3000',icon:'⚡',name:'Fizik 50 Saat',desc:'Fizik dersinde 50 saat çalış',chk:s=>_smLog(s,'fiz')>=3000},
+{id:'b_min_fiz_4800',icon:'⚡',name:'Fizik 80 Saat',desc:'Fizik dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'fiz')>=4800},
+{id:'b_min_fiz_6000',icon:'⚡',name:'Fizik 100 Saat',desc:'Fizik dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'fiz')>=6000},
+{id:'b_min_kim_1800',icon:'🧪',name:'Kimya 30 Saat',desc:'Kimya dersinde 30 saat çalış',chk:s=>_smLog(s,'kim')>=1800},
+{id:'b_min_kim_2400',icon:'🧪',name:'Kimya 40 Saat',desc:'Kimya dersinde 40 saat çalış',chk:s=>_smLog(s,'kim')>=2400},
+{id:'b_min_kim_3000',icon:'🧪',name:'Kimya 50 Saat',desc:'Kimya dersinde 50 saat çalış',chk:s=>_smLog(s,'kim')>=3000},
+{id:'b_min_kim_4800',icon:'🧪',name:'Kimya 80 Saat',desc:'Kimya dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'kim')>=4800},
+{id:'b_min_kim_6000',icon:'🧪',name:'Kimya 100 Saat',desc:'Kimya dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'kim')>=6000},
+{id:'b_min_bio_1800',icon:'🌿',name:'Biyoloji 30 Saat',desc:'Biyoloji dersinde 30 saat çalış',chk:s=>_smLog(s,'bio')>=1800},
+{id:'b_min_bio_2400',icon:'🌿',name:'Biyoloji 40 Saat',desc:'Biyoloji dersinde 40 saat çalış',chk:s=>_smLog(s,'bio')>=2400},
+{id:'b_min_bio_3000',icon:'🌿',name:'Biyoloji 50 Saat',desc:'Biyoloji dersinde 50 saat çalış',chk:s=>_smLog(s,'bio')>=3000},
+{id:'b_min_bio_4800',icon:'🌿',name:'Biyoloji 80 Saat',desc:'Biyoloji dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'bio')>=4800},
+{id:'b_min_bio_6000',icon:'🌿',name:'Biyoloji 100 Saat',desc:'Biyoloji dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'bio')>=6000},
+{id:'b_min_geo_1800',icon:'📐',name:'Geometri 30 Saat',desc:'Geometri dersinde 30 saat çalış',chk:s=>_smLog(s,'geo')>=1800},
+{id:'b_min_geo_2400',icon:'📐',name:'Geometri 40 Saat',desc:'Geometri dersinde 40 saat çalış',chk:s=>_smLog(s,'geo')>=2400},
+{id:'b_min_geo_3000',icon:'📐',name:'Geometri 50 Saat',desc:'Geometri dersinde 50 saat çalış',chk:s=>_smLog(s,'geo')>=3000},
+{id:'b_min_geo_4800',icon:'📐',name:'Geometri 80 Saat',desc:'Geometri dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'geo')>=4800},
+{id:'b_min_geo_6000',icon:'📐',name:'Geometri 100 Saat',desc:'Geometri dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'geo')>=6000},
+{id:'b_min_tur_1800',icon:'📝',name:'Türkçe 30 Saat',desc:'Türkçe dersinde 30 saat çalış',chk:s=>_smLog(s,'tur')>=1800},
+{id:'b_min_tur_2400',icon:'📝',name:'Türkçe 40 Saat',desc:'Türkçe dersinde 40 saat çalış',chk:s=>_smLog(s,'tur')>=2400},
+{id:'b_min_tur_3000',icon:'📝',name:'Türkçe 50 Saat',desc:'Türkçe dersinde 50 saat çalış',chk:s=>_smLog(s,'tur')>=3000},
+{id:'b_min_tur_4800',icon:'📝',name:'Türkçe 80 Saat',desc:'Türkçe dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'tur')>=4800},
+{id:'b_min_tur_6000',icon:'📝',name:'Türkçe 100 Saat',desc:'Türkçe dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'tur')>=6000},
+{id:'b_min_tar_1800',icon:'⚔️',name:'Tarih 30 Saat',desc:'Tarih dersinde 30 saat çalış',chk:s=>_smLog(s,'tar')>=1800},
+{id:'b_min_tar_2400',icon:'⚔️',name:'Tarih 40 Saat',desc:'Tarih dersinde 40 saat çalış',chk:s=>_smLog(s,'tar')>=2400},
+{id:'b_min_tar_3000',icon:'⚔️',name:'Tarih 50 Saat',desc:'Tarih dersinde 50 saat çalış',chk:s=>_smLog(s,'tar')>=3000},
+{id:'b_min_tar_4800',icon:'⚔️',name:'Tarih 80 Saat',desc:'Tarih dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'tar')>=4800},
+{id:'b_min_tar_6000',icon:'⚔️',name:'Tarih 100 Saat',desc:'Tarih dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'tar')>=6000},
+{id:'b_min_cog_1800',icon:'🌍',name:'Coğrafya 30 Saat',desc:'Coğrafya dersinde 30 saat çalış',chk:s=>_smLog(s,'cog')>=1800},
+{id:'b_min_cog_2400',icon:'🌍',name:'Coğrafya 40 Saat',desc:'Coğrafya dersinde 40 saat çalış',chk:s=>_smLog(s,'cog')>=2400},
+{id:'b_min_cog_3000',icon:'🌍',name:'Coğrafya 50 Saat',desc:'Coğrafya dersinde 50 saat çalış',chk:s=>_smLog(s,'cog')>=3000},
+{id:'b_min_cog_4800',icon:'🌍',name:'Coğrafya 80 Saat',desc:'Coğrafya dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'cog')>=4800},
+{id:'b_min_cog_6000',icon:'🌍',name:'Coğrafya 100 Saat',desc:'Coğrafya dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'cog')>=6000},
+{id:'b_min_fels_1800',icon:'🧠',name:'Felsefe 30 Saat',desc:'Felsefe dersinde 30 saat çalış',chk:s=>_smLog(s,'fels')>=1800},
+{id:'b_min_fels_2400',icon:'🧠',name:'Felsefe 40 Saat',desc:'Felsefe dersinde 40 saat çalış',chk:s=>_smLog(s,'fels')>=2400},
+{id:'b_min_fels_3000',icon:'🧠',name:'Felsefe 50 Saat',desc:'Felsefe dersinde 50 saat çalış',chk:s=>_smLog(s,'fels')>=3000},
+{id:'b_min_fels_4800',icon:'🧠',name:'Felsefe 80 Saat',desc:'Felsefe dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'fels')>=4800},
+{id:'b_min_fels_6000',icon:'🧠',name:'Felsefe 100 Saat',desc:'Felsefe dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'fels')>=6000},
+{id:'b_min_ing_1800',icon:'🌐',name:'İngilizce 30 Saat',desc:'İngilizce dersinde 30 saat çalış',chk:s=>_smLog(s,'ing')>=1800},
+{id:'b_min_ing_2400',icon:'🌐',name:'İngilizce 40 Saat',desc:'İngilizce dersinde 40 saat çalış',chk:s=>_smLog(s,'ing')>=2400},
+{id:'b_min_ing_3000',icon:'🌐',name:'İngilizce 50 Saat',desc:'İngilizce dersinde 50 saat çalış',chk:s=>_smLog(s,'ing')>=3000},
+{id:'b_min_ing_4800',icon:'🌐',name:'İngilizce 80 Saat',desc:'İngilizce dersinde 80 saat çalış (gerçek usta!)',chk:s=>_smLog(s,'ing')>=4800},
+{id:'b_min_ing_6000',icon:'🌐',name:'İngilizce 100 Saat',desc:'İngilizce dersinde 100 saat çalış — efsanevi!',chk:s=>_smLog(s,'ing')>=6000},
+
+// ════════════════════════════════════════════════════════════════
+// DERS SORU ROZET BLOĞU — Genişletilmiş (2000, 5000, 10000)
+// ════════════════════════════════════════════════════════════════
+{id:'b_q_mat_2000',icon:'➕',name:'Matematik Süper Uzman',desc:'Matematik dersinde 2000 soru çöz',chk:s=>(s.subjects['mat']||{}).questions>=2000},
+{id:'b_q_mat_5000',icon:'➕',name:'Matematik Grand Master',desc:'Matematik dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['mat']||{}).questions>=5000},
+{id:'b_q_fiz_2000',icon:'⚡',name:'Fizik Süper Uzman',desc:'Fizik dersinde 2000 soru çöz',chk:s=>(s.subjects['fiz']||{}).questions>=2000},
+{id:'b_q_fiz_5000',icon:'⚡',name:'Fizik Grand Master',desc:'Fizik dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['fiz']||{}).questions>=5000},
+{id:'b_q_kim_2000',icon:'🧪',name:'Kimya Süper Uzman',desc:'Kimya dersinde 2000 soru çöz',chk:s=>(s.subjects['kim']||{}).questions>=2000},
+{id:'b_q_kim_5000',icon:'🧪',name:'Kimya Grand Master',desc:'Kimya dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['kim']||{}).questions>=5000},
+{id:'b_q_bio_2000',icon:'🌿',name:'Biyoloji Süper Uzman',desc:'Biyoloji dersinde 2000 soru çöz',chk:s=>(s.subjects['bio']||{}).questions>=2000},
+{id:'b_q_bio_5000',icon:'🌿',name:'Biyoloji Grand Master',desc:'Biyoloji dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['bio']||{}).questions>=5000},
+{id:'b_q_geo_2000',icon:'📐',name:'Geometri Süper Uzman',desc:'Geometri dersinde 2000 soru çöz',chk:s=>(s.subjects['geo']||{}).questions>=2000},
+{id:'b_q_geo_5000',icon:'📐',name:'Geometri Grand Master',desc:'Geometri dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['geo']||{}).questions>=5000},
+{id:'b_q_tur_2000',icon:'📝',name:'Türkçe Süper Uzman',desc:'Türkçe dersinde 2000 soru çöz',chk:s=>(s.subjects['tur']||{}).questions>=2000},
+{id:'b_q_tur_5000',icon:'📝',name:'Türkçe Grand Master',desc:'Türkçe dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['tur']||{}).questions>=5000},
+{id:'b_q_tar_2000',icon:'⚔️',name:'Tarih Süper Uzman',desc:'Tarih dersinde 2000 soru çöz',chk:s=>(s.subjects['tar']||{}).questions>=2000},
+{id:'b_q_tar_5000',icon:'⚔️',name:'Tarih Grand Master',desc:'Tarih dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['tar']||{}).questions>=5000},
+{id:'b_q_cog_2000',icon:'🌍',name:'Coğrafya Süper Uzman',desc:'Coğrafya dersinde 2000 soru çöz',chk:s=>(s.subjects['cog']||{}).questions>=2000},
+{id:'b_q_cog_5000',icon:'🌍',name:'Coğrafya Grand Master',desc:'Coğrafya dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['cog']||{}).questions>=5000},
+{id:'b_q_fels_2000',icon:'🧠',name:'Felsefe Süper Uzman',desc:'Felsefe dersinde 2000 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=2000},
+{id:'b_q_fels_5000',icon:'🧠',name:'Felsefe Grand Master',desc:'Felsefe dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['fels']||{}).questions>=5000},
+{id:'b_q_ing_2000',icon:'🌐',name:'İngilizce Süper Uzman',desc:'İngilizce dersinde 2000 soru çöz',chk:s=>(s.subjects['ing']||{}).questions>=2000},
+{id:'b_q_ing_5000',icon:'🌐',name:'İngilizce Grand Master',desc:'İngilizce dersinde 5000 soru çöz — inanılmaz!',chk:s=>(s.subjects['ing']||{}).questions>=5000},
+
+// ════════════════════════════════════════════════════════════════
+// DERS BOSS ROZET BLOĞU — Tüm bossları yen
+// ════════════════════════════════════════════════════════════════
+{id:'b_boss_mat_all',icon:'🏆',name:'Matematik Tüm Bosslar',desc:'Matematik dersindeki tüm bossları yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_mat_5',icon:'🥇',name:'Matematik 5 Boss',desc:'Matematik dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('MAT')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_fiz_all',icon:'🏆',name:'Fizik Tüm Bosslar',desc:'Fizik dersindeki tüm bossları yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_fiz_5',icon:'🥇',name:'Fizik 5 Boss',desc:'Fizik dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('FIZ')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_kim_all',icon:'🏆',name:'Kimya Tüm Bosslar',desc:'Kimya dersindeki tüm bossları yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0)).length>=4},
+{id:'b_boss_kim_5',icon:'🥇',name:'Kimya 5 Boss',desc:'Kimya dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('KIM')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_bio_all',icon:'🏆',name:'Biyoloji Tüm Bosslar',desc:'Biyoloji dersindeki tüm bossları yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0)).length>=5},
+{id:'b_boss_bio_5',icon:'🥇',name:'Biyoloji 5 Boss',desc:'Biyoloji dersinden 5 boss yen',chk:s=>BOSSES.filter(b=>b.month&&b.month.startsWith('BIO')&&(s.bossHp[b.id]<=0)).length>=5},
+
+// ════════════════════════════════════════════════════════════════
+// SEVİYE ROZET BLOĞU — İleri seviyeler
+// ════════════════════════════════════════════════════════════════
+{id:'b_lv35',icon:'💠',name:'35. Sv',desc:'35. seviyeye ulaş',chk:s=>getLvl(s.xp)>=35},
+{id:'b_lv40',icon:'🔮',name:'40. Sv',desc:'40. seviyeye ulaş',chk:s=>getLvl(s.xp)>=40},
+{id:'b_lv45',icon:'✨',name:'45. Sv',desc:'45. seviyeye ulaş',chk:s=>getLvl(s.xp)>=45},
+{id:'b_lv50',icon:'👑',name:'50. Sv — Şampiyon',desc:'50. seviyeye ulaş — çok az kişi burada!',chk:s=>getLvl(s.xp)>=50},
+
+// ════════════════════════════════════════════════════════════════
+// SERİ ROZET BLOĞU — Uzun seriler
+// ════════════════════════════════════════════════════════════════
+{id:'b_str200',icon:'🌌',name:'Seri 200 Gün',desc:'200 günlük seri',chk:s=>s.streak>=200},
+{id:'b_str250',icon:'🌠',name:'Seri 250 Gün',desc:'250 günlük seri',chk:s=>s.streak>=250},
+{id:'b_str300',icon:'🎖️',name:'Seri 300 Gün',desc:'300 günlük seri',chk:s=>s.streak>=300},
+
+// ════════════════════════════════════════════════════════════════
+// XP MİLESTONE BLOĞU — Yüksek XP
+// ════════════════════════════════════════════════════════════════
+{id:'b_xp150000',icon:'🌟',name:'150K XP',desc:'150000 XP kazan',chk:s=>s.xp>=150000},
+{id:'b_xp200000',icon:'💫',name:'200K XP',desc:'200000 XP kazan',chk:s=>s.xp>=200000},
+{id:'b_xp500000',icon:'🏆',name:'500K XP Efsanesi',desc:'500000 XP kazan — tarihe geç!',chk:s=>s.xp>=500000},
+
+// ════════════════════════════════════════════════════════════════
+// TOPLAM DAKİKA — Daha büyük hedefler
+// ════════════════════════════════════════════════════════════════
+{id:'b_total_1000saat',icon:'⌚',name:'1000 Saat Toplam',desc:'Toplamda 60000 dakika çalış',chk:s=>(s.totalMinutes||0)>=60000},
+{id:'b_total_2000saat',icon:'⏰',name:'2000 Saat Efsanesi',desc:'Toplamda 120000 dakika çalış — muhteşem!',chk:s=>(s.totalMinutes||0)>=120000},
+
+// ════════════════════════════════════════════════════════════════
+// KRONOMETER XP ROZETLERİ — Timer XP biriktir
+// ════════════════════════════════════════════════════════════════
+{id:'b_timer_xp50',icon:'⏱️',name:'Kronometer 50 XP',desc:'Kronometreden toplam 50 XP kazan',chk:s=>{var t=0;var dl=s.dailyLog||{};Object.values(dl).forEach(function(d){if(d)Object.values(d).forEach(function(v){if(typeof v==='number'&&v===5)t+=v;});});return (s.log||[]).filter(function(l){return l.txt==='Kronometer: 5dk çalışma';}).length>=10;}},
+{id:'b_timer_xp250',icon:'⏲️',name:'Kronometer 250 XP',desc:'Kronometreden 250+ XP kazan (50 oturum)',chk:s=>(s.log||[]).filter(function(l){return l.txt==='Kronometer: 5dk çalışma';}).length>=50},
+{id:'b_timer_xp1000',icon:'🕰️',name:'Kronometer 1000 XP',desc:'Kronometreden 1000 XP kazan (200 oturum)',chk:s=>(s.log||[]).filter(function(l){return l.txt==='Kronometer: 5dk çalışma';}).length>=200},
+{id:'b_timer_sessions100',icon:'⌛',name:'100 Timer Oturumu',desc:'100 kez 5 dakika tamamla',chk:s=>(s.log||[]).filter(function(l){return l.txt==='Kronometer: 5dk çalışma';}).length>=100},
+{id:'b_timer_sessions500',icon:'🔔',name:'500 Timer Oturumu',desc:'500 kez 5 dakika tamamla — demir disiplin!',chk:s=>(s.log||[]).filter(function(l){return l.txt==='Kronometer: 5dk çalışma';}).length>=500},
+
+// ════════════════════════════════════════════════════════════════
+// FASİKÜL ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_fasikul_1',icon:'📒',name:'İlk Fasikül',desc:'1 fasikül oluştur',chk:s=>(s.fasikuller||[]).length>=1},
+{id:'b_fasikul_3',icon:'📓',name:'3 Fasikül',desc:'3 fasikül oluştur',chk:s=>(s.fasikuller||[]).length>=3},
+{id:'b_fasikul_5',icon:'📔',name:'5 Fasikül',desc:'5 fasikül oluştur',chk:s=>(s.fasikuller||[]).length>=5},
+{id:'b_fasikul_10',icon:'📚',name:'10 Fasikül',desc:'10 fasikül oluştur',chk:s=>(s.fasikuller||[]).length>=10},
+{id:'b_fasikul_done1',icon:'✅',name:'Fasikül Bitirici',desc:'1 fasiküldeki tüm bölümleri tamamla',chk:s=>(s.fasikuller||[]).filter(function(f){return f.bolumler&&f.bolumler.length>0&&f.bolumler.every(function(b){return b.done;});}).length>=1},
+{id:'b_fasikul_done3',icon:'✅',name:'3 Fasikül Bitti',desc:'3 fasiküldeki tüm bölümleri tamamla',chk:s=>(s.fasikuller||[]).filter(function(f){return f.bolumler&&f.bolumler.length>0&&f.bolumler.every(function(b){return b.done;});}).length>=3},
+{id:'b_fasikul_done5',icon:'🏅',name:'5 Fasikül Ustası',desc:'5 fasiküldeki tüm bölümleri tamamla',chk:s=>(s.fasikuller||[]).filter(function(f){return f.bolumler&&f.bolumler.length>0&&f.bolumler.every(function(b){return b.done;});}).length>=5},
+{id:'b_fasikul_100sayfa',icon:'📄',name:'100 Sayfa',desc:'Toplamda 100+ sayfalık fasikül oluştur',chk:s=>(s.fasikuller||[]).reduce(function(a,f){return a+(f.sayfaSayisi||0);},0)>=100},
+{id:'b_fasikul_500sayfa',icon:'📋',name:'500 Sayfa',desc:'Toplamda 500+ sayfalık fasikül oluştur',chk:s=>(s.fasikuller||[]).reduce(function(a,f){return a+(f.sayfaSayisi||0);},0)>=500},
+
+// ════════════════════════════════════════════════════════════════
+// SORU BANKASI EKSTRA ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_banka5',icon:'📂',name:'5 Banka',desc:'5 soru bankası oluştur',chk:s=>(s.soruBankalari||[]).length>=5},
+{id:'b_banka10',icon:'📁',name:'10 Banka',desc:'10 soru bankası oluştur',chk:s=>(s.soruBankalari||[]).length>=10},
+{id:'b_banka_done3',icon:'✅',name:'3 Banka Bitti',desc:'3 bankayı tamamen bitir',chk:s=>(s.soruBankalari||[]).filter(function(b){return b.topics.length>0&&b.topics.every(function(t){return t.done;});}).length>=3},
+{id:'b_banka_done5',icon:'🏅',name:'5 Banka Ustası',desc:'5 bankayı tamamen bitir',chk:s=>(s.soruBankalari||[]).filter(function(b){return b.topics.length>0&&b.topics.every(function(t){return t.done;});}).length>=5},
+{id:'b_banka_konu50',icon:'🗂️',name:'50 Banka Konusu',desc:'Tüm bankalarda toplam 50+ konu ekle',chk:s=>(s.soruBankalari||[]).reduce(function(a,b){return a+b.topics.length;},0)>=50},
+{id:'b_banka_konu100',icon:'🗃️',name:'100 Banka Konusu',desc:'Tüm bankalarda toplam 100+ konu ekle',chk:s=>(s.soruBankalari||[]).reduce(function(a,b){return a+b.topics.length;},0)>=100},
+
+// ════════════════════════════════════════════════════════════════
+// NET SORU BLOĞU — Ders bazlı net
+// ════════════════════════════════════════════════════════════════
+{id:'b_net_mat_20',icon:'➕',name:'Matematik 20 Net',desc:'Matematik dersinde toplam 20+ net yap',chk:s=>(s.subjects['mat']&&(s.subjects['mat'].correct||0)-((s.subjects['mat'].wrong||0)/4))>=20},
+{id:'b_net_mat_50',icon:'➕',name:'Matematik 50 Net',desc:'Matematik dersinde toplam 50+ net yap',chk:s=>(s.subjects['mat']&&(s.subjects['mat'].correct||0)-((s.subjects['mat'].wrong||0)/4))>=50},
+{id:'b_net_mat_100',icon:'➕',name:'Matematik 100 Net',desc:'Matematik dersinde toplam 100+ net yap',chk:s=>(s.subjects['mat']&&(s.subjects['mat'].correct||0)-((s.subjects['mat'].wrong||0)/4))>=100},
+{id:'b_net_mat_200',icon:'➕',name:'Matematik 200 Net',desc:'Matematik dersinde toplam 200+ net yap',chk:s=>(s.subjects['mat']&&(s.subjects['mat'].correct||0)-((s.subjects['mat'].wrong||0)/4))>=200},
+{id:'b_net_fiz_20',icon:'⚡',name:'Fizik 20 Net',desc:'Fizik dersinde toplam 20+ net yap',chk:s=>(s.subjects['fiz']&&(s.subjects['fiz'].correct||0)-((s.subjects['fiz'].wrong||0)/4))>=20},
+{id:'b_net_fiz_50',icon:'⚡',name:'Fizik 50 Net',desc:'Fizik dersinde toplam 50+ net yap',chk:s=>(s.subjects['fiz']&&(s.subjects['fiz'].correct||0)-((s.subjects['fiz'].wrong||0)/4))>=50},
+{id:'b_net_fiz_100',icon:'⚡',name:'Fizik 100 Net',desc:'Fizik dersinde toplam 100+ net yap',chk:s=>(s.subjects['fiz']&&(s.subjects['fiz'].correct||0)-((s.subjects['fiz'].wrong||0)/4))>=100},
+{id:'b_net_fiz_200',icon:'⚡',name:'Fizik 200 Net',desc:'Fizik dersinde toplam 200+ net yap',chk:s=>(s.subjects['fiz']&&(s.subjects['fiz'].correct||0)-((s.subjects['fiz'].wrong||0)/4))>=200},
+{id:'b_net_kim_20',icon:'🧪',name:'Kimya 20 Net',desc:'Kimya dersinde toplam 20+ net yap',chk:s=>(s.subjects['kim']&&(s.subjects['kim'].correct||0)-((s.subjects['kim'].wrong||0)/4))>=20},
+{id:'b_net_kim_50',icon:'🧪',name:'Kimya 50 Net',desc:'Kimya dersinde toplam 50+ net yap',chk:s=>(s.subjects['kim']&&(s.subjects['kim'].correct||0)-((s.subjects['kim'].wrong||0)/4))>=50},
+{id:'b_net_kim_100',icon:'🧪',name:'Kimya 100 Net',desc:'Kimya dersinde toplam 100+ net yap',chk:s=>(s.subjects['kim']&&(s.subjects['kim'].correct||0)-((s.subjects['kim'].wrong||0)/4))>=100},
+{id:'b_net_kim_200',icon:'🧪',name:'Kimya 200 Net',desc:'Kimya dersinde toplam 200+ net yap',chk:s=>(s.subjects['kim']&&(s.subjects['kim'].correct||0)-((s.subjects['kim'].wrong||0)/4))>=200},
+{id:'b_net_bio_20',icon:'🌿',name:'Biyoloji 20 Net',desc:'Biyoloji dersinde toplam 20+ net yap',chk:s=>(s.subjects['bio']&&(s.subjects['bio'].correct||0)-((s.subjects['bio'].wrong||0)/4))>=20},
+{id:'b_net_bio_50',icon:'🌿',name:'Biyoloji 50 Net',desc:'Biyoloji dersinde toplam 50+ net yap',chk:s=>(s.subjects['bio']&&(s.subjects['bio'].correct||0)-((s.subjects['bio'].wrong||0)/4))>=50},
+{id:'b_net_bio_100',icon:'🌿',name:'Biyoloji 100 Net',desc:'Biyoloji dersinde toplam 100+ net yap',chk:s=>(s.subjects['bio']&&(s.subjects['bio'].correct||0)-((s.subjects['bio'].wrong||0)/4))>=100},
+{id:'b_net_bio_200',icon:'🌿',name:'Biyoloji 200 Net',desc:'Biyoloji dersinde toplam 200+ net yap',chk:s=>(s.subjects['bio']&&(s.subjects['bio'].correct||0)-((s.subjects['bio'].wrong||0)/4))>=200},
+{id:'b_net_geo_20',icon:'📐',name:'Geometri 20 Net',desc:'Geometri dersinde toplam 20+ net yap',chk:s=>(s.subjects['geo']&&(s.subjects['geo'].correct||0)-((s.subjects['geo'].wrong||0)/4))>=20},
+{id:'b_net_geo_50',icon:'📐',name:'Geometri 50 Net',desc:'Geometri dersinde toplam 50+ net yap',chk:s=>(s.subjects['geo']&&(s.subjects['geo'].correct||0)-((s.subjects['geo'].wrong||0)/4))>=50},
+{id:'b_net_geo_100',icon:'📐',name:'Geometri 100 Net',desc:'Geometri dersinde toplam 100+ net yap',chk:s=>(s.subjects['geo']&&(s.subjects['geo'].correct||0)-((s.subjects['geo'].wrong||0)/4))>=100},
+{id:'b_net_geo_200',icon:'📐',name:'Geometri 200 Net',desc:'Geometri dersinde toplam 200+ net yap',chk:s=>(s.subjects['geo']&&(s.subjects['geo'].correct||0)-((s.subjects['geo'].wrong||0)/4))>=200},
+{id:'b_net_tur_20',icon:'📝',name:'Türkçe 20 Net',desc:'Türkçe dersinde toplam 20+ net yap',chk:s=>(s.subjects['tur']&&(s.subjects['tur'].correct||0)-((s.subjects['tur'].wrong||0)/4))>=20},
+{id:'b_net_tur_50',icon:'📝',name:'Türkçe 50 Net',desc:'Türkçe dersinde toplam 50+ net yap',chk:s=>(s.subjects['tur']&&(s.subjects['tur'].correct||0)-((s.subjects['tur'].wrong||0)/4))>=50},
+{id:'b_net_tur_100',icon:'📝',name:'Türkçe 100 Net',desc:'Türkçe dersinde toplam 100+ net yap',chk:s=>(s.subjects['tur']&&(s.subjects['tur'].correct||0)-((s.subjects['tur'].wrong||0)/4))>=100},
+{id:'b_net_tur_200',icon:'📝',name:'Türkçe 200 Net',desc:'Türkçe dersinde toplam 200+ net yap',chk:s=>(s.subjects['tur']&&(s.subjects['tur'].correct||0)-((s.subjects['tur'].wrong||0)/4))>=200},
+{id:'b_net_tar_20',icon:'⚔️',name:'Tarih 20 Net',desc:'Tarih dersinde toplam 20+ net yap',chk:s=>(s.subjects['tar']&&(s.subjects['tar'].correct||0)-((s.subjects['tar'].wrong||0)/4))>=20},
+{id:'b_net_tar_50',icon:'⚔️',name:'Tarih 50 Net',desc:'Tarih dersinde toplam 50+ net yap',chk:s=>(s.subjects['tar']&&(s.subjects['tar'].correct||0)-((s.subjects['tar'].wrong||0)/4))>=50},
+{id:'b_net_tar_100',icon:'⚔️',name:'Tarih 100 Net',desc:'Tarih dersinde toplam 100+ net yap',chk:s=>(s.subjects['tar']&&(s.subjects['tar'].correct||0)-((s.subjects['tar'].wrong||0)/4))>=100},
+{id:'b_net_tar_200',icon:'⚔️',name:'Tarih 200 Net',desc:'Tarih dersinde toplam 200+ net yap',chk:s=>(s.subjects['tar']&&(s.subjects['tar'].correct||0)-((s.subjects['tar'].wrong||0)/4))>=200},
+{id:'b_net_cog_20',icon:'🌍',name:'Coğrafya 20 Net',desc:'Coğrafya dersinde toplam 20+ net yap',chk:s=>(s.subjects['cog']&&(s.subjects['cog'].correct||0)-((s.subjects['cog'].wrong||0)/4))>=20},
+{id:'b_net_cog_50',icon:'🌍',name:'Coğrafya 50 Net',desc:'Coğrafya dersinde toplam 50+ net yap',chk:s=>(s.subjects['cog']&&(s.subjects['cog'].correct||0)-((s.subjects['cog'].wrong||0)/4))>=50},
+{id:'b_net_cog_100',icon:'🌍',name:'Coğrafya 100 Net',desc:'Coğrafya dersinde toplam 100+ net yap',chk:s=>(s.subjects['cog']&&(s.subjects['cog'].correct||0)-((s.subjects['cog'].wrong||0)/4))>=100},
+{id:'b_net_cog_200',icon:'🌍',name:'Coğrafya 200 Net',desc:'Coğrafya dersinde toplam 200+ net yap',chk:s=>(s.subjects['cog']&&(s.subjects['cog'].correct||0)-((s.subjects['cog'].wrong||0)/4))>=200},
+{id:'b_net_fels_20',icon:'🧠',name:'Felsefe 20 Net',desc:'Felsefe dersinde toplam 20+ net yap',chk:s=>(s.subjects['fels']&&(s.subjects['fels'].correct||0)-((s.subjects['fels'].wrong||0)/4))>=20},
+{id:'b_net_fels_50',icon:'🧠',name:'Felsefe 50 Net',desc:'Felsefe dersinde toplam 50+ net yap',chk:s=>(s.subjects['fels']&&(s.subjects['fels'].correct||0)-((s.subjects['fels'].wrong||0)/4))>=50},
+{id:'b_net_fels_100',icon:'🧠',name:'Felsefe 100 Net',desc:'Felsefe dersinde toplam 100+ net yap',chk:s=>(s.subjects['fels']&&(s.subjects['fels'].correct||0)-((s.subjects['fels'].wrong||0)/4))>=100},
+{id:'b_net_fels_200',icon:'🧠',name:'Felsefe 200 Net',desc:'Felsefe dersinde toplam 200+ net yap',chk:s=>(s.subjects['fels']&&(s.subjects['fels'].correct||0)-((s.subjects['fels'].wrong||0)/4))>=200},
+{id:'b_net_ing_20',icon:'🌐',name:'İngilizce 20 Net',desc:'İngilizce dersinde toplam 20+ net yap',chk:s=>(s.subjects['ing']&&(s.subjects['ing'].correct||0)-((s.subjects['ing'].wrong||0)/4))>=20},
+{id:'b_net_ing_50',icon:'🌐',name:'İngilizce 50 Net',desc:'İngilizce dersinde toplam 50+ net yap',chk:s=>(s.subjects['ing']&&(s.subjects['ing'].correct||0)-((s.subjects['ing'].wrong||0)/4))>=50},
+{id:'b_net_ing_100',icon:'🌐',name:'İngilizce 100 Net',desc:'İngilizce dersinde toplam 100+ net yap',chk:s=>(s.subjects['ing']&&(s.subjects['ing'].correct||0)-((s.subjects['ing'].wrong||0)/4))>=100},
+{id:'b_net_ing_200',icon:'🌐',name:'İngilizce 200 Net',desc:'İngilizce dersinde toplam 200+ net yap',chk:s=>(s.subjects['ing']&&(s.subjects['ing'].correct||0)-((s.subjects['ing'].wrong||0)/4))>=200},
+
+// ════════════════════════════════════════════════════════════════
+// DENEME NET BLOĞU — Tek denemede yüksek net
+// ════════════════════════════════════════════════════════════════
+{id:'b_den_net50',icon:'🎯',name:'50 Net Denemesi',desc:'Bir denemede 50+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.totalNet>=50;})},
+{id:'b_den_net80',icon:'🎯',name:'80 Net Denemesi',desc:'Bir denemede 80+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.totalNet>=80;})},
+{id:'b_den_net100',icon:'💎',name:'100 Net Denemesi',desc:'Bir denemede 100+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.totalNet>=100;})},
+{id:'b_den_net120',icon:'👑',name:'120 Net Denemesi',desc:'Bir denemede 120+ net yap — mükemmel!',chk:s=>(s.denemeler||[]).some(function(d){return d.totalNet>=120;})},
+{id:'b_den_ayda4',icon:'📆',name:'Aylık Deneme',desc:'Son 30 günde 4+ deneme gir',chk:s=>{var now=Date.now();var month=30*24*60*60*1000;return (s.denemeler||[]).filter(function(d){return (d.ts||0)>now-month;}).length>=4;}},
+{id:'b_den_haftada1',icon:'📅',name:'Haftalık Deneme',desc:'Son 7 günde en az 1 deneme gir',chk:s=>{var now=Date.now();var week=7*24*60*60*1000;return (s.denemeler||[]).some(function(d){return (d.ts||0)>now-week;});}},
+
+// ════════════════════════════════════════════════════════════════
+// KONU TAMAMLAMA BLOĞU — %50, %75, %100
+// ════════════════════════════════════════════════════════════════
+{id:'b_topic_mat_50',icon:'➕',name:'Matematik %50',desc:'Matematik konularının yarısını tamamla',chk:s=>Object.keys((s.subjects['mat']||{}).topics||{}).length>=18},
+{id:'b_topic_mat_75',icon:'➕',name:'Matematik %75',desc:'Matematik konularının %75\'ini tamamla',chk:s=>Object.keys((s.subjects['mat']||{}).topics||{}).length>=27},
+{id:'b_topic_mat_100',icon:'✅',name:'Matematik Tüm Konular',desc:'Matematik konularının tamamını bitir',chk:s=>Object.keys((s.subjects['mat']||{}).topics||{}).length>=36},
+{id:'b_topic_fiz_50',icon:'⚡',name:'Fizik %50',desc:'Fizik konularının yarısını tamamla',chk:s=>Object.keys((s.subjects['fiz']||{}).topics||{}).length>=12},
+{id:'b_topic_fiz_75',icon:'⚡',name:'Fizik %75',desc:'Fizik konularının %75\'ini tamamla',chk:s=>Object.keys((s.subjects['fiz']||{}).topics||{}).length>=18},
+{id:'b_topic_fiz_100',icon:'✅',name:'Fizik Tüm Konular',desc:'Fizik konularının tamamını bitir',chk:s=>Object.keys((s.subjects['fiz']||{}).topics||{}).length>=24},
+{id:'b_topic_kim_50',icon:'🧪',name:'Kimya %50',desc:'Kimya konularının yarısını tamamla',chk:s=>Object.keys((s.subjects['kim']||{}).topics||{}).length>=8},
+{id:'b_topic_kim_75',icon:'🧪',name:'Kimya %75',desc:'Kimya konularının %75\'ini tamamla',chk:s=>Object.keys((s.subjects['kim']||{}).topics||{}).length>=12},
+{id:'b_topic_kim_100',icon:'✅',name:'Kimya Tüm Konular',desc:'Kimya konularının tamamını bitir',chk:s=>Object.keys((s.subjects['kim']||{}).topics||{}).length>=16},
+{id:'b_topic_bio_50',icon:'🌿',name:'Biyoloji %50',desc:'Biyoloji konularının yarısını tamamla',chk:s=>Object.keys((s.subjects['bio']||{}).topics||{}).length>=10},
+{id:'b_topic_bio_75',icon:'🌿',name:'Biyoloji %75',desc:'Biyoloji konularının %75\'ini tamamla',chk:s=>Object.keys((s.subjects['bio']||{}).topics||{}).length>=15},
+{id:'b_topic_bio_100',icon:'✅',name:'Biyoloji Tüm Konular',desc:'Biyoloji konularının tamamını bitir',chk:s=>Object.keys((s.subjects['bio']||{}).topics||{}).length>=20},
+{id:'b_topic_geo_50',icon:'📐',name:'Geometri %50',desc:'Geometri konularının yarısını tamamla',chk:s=>Object.keys((s.subjects['geo']||{}).topics||{}).length>=8},
+{id:'b_topic_geo_75',icon:'📐',name:'Geometri %75',desc:'Geometri konularının %75\'ini tamamla',chk:s=>Object.keys((s.subjects['geo']||{}).topics||{}).length>=12},
+{id:'b_topic_geo_100',icon:'✅',name:'Geometri Tüm Konular',desc:'Geometri konularının tamamını bitir',chk:s=>Object.keys((s.subjects['geo']||{}).topics||{}).length>=16},
+{id:'b_topic_tur_50',icon:'📝',name:'Türkçe %50',desc:'Türkçe konularının yarısını tamamla',chk:s=>Object.keys((s.subjects['tur']||{}).topics||{}).length>=12},
+{id:'b_topic_tur_75',icon:'📝',name:'Türkçe %75',desc:'Türkçe konularının %75\'ini tamamla',chk:s=>Object.keys((s.subjects['tur']||{}).topics||{}).length>=18},
+{id:'b_topic_tur_100',icon:'✅',name:'Türkçe Tüm Konular',desc:'Türkçe konularının tamamını bitir',chk:s=>Object.keys((s.subjects['tur']||{}).topics||{}).length>=24},
+{id:'b_topic_tar_50',icon:'⚔️',name:'Tarih %50',desc:'Tarih konularının yarısını tamamla',chk:s=>Object.keys((s.subjects['tar']||{}).topics||{}).length>=8},
+{id:'b_topic_tar_75',icon:'⚔️',name:'Tarih %75',desc:'Tarih konularının %75\'ini tamamla',chk:s=>Object.keys((s.subjects['tar']||{}).topics||{}).length>=12},
+{id:'b_topic_tar_100',icon:'✅',name:'Tarih Tüm Konular',desc:'Tarih konularının tamamını bitir',chk:s=>Object.keys((s.subjects['tar']||{}).topics||{}).length>=16},
+{id:'b_topic_cog_50',icon:'🌍',name:'Coğrafya %50',desc:'Coğrafya konularının yarısını tamamla',chk:s=>Object.keys((s.subjects['cog']||{}).topics||{}).length>=8},
+{id:'b_topic_cog_75',icon:'🌍',name:'Coğrafya %75',desc:'Coğrafya konularının %75\'ini tamamla',chk:s=>Object.keys((s.subjects['cog']||{}).topics||{}).length>=12},
+{id:'b_topic_cog_100',icon:'✅',name:'Coğrafya Tüm Konular',desc:'Coğrafya konularının tamamını bitir',chk:s=>Object.keys((s.subjects['cog']||{}).topics||{}).length>=16},
+{id:'b_topic_fels_50',icon:'🧠',name:'Felsefe %50',desc:'Felsefe konularının yarısını tamamla',chk:s=>Object.keys((s.subjects['fels']||{}).topics||{}).length>=8},
+{id:'b_topic_fels_75',icon:'🧠',name:'Felsefe %75',desc:'Felsefe konularının %75\'ini tamamla',chk:s=>Object.keys((s.subjects['fels']||{}).topics||{}).length>=12},
+{id:'b_topic_fels_100',icon:'✅',name:'Felsefe Tüm Konular',desc:'Felsefe konularının tamamını bitir',chk:s=>Object.keys((s.subjects['fels']||{}).topics||{}).length>=16},
+
+// ════════════════════════════════════════════════════════════════
+// HAFTALIK XP TUTARLILIK
+// ════════════════════════════════════════════════════════════════
+{id:'b_weekly_xp_streak2',icon:'📊',name:'2 Hafta 500 XP',desc:'2 hafta üst üste 500+ XP kazan',chk:s=>{var h=s.weekHistory||[];if(h.length<2)return false;var sorted=[...h].sort(function(a,b){return new Date(b.wk)-new Date(a.wk);});var w1=(s.weeklyXp||[]).reduce(function(a,b){return a+b;},0);var w2=(sorted[0].wx||[]).reduce(function(a,b){return a+b;},0);return w1>=500&&w2>=500;}},
+{id:'b_weekly_xp_streak3',icon:'📈',name:'3 Hafta 500 XP',desc:'3 hafta üst üste 500+ XP kazan',chk:s=>{var h=s.weekHistory||[];if(h.length<2)return false;var sorted=[...h].sort(function(a,b){return new Date(b.wk)-new Date(a.wk);});var w1=(s.weeklyXp||[]).reduce(function(a,b){return a+b;},0);var w2=(sorted[0].wx||[]).reduce(function(a,b){return a+b;},0);var w3=sorted.length>=2?(sorted[1].wx||[]).reduce(function(a,b){return a+b;},0):0;return w1>=500&&w2>=500&&w3>=500;}},
+{id:'b_daily_500xp',icon:'💰',name:'Günde 500 XP',desc:'Bir günde 500 XP kazan',chk:s=>{var dl=s.dailyLog||{};return Object.values(dl).some(function(d){return (d&&d.xp||0)>=500;});}},
+{id:'b_daily_1000xp',icon:'💎',name:'Günde 1000 XP',desc:'Bir günde 1000 XP kazan',chk:s=>{var dl=s.dailyLog||{};return Object.values(dl).some(function(d){return (d&&d.xp||0)>=1000;});}},
+
+// ════════════════════════════════════════════════════════════════
+// GÖREV KOMBO ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_task_daily10',icon:'✅',name:'Günde 10 Görev',desc:'Bir günde 10 görev tamamla',chk:s=>{var dl=s.dailyLog&&s.dailyLog[new Date().toDateString()];return (dl&&dl.questions||0)>=50;}},
+{id:'b_3subj_100q',icon:'🎯',name:'3 Ders 100 Soru',desc:'3 farklı dersin her birinde 100+ soru çöz',chk:s=>['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].filter(function(id){return (s.subjects[id]&&s.subjects[id].questions||0)>=100;}).length>=3},
+{id:'b_5subj_100q',icon:'🏹',name:'5 Ders 100 Soru',desc:'5 farklı dersin her birinde 100+ soru çöz',chk:s=>['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].filter(function(id){return (s.subjects[id]&&s.subjects[id].questions||0)>=100;}).length>=5},
+{id:'b_9subj_10q',icon:'🎓',name:'Tam Ders 10\'ar Soru',desc:'9 dersin tümünde en az 10 soru çöz',chk:s=>['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].every(function(id){return (s.subjects[id]&&s.subjects[id].questions||0)>=10;})},
+{id:'b_9subj_50q',icon:'🏆',name:'Tam Ders 50\'şer Soru',desc:'9 dersin tümünde en az 50 soru çöz',chk:s=>['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].every(function(id){return (s.subjects[id]&&s.subjects[id].questions||0)>=50;})},
+
+// ════════════════════════════════════════════════════════════════
+// ÖZEL EĞLENCELİ ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_fun_300xp_gun',icon:'🚀',name:'300 XP Günü',desc:'Bir günde 300 XP kazan',chk:s=>{var td=new Date().toDateString();var dl=s.dailyLog&&s.dailyLog[td];return (dl&&dl.xp||0)>=300;}},
+{id:'b_fun_yaz_calisi',icon:'☀️',name:'Yaz Çalışkanı',desc:'Temmuz veya Ağustos ayında çalış',chk:s=>{var m=new Date().getMonth();return (m===6||m===7)&&(s.dailyMins||0)>=30;}},
+{id:'b_fun_kis_calisi',icon:'❄️',name:'Kış Savaşçısı',desc:'Ocak veya Şubat ayında çalış',chk:s=>{var m=new Date().getMonth();return (m===0||m===1)&&(s.dailyMins||0)>=30;}},
+{id:'b_fun_yilbasi',icon:'🎉',name:'Yılbaşı Çalışkanı',desc:'1 Ocak günü çalış',chk:s=>{var d=new Date();return d.getMonth()===0&&d.getDate()===1&&(s.dailyMins||0)>=30;}},
+{id:'b_fun_donem_basi',icon:'📚',name:'Dönem Başı',desc:'Eylül ayında çalış',chk:s=>new Date().getMonth()===8&&(s.dailyMins||0)>=60},
+{id:'b_fun_donem_sonu',icon:'📝',name:'Dönem Sonu',desc:'Haziran ayında çalış',chk:s=>new Date().getMonth()===5&&(s.dailyMins||0)>=60},
+{id:'b_fun_sinavdan_once',icon:'⚡',name:'Sınav Öncesi',desc:'Nisan veya Mayıs ayında çalış',chk:s=>{var m=new Date().getMonth();return (m===3||m===4)&&(s.dailyMins||0)>=120;}},
+{id:'b_fun_robot',icon:'🤖',name:'Robot Gibi',desc:'Her gün aynı miktarda çalış — 7 gün 60dk',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2,3,4,5,6].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);var m=(dl[d.toDateString()]&&dl[d.toDateString()].mins)||0;return m>=55&&m<=65;});}},
+{id:'b_fun_matematik_seven',icon:'➕',name:'Matematik Sever',desc:'Matematik %40+ günlük çalışma olsun (60dk+)',chk:s=>{var sm=_todaySM(s);var total=Object.values(sm).reduce(function(a,b){return a+b;},0);return total>=60&&(sm.mat||0)/total>=0.4;}},
+{id:'b_fun_fen_bilimci',icon:'🔬',name:'Fen Bilimci',desc:'Aynı günde Fizik, Kimya ve Biyoloji çalış',chk:s=>{var sm=_todaySM(s);return (sm.fiz||0)>0&&(sm.kim||0)>0&&(sm.bio||0)>0;}},
+{id:'b_fun_sosyal_bilimci',icon:'📜',name:'Sosyal Bilimci',desc:'Aynı günde Tarih, Coğrafya ve Felsefe çalış',chk:s=>{var sm=_todaySM(s);return (sm.tar||0)>0&&(sm.cog||0)>0&&(sm.fels||0)>0;}},
+{id:'b_fun_dil_ustasi',icon:'🌐',name:'Dil Ustası',desc:'İngilizce + Türkçe aynı gün çalış (30dk+)',chk:s=>{var sm=_todaySM(s);return (sm.ing||0)>=15&&(sm.tur||0)>=15;}},
+{id:'b_fun_100gun_100xp',icon:'🎯',name:'100 Gün 100 XP',desc:'100 günlük serinde 100+ XP kazan',chk:s=>s.streak>=100&&s.xp>=10000},
+{id:'b_fun_1000q_1000xp',icon:'🔥',name:'1000 Soru 1000 XP',desc:'1000 soru çöz ve 1000 XP kazan',chk:s=>s.questions>=1000&&s.xp>=1000},
+{id:'b_fun_boss_boss',icon:'💥',name:'Patron Avcısı',desc:'Bir günde 2+ boss yen',chk:s=>s.bossesBeaten>=2&&(s.dailyMins||0)>=30},
+{id:'b_fun_perfectionist',icon:'💯',name:'Mükemmeliyetçi',desc:'100 günlük seri + 10000 XP + 50 net',chk:s=>s.streak>=100&&s.xp>=10000&&(s.totalNet||0)>=50},
+{id:'b_fun_all_around',icon:'🎓',name:'Her Şeyin Ustası',desc:'Tüm ders bosslarını yen (12 boss)',chk:s=>s.bossesBeaten>=15},
+{id:'b_fun_xp_collector',icon:'🗝️',name:'XP Avcısı',desc:'Bir oturumda 100+ XP kazan',chk:s=>{var td=new Date().toDateString();var dl=s.dailyLog&&s.dailyLog[td];return (dl&&dl.xp||0)>=100;}},
+{id:'b_fun_super_student',icon:'⭐',name:'Süper Öğrenci',desc:'Aynı gün 3 saat çalış + 5+ soru çöz',chk:s=>(s.dailyMins||0)>=180&&(s.dailyLog&&s.dailyLog[new Date().toDateString()]&&s.dailyLog[new Date().toDateString()].questions||0)>=5},
+{id:'b_fun_early_riser',icon:'🌅',name:'Sabah 5\'te Uyanış',desc:'Sabah 05:00-07:00 arasında çalış',chk:s=>{var h=new Date().getHours();return h>=5&&h<7&&s.tasks>=1;}},
+{id:'b_fun_lunchtime',icon:'🍱',name:'Öğle Çalışması',desc:'Öğle 12:00-14:00 arası çalış',chk:s=>{var h=new Date().getHours();return h>=12&&h<14&&(s.dailyMins||0)>=30;}},
+{id:'b_fun_evening_study',icon:'🌆',name:'Akşam Ritüeli',desc:'Her akşam 19:00-22:00 çalış (3 gün)',chk:s=>{var h=new Date().getHours();return h>=19&&h<22&&s.streak>=3&&(s.dailyMins||0)>=30;}},
+{id:'b_fun_no_wrong',icon:'✨',name:'Hata Yok!',desc:'Bir günde sadece doğru cevap ver (0 yanlış)',chk:s=>{var td=new Date().toDateString();var dl=s.dailyLog&&s.dailyLog[td];return (dl&&dl.questions||0)>=10&&(s.subjects&&Object.values(s.subjects).every(function(sb){return !sb.lastDayWrong;}));},},
+{id:'b_fun_consistent10',icon:'🔑',name:'Tutarlı 10 Gün',desc:'10 gün üst üste en az 30dk çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2,3,4,5,6,7,8,9].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=30;});}},
+{id:'b_fun_big_day',icon:'🌟',name:'Büyük Gün',desc:'Bir günde 500+ dakika çalış',chk:s=>(s.dailyMins||0)>=500},
+{id:'b_fun_almostperfect',icon:'🎯',name:'Neredeyse Mükemmel',desc:'Bir denemede 80%+ doğruluk oranı',chk:s=>(s.denemeler||[]).some(function(d){var c=d.correct||0,w=d.wrong||0;return c+w>=20&&w/(c+w)<=0.2;})},
+{id:'b_fun_no_breaks',icon:'💪',name:'Durmak Yok',desc:'5 saat kesintisiz çalışma (300 dakika günlük)',chk:s=>(s.dailyMins||0)>=300&&s.streak>=1},
+{id:'b_fun_collector',icon:'🗂️',name:'Koleksiyoncu',desc:'5+ soru bankası + 5+ fasikül oluştur',chk:s=>(s.soruBankalari||[]).length>=5&&(s.fasikuller||[]).length>=5},
+{id:'b_fun_first100days',icon:'🎉',name:'İlk 100 Gün!',desc:'100 günlük çalışma serisi kur',chk:s=>s.streak>=100},
+{id:'b_fun_university_dream',icon:'🏛️',name:'Üniversite Hayali',desc:'Hedef üniversite belirle ve 30 gün çalış',chk:s=>(s.unis||[]).some(function(u){return u.hedefDept!=null;})&&s.streak>=30},
+{id:'b_fun_exam_warrior',icon:'⚔️',name:'Sınav Savaşçısı',desc:'30 deneme gir ve 30 boss yen',chk:s=>(s.denemeler||[]).length>=30&&s.bossesBeaten>=30},
+{id:'b_fun_grind',icon:'🔩',name:'Grind Modu',desc:'100 saat toplam + 500 soru',chk:s=>(s.totalMinutes||0)>=6000&&s.questions>=500},
+{id:'b_fun_allrounder',icon:'🌐',name:'Tam Öğrenci',desc:'10 farklı ders türünde çalış (Biyoloji dahil İng)',chk:s=>{var sm=s.subjectMinutes||{};return ['mat','fiz','kim','bio','geo','tur','tar','cog','fels','ing'].filter(function(id){return (sm[id]||0)>=60;}).length>=8;}},
+{id:'b_fun_knowledge_seeker',icon:'🔍',name:'Bilgi Arayışı',desc:'Soru bankasında 20+ konu tamamla',chk:s=>(s.soruBankalari||[]).reduce(function(a,b){return a+b.topics.filter(function(t){return t.done;}).length;},0)>=20},
+{id:'b_fun_100tasks100mins',icon:'🌠',name:'Görev+Çalışma',desc:'100 görev + 100 saat toplam',chk:s=>s.tasks>=100&&(s.totalMinutes||0)>=6000},
+{id:'b_fun_xp_machine',icon:'⚡',name:'XP Makinesi',desc:'Bir haftada 3000+ XP kazan',chk:s=>(s.weeklyXp||[]).reduce(function(a,b){return a+b;},0)>=3000},
+{id:'b_fun_marathon_week',icon:'🏃',name:'Maraton Haftası',desc:'Bir haftada 3000+ dakika çalış (50 saat)',chk:s=>(s.weekTotalMins||0)>=3000},
+{id:'b_fun_studyholic',icon:'📚',name:'Çalışma Hastası',desc:'1 yıllık seri + 1000 saat toplam',chk:s=>s.streak>=365&&(s.totalMinutes||0)>=60000},
+{id:'b_fun_balanced_genius',icon:'⚖️',name:'Dengeli Dahi',desc:'SAY + SÖZ aynı günde 2 saat+',chk:s=>{var sm=_todaySM(s);var say=(sm.mat||0)+(sm.fiz||0)+(sm.kim||0)+(sm.bio||0);var soz=(sm.tur||0)+(sm.tar||0)+(sm.cog||0)+(sm.fels||0);return say>=60&&soz>=60;}},
+{id:'b_fun_7ders_gun',icon:'🌈',name:'7 Ders 1 Günde',desc:'Bir günde 7 farklı ders çalış',chk:s=>Object.keys(_todaySM(s)).filter(function(k){return (_todaySM(s)[k]||0)>0;}).length>=7},
+{id:'b_fun_tum_dersler_30',icon:'🎒',name:'Tam Ders 30dk+',desc:'Tüm derslerde (9 ders) en az 30dk çalış',chk:s=>{var sm=s.subjectMinutes||{};return ['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].every(function(id){return (sm[id]||0)>=30;});}},
+
+
+// ════════════════════════════════════════════════════════════════
+// SORU BLOĞU EKSTRA — Daha fazla ders soru tiers
+// ════════════════════════════════════════════════════════════════
+{id:'b_q_mat_75',icon:'➕',name:'Matematik 75 Soru',desc:'Matematik dersinde 75 soru çöz',chk:s=>(s.subjects['mat']||{}).questions>=75},
+{id:'b_q_mat_150',icon:'➕',name:'Matematik 150 Soru',desc:'Matematik dersinde 150 soru çöz',chk:s=>(s.subjects['mat']||{}).questions>=150},
+{id:'b_q_mat_300',icon:'➕',name:'Matematik 300 Soru',desc:'Matematik dersinde 300 soru çöz',chk:s=>(s.subjects['mat']||{}).questions>=300},
+{id:'b_q_mat_750',icon:'➕',name:'Matematik 750 Soru',desc:'Matematik dersinde 750 soru çöz',chk:s=>(s.subjects['mat']||{}).questions>=750},
+{id:'b_q_fiz_75',icon:'⚡',name:'Fizik 75 Soru',desc:'Fizik dersinde 75 soru çöz',chk:s=>(s.subjects['fiz']||{}).questions>=75},
+{id:'b_q_fiz_150',icon:'⚡',name:'Fizik 150 Soru',desc:'Fizik dersinde 150 soru çöz',chk:s=>(s.subjects['fiz']||{}).questions>=150},
+{id:'b_q_fiz_300',icon:'⚡',name:'Fizik 300 Soru',desc:'Fizik dersinde 300 soru çöz',chk:s=>(s.subjects['fiz']||{}).questions>=300},
+{id:'b_q_fiz_750',icon:'⚡',name:'Fizik 750 Soru',desc:'Fizik dersinde 750 soru çöz',chk:s=>(s.subjects['fiz']||{}).questions>=750},
+{id:'b_q_kim_75',icon:'🧪',name:'Kimya 75 Soru',desc:'Kimya dersinde 75 soru çöz',chk:s=>(s.subjects['kim']||{}).questions>=75},
+{id:'b_q_kim_150',icon:'🧪',name:'Kimya 150 Soru',desc:'Kimya dersinde 150 soru çöz',chk:s=>(s.subjects['kim']||{}).questions>=150},
+{id:'b_q_kim_300',icon:'🧪',name:'Kimya 300 Soru',desc:'Kimya dersinde 300 soru çöz',chk:s=>(s.subjects['kim']||{}).questions>=300},
+{id:'b_q_kim_750',icon:'🧪',name:'Kimya 750 Soru',desc:'Kimya dersinde 750 soru çöz',chk:s=>(s.subjects['kim']||{}).questions>=750},
+{id:'b_q_bio_75',icon:'🌿',name:'Biyoloji 75 Soru',desc:'Biyoloji dersinde 75 soru çöz',chk:s=>(s.subjects['bio']||{}).questions>=75},
+{id:'b_q_bio_150',icon:'🌿',name:'Biyoloji 150 Soru',desc:'Biyoloji dersinde 150 soru çöz',chk:s=>(s.subjects['bio']||{}).questions>=150},
+{id:'b_q_bio_300',icon:'🌿',name:'Biyoloji 300 Soru',desc:'Biyoloji dersinde 300 soru çöz',chk:s=>(s.subjects['bio']||{}).questions>=300},
+{id:'b_q_bio_750',icon:'🌿',name:'Biyoloji 750 Soru',desc:'Biyoloji dersinde 750 soru çöz',chk:s=>(s.subjects['bio']||{}).questions>=750},
+{id:'b_q_geo_75',icon:'📐',name:'Geometri 75 Soru',desc:'Geometri dersinde 75 soru çöz',chk:s=>(s.subjects['geo']||{}).questions>=75},
+{id:'b_q_geo_150',icon:'📐',name:'Geometri 150 Soru',desc:'Geometri dersinde 150 soru çöz',chk:s=>(s.subjects['geo']||{}).questions>=150},
+{id:'b_q_geo_300',icon:'📐',name:'Geometri 300 Soru',desc:'Geometri dersinde 300 soru çöz',chk:s=>(s.subjects['geo']||{}).questions>=300},
+{id:'b_q_geo_750',icon:'📐',name:'Geometri 750 Soru',desc:'Geometri dersinde 750 soru çöz',chk:s=>(s.subjects['geo']||{}).questions>=750},
+{id:'b_q_tur_75',icon:'📝',name:'Türkçe 75 Soru',desc:'Türkçe dersinde 75 soru çöz',chk:s=>(s.subjects['tur']||{}).questions>=75},
+{id:'b_q_tur_150',icon:'📝',name:'Türkçe 150 Soru',desc:'Türkçe dersinde 150 soru çöz',chk:s=>(s.subjects['tur']||{}).questions>=150},
+{id:'b_q_tur_300',icon:'📝',name:'Türkçe 300 Soru',desc:'Türkçe dersinde 300 soru çöz',chk:s=>(s.subjects['tur']||{}).questions>=300},
+{id:'b_q_tur_750',icon:'📝',name:'Türkçe 750 Soru',desc:'Türkçe dersinde 750 soru çöz',chk:s=>(s.subjects['tur']||{}).questions>=750},
+{id:'b_q_tar_75',icon:'⚔️',name:'Tarih 75 Soru',desc:'Tarih dersinde 75 soru çöz',chk:s=>(s.subjects['tar']||{}).questions>=75},
+{id:'b_q_tar_150',icon:'⚔️',name:'Tarih 150 Soru',desc:'Tarih dersinde 150 soru çöz',chk:s=>(s.subjects['tar']||{}).questions>=150},
+{id:'b_q_tar_300',icon:'⚔️',name:'Tarih 300 Soru',desc:'Tarih dersinde 300 soru çöz',chk:s=>(s.subjects['tar']||{}).questions>=300},
+{id:'b_q_tar_750',icon:'⚔️',name:'Tarih 750 Soru',desc:'Tarih dersinde 750 soru çöz',chk:s=>(s.subjects['tar']||{}).questions>=750},
+{id:'b_q_cog_75',icon:'🌍',name:'Coğrafya 75 Soru',desc:'Coğrafya dersinde 75 soru çöz',chk:s=>(s.subjects['cog']||{}).questions>=75},
+{id:'b_q_cog_150',icon:'🌍',name:'Coğrafya 150 Soru',desc:'Coğrafya dersinde 150 soru çöz',chk:s=>(s.subjects['cog']||{}).questions>=150},
+{id:'b_q_cog_300',icon:'🌍',name:'Coğrafya 300 Soru',desc:'Coğrafya dersinde 300 soru çöz',chk:s=>(s.subjects['cog']||{}).questions>=300},
+{id:'b_q_cog_750',icon:'🌍',name:'Coğrafya 750 Soru',desc:'Coğrafya dersinde 750 soru çöz',chk:s=>(s.subjects['cog']||{}).questions>=750},
+{id:'b_q_fels_75',icon:'🧠',name:'Felsefe 75 Soru',desc:'Felsefe dersinde 75 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=75},
+{id:'b_q_fels_150',icon:'🧠',name:'Felsefe 150 Soru',desc:'Felsefe dersinde 150 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=150},
+{id:'b_q_fels_300',icon:'🧠',name:'Felsefe 300 Soru',desc:'Felsefe dersinde 300 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=300},
+{id:'b_q_fels_750',icon:'🧠',name:'Felsefe 750 Soru',desc:'Felsefe dersinde 750 soru çöz',chk:s=>(s.subjects['fels']||{}).questions>=750},
+{id:'b_q_ing_75',icon:'🌐',name:'İngilizce 75 Soru',desc:'İngilizce dersinde 75 soru çöz',chk:s=>(s.subjects['ing']||{}).questions>=75},
+{id:'b_q_ing_150',icon:'🌐',name:'İngilizce 150 Soru',desc:'İngilizce dersinde 150 soru çöz',chk:s=>(s.subjects['ing']||{}).questions>=150},
+{id:'b_q_ing_300',icon:'🌐',name:'İngilizce 300 Soru',desc:'İngilizce dersinde 300 soru çöz',chk:s=>(s.subjects['ing']||{}).questions>=300},
+{id:'b_q_ing_750',icon:'🌐',name:'İngilizce 750 Soru',desc:'İngilizce dersinde 750 soru çöz',chk:s=>(s.subjects['ing']||{}).questions>=750},
+
+// ════════════════════════════════════════════════════════════════
+// HAFTALIK DAKİKA BLOĞU — Daha fazla milestone
+// ════════════════════════════════════════════════════════════════
+{id:'b_week_3600',icon:'⭐',name:'Haftalık 60 Saat',desc:'Bu hafta 3600 dakika çalış',chk:s=>(s.weekTotalMins||0)>=3600},
+{id:'b_week_4200',icon:'🌟',name:'Haftalık 70 Saat',desc:'Bu hafta 4200 dakika çalış',chk:s=>(s.weekTotalMins||0)>=4200},
+{id:'b_week_4800',icon:'💫',name:'Haftalık 80 Saat',desc:'Bu hafta 4800 dakika çalış',chk:s=>(s.weekTotalMins||0)>=4800},
+
+// ════════════════════════════════════════════════════════════════
+// GÜNLÜK DAKİKA BLOĞU — Ekstra tier
+// ════════════════════════════════════════════════════════════════
+{id:'b_daily_720',icon:'🌙',name:'Günlük 12 Saat',desc:'Bir günde 720 dakika çalış',chk:s=>(s.dailyMins||0)>=720},
+{id:'b_daily_420',icon:'🕗',name:'Günlük 7 Saat',desc:'Bir günde 420 dakika çalış',chk:s=>(s.dailyMins||0)>=420},
+
+// ════════════════════════════════════════════════════════════════
+// GÖREV MİLESTONE — Ekstra görev sayıları
+// ════════════════════════════════════════════════════════════════
+{id:'b_task750',icon:'🏕️',name:'750 Görev',desc:'750 görev tamamla',chk:s=>s.tasks>=750},
+{id:'b_task1000',icon:'🗻',name:'1000 Görev',desc:'1000 görev tamamla',chk:s=>s.tasks>=1000},
+{id:'b_task2000',icon:'🌋',name:'2000 Görev',desc:'2000 görev tamamla',chk:s=>s.tasks>=2000},
+
+// ════════════════════════════════════════════════════════════════
+// SORU TOPLAM MİLESTONE
+// ════════════════════════════════════════════════════════════════
+{id:'b_q7500',icon:'📚',name:'7500 Soru',desc:'7500 soru çöz',chk:s=>s.questions>=7500},
+{id:'b_q10000',icon:'🌟',name:'10000 Soru',desc:'10000 soru çöz — tarihe geçtin!',chk:s=>s.questions>=10000},
+
+// ════════════════════════════════════════════════════════════════
+// NET MİLESTONE EKSTRA
+// ════════════════════════════════════════════════════════════════
+{id:'b_net750',icon:'💡',name:'750 Net',desc:'Toplam 750+ net',chk:s=>(s.totalNet||0)>=750},
+{id:'b_net1000',icon:'🌟',name:'1000 Net',desc:'Toplam 1000+ net — dahi!',chk:s=>(s.totalNet||0)>=1000},
+
+// ════════════════════════════════════════════════════════════════
+// DERS PERFORMANS ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_min_mat_900',icon:'➕',name:'Matematik 15 Saat',desc:'Matematik dersinde 900 dakika çalış',chk:s=>_smLog(s,'mat')>=900},
+{id:'b_min_fiz_900',icon:'⚡',name:'Fizik 15 Saat',desc:'Fizik dersinde 900 dakika çalış',chk:s=>_smLog(s,'fiz')>=900},
+{id:'b_min_kim_900',icon:'🧪',name:'Kimya 15 Saat',desc:'Kimya dersinde 900 dakika çalış',chk:s=>_smLog(s,'kim')>=900},
+{id:'b_min_bio_900',icon:'🌿',name:'Biyoloji 15 Saat',desc:'Biyoloji dersinde 900 dakika çalış',chk:s=>_smLog(s,'bio')>=900},
+{id:'b_min_geo_900',icon:'📐',name:'Geometri 15 Saat',desc:'Geometri dersinde 900 dakika çalış',chk:s=>_smLog(s,'geo')>=900},
+{id:'b_min_tur_900',icon:'📝',name:'Türkçe 15 Saat',desc:'Türkçe dersinde 900 dakika çalış',chk:s=>_smLog(s,'tur')>=900},
+{id:'b_min_tar_900',icon:'⚔️',name:'Tarih 15 Saat',desc:'Tarih dersinde 900 dakika çalış',chk:s=>_smLog(s,'tar')>=900},
+{id:'b_min_cog_900',icon:'🌍',name:'Coğrafya 15 Saat',desc:'Coğrafya dersinde 900 dakika çalış',chk:s=>_smLog(s,'cog')>=900},
+{id:'b_min_fels_900',icon:'🧠',name:'Felsefe 15 Saat',desc:'Felsefe dersinde 900 dakika çalış',chk:s=>_smLog(s,'fels')>=900},
+
+// ════════════════════════════════════════════════════════════════
+// ARKADAŞ & SOSYAL ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_friends_3',icon:'👥',name:'3 Arkadaş',desc:'3+ arkadaş ekle',chk:s=>(s.friendScores||[]).length>=3},
+{id:'b_friends_5',icon:'🤝',name:'5 Arkadaş',desc:'5+ arkadaş ekle',chk:s=>(s.friendScores||[]).length>=5},
+{id:'b_friends_10',icon:'🏟️',name:'10 Arkadaş',desc:'10+ arkadaş ekle — sosyal kelebek!',chk:s=>(s.friendScores||[]).length>=10},
+
+// ════════════════════════════════════════════════════════════════
+// ÜNİVERSİTE HEDEF ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_uni_3',icon:'🏛️',name:'3 Üniversite',desc:'3 üniversite ekle',chk:s=>(s.unis||[]).length>=3},
+{id:'b_uni_5',icon:'🎓',name:'5 Üniversite',desc:'5 üniversite ekle',chk:s=>(s.unis||[]).length>=5},
+{id:'b_uni_hedef_net',icon:'🎯',name:'Hedef Netiyle',desc:'Hedef üniversite belirle + 100+ net',chk:s=>(s.unis||[]).some(function(u){return u.hedefDept!=null;})&&(s.totalNet||0)>=100},
+
+// ════════════════════════════════════════════════════════════════
+// YKS ÖZEL ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_tyt_focus',icon:'📘',name:'TYT Odaklı',desc:'Türkçe + Mat + Fen toplamda 300+ soru çöz',chk:s=>(s.subjects['tur']&&s.subjects['tur'].questions||0)+(s.subjects['mat']&&s.subjects['mat'].questions||0)+(s.subjects['fiz']&&s.subjects['fiz'].questions||0)+(s.subjects['kim']&&s.subjects['kim'].questions||0)+(s.subjects['bio']&&s.subjects['bio'].questions||0)>=300},
+{id:'b_ayt_say_focus',icon:'🔢',name:'AYT SAY Odaklı',desc:'Mat+Fiz+Kim+Bio toplamda 500+ soru çöz',chk:s=>(s.subjects['mat']&&s.subjects['mat'].questions||0)+(s.subjects['fiz']&&s.subjects['fiz'].questions||0)+(s.subjects['kim']&&s.subjects['kim'].questions||0)+(s.subjects['bio']&&s.subjects['bio'].questions||0)>=500},
+{id:'b_ayt_soz_focus',icon:'📖',name:'AYT SÖZ Odaklı',desc:'Tur+Tar+Cog+Fels toplamda 500+ soru çöz',chk:s=>(s.subjects['tur']&&s.subjects['tur'].questions||0)+(s.subjects['tar']&&s.subjects['tar'].questions||0)+(s.subjects['cog']&&s.subjects['cog'].questions||0)+(s.subjects['fels']&&s.subjects['fels'].questions||0)>=500},
+{id:'b_yks_hazir',icon:'🏆',name:'YKS Hazır',desc:'Tüm derslerde 50+ soru, 3 deneme ve 100 saat',chk:s=>['mat','fiz','kim','bio','tur','tar','cog','fels'].every(function(id){return (s.subjects[id]&&s.subjects[id].questions||0)>=50;})&&(s.denemeler||[]).length>=3&&(s.totalMinutes||0)>=6000},
+{id:'b_yks_sampiyon',icon:'👑',name:'YKS Şampiyonu',desc:'500 saat, 50 deneme, 500 net',chk:s=>(s.totalMinutes||0)>=30000&&(s.denemeler||[]).length>=50&&(s.totalNet||0)>=500},
+
+// ════════════════════════════════════════════════════════════════
+// RUTIN VE DÜZEN ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_rutin_1',icon:'🔔',name:'İlk Rutin',desc:'1 rutin tamamla',chk:s=>s.tasks>=1},
+{id:'b_rutin_streak',icon:'🔁',name:'Rutin Serisi',desc:'7 gün üst üste çalış (görev varken)',chk:s=>s.streak>=7&&s.tasks>=7},
+{id:'b_morning_evening',icon:'☀️',name:'Sabah-Akşam Dengesi',desc:'Hem sabah 6-12 hem akşam 18-23 çalış',chk:s=>{var h=new Date().getHours();return (h>=6&&h<12||h>=18&&h<23)&&(s.dailyMins||0)>=60;}},
+{id:'b_gece_sabah_combo',icon:'🌓',name:'Gece-Sabah Komboscu',desc:'Gece 23:00+ çalış, ertesi sabah da çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();var yesterday=new Date(today);yesterday.setDate(today.getDate()-1);return (dl[today.toDateString()]&&dl[today.toDateString()].mins||0)>=30&&(dl[yesterday.toDateString()]&&dl[yesterday.toDateString()].mins||0)>=30;}},
+
+// ════════════════════════════════════════════════════════════════
+// DENEME PERFORMANS BLOĞU — Ders bazlı deneme netleri
+// ════════════════════════════════════════════════════════════════
+{id:'b_den_mat_20',icon:'➕',name:'Mat 20 Net',desc:'Bir denemede Matematik\'ten 20+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.nets&&d.nets.mat>=20;})},
+{id:'b_den_mat_30',icon:'➕',name:'Mat 30 Net',desc:'Bir denemede Matematik\'ten 30+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.nets&&d.nets.mat>=30;})},
+{id:'b_den_fiz_15',icon:'⚡',name:'Fizik 15 Net',desc:'Bir denemede Fizik\'ten 15+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.nets&&d.nets.fiz>=15;})},
+{id:'b_den_kim_15',icon:'🧪',name:'Kimya 15 Net',desc:'Bir denemede Kimya\'dan 15+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.nets&&d.nets.kim>=15;})},
+{id:'b_den_bio_15',icon:'🌿',name:'Biyoloji 15 Net',desc:'Bir denemede Biyoloji\'den 15+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.nets&&d.nets.bio>=15;})},
+{id:'b_den_tur_20',icon:'📝',name:'Türkçe 20 Net',desc:'Bir denemede Türkçe\'den 20+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.nets&&d.nets.tur>=20;})},
+{id:'b_den_tar_15',icon:'⚔️',name:'Tarih 15 Net',desc:'Bir denemede Tarih\'ten 15+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.nets&&d.nets.tar>=15;})},
+{id:'b_den_cog_12',icon:'🌍',name:'Coğrafya 12 Net',desc:'Bir denemede Coğrafya\'dan 12+ net yap',chk:s=>(s.denemeler||[]).some(function(d){return d.nets&&d.nets.cog>=12;})},
+
+// ════════════════════════════════════════════════════════════════
+// GÜNLÜK ÇALIŞMA PATTERN ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_daily_2h_7streak',icon:'🔑',name:'2 Saat 7 Gün',desc:'7 gün üst üste en az 120 dakika çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2,3,4,5,6].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=120;});}},
+{id:'b_daily_1h_14streak',icon:'💪',name:'1 Saat 14 Gün',desc:'14 gün üst üste en az 60 dakika çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2,3,4,5,6,7,8,9,10,11,12,13].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=60;});}},
+{id:'b_daily_30dk_30streak',icon:'⭐',name:'30dk 30 Gün',desc:'30 gün üst üste en az 30 dakika çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();var arr=[];for(var i=0;i<30;i++){var d=new Date(today);d.setDate(today.getDate()-i);arr.push(d.toDateString());}return arr.every(function(k){return (dl[k]&&dl[k].mins||0)>=30;});}},
+{id:'b_daily_4h_3streak',icon:'🔥',name:'4 Saat 3 Gün',desc:'3 gün üst üste en az 240 dakika çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=240;});}},
+
+// ════════════════════════════════════════════════════════════════
+// ÖZEL ZAMAN DİLİMİ ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_time_afternoon',icon:'🌤️',name:'Öğleden Sonra',desc:'Öğleden sonra 14:00-18:00 çalış',chk:s=>{var h=new Date().getHours();return h>=14&&h<18&&(s.dailyMins||0)>=30;}},
+{id:'b_time_midnight',icon:'🌃',name:'Gece Yarısı',desc:'Gece 00:00-02:00 arası çalış',chk:s=>{var h=new Date().getHours();return h>=0&&h<2&&s.tasks>=1;}},
+{id:'b_time_weekend_3h',icon:'🏖️',name:'Hafta Sonu 3 Saat',desc:'Hafta sonu günlerinden birinde 3+ saat çalış',chk:s=>[0,6].includes(new Date().getDay())&&(s.dailyMins||0)>=180},
+{id:'b_time_3days_row',icon:'📅',name:'3 Gün Aralıksız',desc:'3 gün üst üste her gün 2+ saat çalış',chk:s=>{var dl=s.dailyLog||{};var t=new Date();return [0,1,2].every(function(i){var d=new Date(t);d.setDate(t.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=120;});}},
+
+// ════════════════════════════════════════════════════════════════
+// KONU BAZLI ROZETLERİ DEVAMI
+// ════════════════════════════════════════════════════════════════
+{id:'b_topic_ing_10',icon:'🌐',name:'İngilizce 10 Konu',desc:'İngilizce dersinde 10 konu tamamla',chk:s=>Object.keys((s.subjects['ing']||{}).topics||{}).length>=10},
+{id:'b_topic_ing_20',icon:'🌐',name:'İngilizce 20 Konu',desc:'İngilizce dersinde 20 konu tamamla',chk:s=>Object.keys((s.subjects['ing']||{}).topics||{}).length>=20},
+{id:'b_topic_all_25',icon:'📚',name:'Tüm Dersler 5 Konu',desc:'9 dersin tümünde en az 5 konu tamamla',chk:s=>['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].every(function(id){return Object.keys((s.subjects[id]||{}).topics||{}).length>=5;})},
+
+// ════════════════════════════════════════════════════════════════
+// HEDEFLİ ÇALIŞMA ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_goal_done5',icon:'🎯',name:'5 Hedef',desc:'5 hedef tamamla',chk:s=>(s.goals||[]).filter(function(g){return g.done;}).length>=5},
+{id:'b_goal_done10',icon:'🎯',name:'10 Hedef',desc:'10 hedef tamamla',chk:s=>(s.goals||[]).filter(function(g){return g.done;}).length>=10},
+{id:'b_goal_done25',icon:'🏆',name:'25 Hedef',desc:'25 hedef tamamla',chk:s=>(s.goals||[]).filter(function(g){return g.done;}).length>=25},
+{id:'b_goal_create5',icon:'📌',name:'5 Hedef Oluştur',desc:'5 hedef oluştur',chk:s=>(s.goals||[]).length>=5},
+{id:'b_goal_create10',icon:'📍',name:'10 Hedef Oluştur',desc:'10 hedef oluştur',chk:s=>(s.goals||[]).length>=10},
+
+// ════════════════════════════════════════════════════════════════
+// SUPER COMBO ROZETLERİ — Büyük başarımlar
+// ════════════════════════════════════════════════════════════════
+{id:'b_super_allsubj1h',icon:'🌈',name:'Her Ders 1 Saat',desc:'Tüm 9 derste toplam 60dk+ çalış',chk:s=>{var sm=s.subjectMinutes||{};return ['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].every(function(id){return (sm[id]||0)>=60;});}},
+{id:'b_super_allsubj10h',icon:'💎',name:'Her Ders 10 Saat',desc:'Tüm 9 derste toplam 600dk+ çalış',chk:s=>{var sm=s.subjectMinutes||{};return ['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].every(function(id){return (sm[id]||0)>=600;});}},
+{id:'b_super_25ders_cepte',icon:'🎒',name:'25 Ders Cebinde',desc:'9 dersinin tümünde 25+ soru çöz',chk:s=>['mat','fiz','kim','bio','geo','tur','tar','cog','fels'].every(function(id){return (s.subjects[id]&&s.subjects[id].questions||0)>=25;})},
+{id:'b_super_5banka_5fasikul',icon:'📚',name:'Eksiksiz Kütüphane',desc:'5 banka + 5 fasikül oluştur + bitir',chk:s=>(s.soruBankalari||[]).filter(function(b){return b.topics.length>0&&b.topics.every(function(t){return t.done;});}).length>=3&&(s.fasikuller||[]).filter(function(f){return f.bolumler&&f.bolumler.length>0&&f.bolumler.every(function(b){return b.done;});}).length>=3},
+{id:'b_super_500saat_1yil',icon:'👑',name:'Yıl + 500 Saat',desc:'365 günlük seri + 500 saat toplam',chk:s=>s.streak>=365&&(s.totalMinutes||0)>=30000},
+{id:'b_super_100net_100boss',icon:'🏆',name:'100 Net 100 Boss',desc:'100 net + 100 boss',chk:s=>(s.totalNet||0)>=100&&s.bossesBeaten>=10},
+{id:'b_super_marathon',icon:'🏃',name:'Süper Maraton',desc:'Bir günde 8 saat + bir haftada 40 saat',chk:s=>(s.dailyMins||0)>=480&&(s.weekTotalMins||0)>=2400},
+{id:'b_super_scholar',icon:'🎓',name:'YKS Bilgesi',desc:'1000 soru + 100 saat + 30 net + 5 deneme',chk:s=>s.questions>=1000&&(s.totalMinutes||0)>=6000&&(s.totalNet||0)>=30&&(s.denemeler||[]).length>=5},
+{id:'b_super_allstar',icon:'⭐',name:'Tüm Yıldız',desc:'50 görev + 100 soru + 30 gün seri + 1 boss',chk:s=>s.tasks>=50&&s.questions>=100&&s.streak>=30&&s.bossesBeaten>=1},
+{id:'b_super_nonstop',icon:'⚡',name:'Dur Dur Yok',desc:'10 gün üst üste 2+ saat çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();var arr=[];for(var i=0;i<10;i++){var d=new Date(today);d.setDate(today.getDate()-i);arr.push(d.toDateString());}return arr.every(function(k){return (dl[k]&&dl[k].mins||0)>=120;});}},
+{id:'b_super_pro',icon:'💡',name:'Pro Öğrenci',desc:'200 saat + 200 soru + 30 seri + 3 deneme',chk:s=>(s.totalMinutes||0)>=12000&&s.questions>=200&&s.streak>=30&&(s.denemeler||[]).length>=3},
+
+// ════════════════════════════════════════════════════════════════
+// GELİŞİM İZLEYİCİ ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_improve_daily5',icon:'📈',name:'5 Gün Büyümesi',desc:'5 gün üst üste her gün dünden fazla çalış',chk:s=>{var dl=s.dailyLog||{};var today=new Date();var days=[0,1,2,3,4].map(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return dl[d.toDateString()]&&dl[d.toDateString()].mins||0;});return days[0]>days[1]&&days[1]>days[2]&&days[2]>days[3]&&days[3]>days[4]&&days[4]>=20;}},
+{id:'b_improve_month_growth',icon:'📊',name:'Aylık Büyüme',desc:'Bu ay geçen aydan daha fazla çalış',chk:s=>{var h=s.weekHistory||[];if(h.length<5)return false;var lastMonth=h.slice(-4).reduce(function(a,w){return a+(w.totalMins||0);},0);var thisMonth=(s.weekTotalMins||0)*4;return thisMonth>lastMonth;}},
+
+// ════════════════════════════════════════════════════════════════
+// ÖZEL MESAJ ROZETLERİ — Motivasyon
+// ════════════════════════════════════════════════════════════════
+{id:'b_msg_start',icon:'🚀',name:'Yolculuk Başladı',desc:'İlk 10 görevi tamamla',chk:s=>s.tasks>=10},
+{id:'b_msg_halfway',icon:'🌗',name:'Yarı Yoldasın!',desc:'15. seviyeye ulaş',chk:s=>getLvl(s.xp)>=15},
+{id:'b_msg_keep_going',icon:'💪',name:'Devam Et!',desc:'30 günlük seri kur',chk:s=>s.streak>=30},
+{id:'b_msg_almost_there',icon:'🎯',name:'Az Kaldı!',desc:'25. seviyeye ulaş',chk:s=>getLvl(s.xp)>=25},
+{id:'b_msg_legend',icon:'🌟',name:'Efsane Öğrenci',desc:'50 deneme + 500 saat + 50 seri',chk:s=>(s.denemeler||[]).length>=50&&(s.totalMinutes||0)>=30000&&s.streak>=50},
+{id:'b_msg_unstoppable',icon:'🔥',name:'Durdurulamaz',desc:'180 günlük seri kur',chk:s=>s.streak>=180},
+{id:'b_msg_goat',icon:'🐐',name:'GOAT',desc:'30. seviye + 50 deneme + 1000 saat + 365 seri',chk:s=>getLvl(s.xp)>=30&&(s.denemeler||[]).length>=50&&(s.totalMinutes||0)>=60000&&s.streak>=365},
+
+// ════════════════════════════════════════════════════════════════
+// DERS MINUTE TIER — 450dk (7.5 saat)
+// ════════════════════════════════════════════════════════════════
+{id:'b_min_mat_450',icon:'➕',name:'Matematik 7.5 Saat',desc:'Matematik dersinde 450 dakika çalış',chk:s=>_smLog(s,'mat')>=450},
+{id:'b_min_fiz_450',icon:'⚡',name:'Fizik 7.5 Saat',desc:'Fizik dersinde 450 dakika çalış',chk:s=>_smLog(s,'fiz')>=450},
+{id:'b_min_kim_450',icon:'🧪',name:'Kimya 7.5 Saat',desc:'Kimya dersinde 450 dakika çalış',chk:s=>_smLog(s,'kim')>=450},
+{id:'b_min_bio_450',icon:'🌿',name:'Biyoloji 7.5 Saat',desc:'Biyoloji dersinde 450 dakika çalış',chk:s=>_smLog(s,'bio')>=450},
+{id:'b_min_geo_450',icon:'📐',name:'Geometri 7.5 Saat',desc:'Geometri dersinde 450 dakika çalış',chk:s=>_smLog(s,'geo')>=450},
+{id:'b_min_tur_450',icon:'📝',name:'Türkçe 7.5 Saat',desc:'Türkçe dersinde 450 dakika çalış',chk:s=>_smLog(s,'tur')>=450},
+{id:'b_min_tar_450',icon:'⚔️',name:'Tarih 7.5 Saat',desc:'Tarih dersinde 450 dakika çalış',chk:s=>_smLog(s,'tar')>=450},
+{id:'b_min_cog_450',icon:'🌍',name:'Coğrafya 7.5 Saat',desc:'Coğrafya dersinde 450 dakika çalış',chk:s=>_smLog(s,'cog')>=450},
+{id:'b_min_fels_450',icon:'🧠',name:'Felsefe 7.5 Saat',desc:'Felsefe dersinde 450 dakika çalış',chk:s=>_smLog(s,'fels')>=450},
+{id:'b_min_ing_450',icon:'🌐',name:'İngilizce 7.5 Saat',desc:'İngilizce dersinde 450 dakika çalış',chk:s=>_smLog(s,'ing')>=450},
+
+// ════════════════════════════════════════════════════════════════
+// GÜNLÜK XP TIERED ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_daily_xp50',icon:'💰',name:'Günde 50 XP',desc:'Bir günde 50 XP kazan',chk:s=>{var dl=s.dailyLog&&s.dailyLog[new Date().toDateString()];return (dl&&dl.xp||0)>=50;}},
+{id:'b_daily_xp100',icon:'💵',name:'Günde 100 XP',desc:'Bir günde 100 XP kazan',chk:s=>{var dl=s.dailyLog&&s.dailyLog[new Date().toDateString()];return (dl&&dl.xp||0)>=100;}},
+{id:'b_daily_xp200',icon:'💶',name:'Günde 200 XP',desc:'Bir günde 200 XP kazan',chk:s=>{var dl=s.dailyLog&&s.dailyLog[new Date().toDateString()];return (dl&&dl.xp||0)>=200;}},
+{id:'b_daily_q10',icon:'📝',name:'Günde 10 Soru',desc:'Bir günde 10 soru çöz',chk:s=>(s.dailyQuestions||0)>=10},
+{id:'b_daily_q20',icon:'📝',name:'Günde 20 Soru',desc:'Bir günde 20 soru çöz',chk:s=>(s.dailyQuestions||0)>=20},
+{id:'b_daily_q50',icon:'📝',name:'Günde 50 Soru',desc:'Bir günde 50 soru çöz',chk:s=>(s.dailyQuestions||0)>=50},
+
+// ════════════════════════════════════════════════════════════════
+// BONUS HAFTALIK MİLESTONELAR
+// ════════════════════════════════════════════════════════════════
+{id:'b_week_120',icon:'⏱️',name:'Haftalık 2 Saat',desc:'Bu hafta 120 dakika çalış',chk:s=>(s.weekTotalMins||0)>=120},
+{id:'b_week_420',icon:'🕔',name:'Haftalık 7 Saat',desc:'Bu hafta 420 dakika çalış',chk:s=>(s.weekTotalMins||0)>=420},
+{id:'b_week_720',icon:'🕖',name:'Haftalık 12 Saat',desc:'Bu hafta 720 dakika çalış',chk:s=>(s.weekTotalMins||0)>=720},
+{id:'b_week_1500',icon:'🕗',name:'Haftalık 25 Saat',desc:'Bu hafta 1500 dakika çalış',chk:s=>(s.weekTotalMins||0)>=1500},
+
+// ════════════════════════════════════════════════════════════════
+// BOSS SAYISI — Daha fazla boss milestone
+// ════════════════════════════════════════════════════════════════
+{id:'b_boss15',icon:'💀',name:'15 Boss',desc:'15 boss yenildi',chk:s=>s.bossesBeaten>=15},
+{id:'b_boss20',icon:'👹',name:'20 Boss',desc:'20 boss yenildi',chk:s=>s.bossesBeaten>=20},
+{id:'b_boss30',icon:'🐉',name:'30 Boss',desc:'30 boss yenildi',chk:s=>s.bossesBeaten>=30},
+{id:'b_boss50',icon:'🌟',name:'50 Boss — Efsane',desc:'50 boss yenildi — kimse seni durduramaz!',chk:s=>s.bossesBeaten>=50},
+
+// ════════════════════════════════════════════════════════════════
+// LOG ENTRY MILESTONE — Aktivite kayıt sayısı
+// ════════════════════════════════════════════════════════════════
+{id:'b_log50',icon:'📋',name:'50 Aktivite',desc:'50 aktivite kaydet',chk:s=>(s.log||[]).length>=50},
+{id:'b_log100',icon:'📋',name:'100 Aktivite',desc:'100 aktivite kaydet',chk:s=>(s.log||[]).length>=100},
+{id:'b_log250',icon:'📋',name:'250 Aktivite',desc:'250 aktivite kaydet',chk:s=>(s.log||[]).length>=250},
+{id:'b_log500',icon:'📋',name:'500 Aktivite',desc:'500 aktivite kaydet — kalın dosya!',chk:s=>(s.log||[]).length>=500},
+
+// ════════════════════════════════════════════════════════════════
+// TOPLAM SORU — Daha fazla milestone
+// ════════════════════════════════════════════════════════════════
+{id:'b_q125',icon:'📘',name:'125 Soru',desc:'125 soru çöz',chk:s=>s.questions>=125},
+{id:'b_q175',icon:'📙',name:'175 Soru',desc:'175 soru çöz',chk:s=>s.questions>=175},
+{id:'b_q350',icon:'📓',name:'350 Soru',desc:'350 soru çöz',chk:s=>s.questions>=350},
+
+// ════════════════════════════════════════════════════════════════
+// SORU DOĞRULUK ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_accuracy_high',icon:'🎯',name:'Yüksek İsabet',desc:'100+ soru çözüp %80+ doğruluk',chk:s=>{var total=0,correct=0;Object.values(s.subjects||{}).forEach(function(sb){total+=(sb.correct||0)+(sb.wrong||0);correct+=(sb.correct||0);});return total>=100&&correct/total>=0.8;}},
+{id:'b_accuracy_pro',icon:'🏹',name:'Pro İsabet',desc:'500+ soru çözüp %75+ doğruluk',chk:s=>{var total=0,correct=0;Object.values(s.subjects||{}).forEach(function(sb){total+=(sb.correct||0)+(sb.wrong||0);correct+=(sb.correct||0);});return total>=500&&correct/total>=0.75;}},
+
+// ════════════════════════════════════════════════════════════════
+// ÖZEL TAKVİM ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_calendar_monday',icon:'📅',name:'Pazartesi Motivasyonu',desc:'Pazartesi günü çalış',chk:s=>new Date().getDay()===1&&(s.dailyMins||0)>=30},
+{id:'b_calendar_sunday',icon:'☀️',name:'Pazar Çalışması',desc:'Pazar günü en az 1 saat çalış',chk:s=>new Date().getDay()===0&&(s.dailyMins||0)>=60},
+{id:'b_calendar_every_day',icon:'🗓️',name:'Her Gün Çalış',desc:'Haftanın 7 günü çalış (son 7 gün)',chk:s=>{var dl=s.dailyLog||{};var today=new Date();return [0,1,2,3,4,5,6].every(function(i){var d=new Date(today);d.setDate(today.getDate()-i);return (dl[d.toDateString()]&&dl[d.toDateString()].mins||0)>=15;});}},
+
+// ════════════════════════════════════════════════════════════════
+// SON BÜYÜK ROZETLERİ
+// ════════════════════════════════════════════════════════════════
+{id:'b_ultimate_1',icon:'🌌',name:'Nihai Hedef I',desc:'500 soru + 100 saat + 30 seri',chk:s=>s.questions>=500&&(s.totalMinutes||0)>=6000&&s.streak>=30},
+{id:'b_ultimate_2',icon:'🌠',name:'Nihai Hedef II',desc:'2000 soru + 500 saat + 90 seri + 10 deneme',chk:s=>s.questions>=2000&&(s.totalMinutes||0)>=30000&&s.streak>=90&&(s.denemeler||[]).length>=10},
+{id:'b_ultimate_3',icon:'⭐',name:'Nihai Hedef III',desc:'5000 soru + 1000 saat + 180 seri + 30 deneme',chk:s=>s.questions>=5000&&(s.totalMinutes||0)>=60000&&s.streak>=180&&(s.denemeler||[]).length>=30},
+{id:'b_toprak_calisi',icon:'🌱',name:'Toprağa Basmak',desc:'Zemin sağlam — 14 gün + 10 görev',chk:s=>s.streak>=14&&s.tasks>=10},
+{id:'b_umut_yolculugu',icon:'🌟',name:'Umut Yolculuğu',desc:'YKS\'ye 1 adım daha yakın — 50 soru',chk:s=>s.questions>=50&&s.streak>=5},
+{id:'b_azimkar',icon:'🔥',name:'Azimkâr',desc:'45 gün seri + 50 soru + 3 boss',chk:s=>s.streak>=45&&s.questions>=50&&s.bossesBeaten>=3},
+{id:'b_caliskan_ari',icon:'🐝',name:'Çalışkan Arı',desc:'Her gün düzenli çalış — 21 gün seri',chk:s=>s.streak>=21},
+{id:'b_mutluluk_formulu',icon:'😊',name:'Mutluluk Formülü',desc:'1000 XP + 30 seri + 10 görev',chk:s=>s.xp>=1000&&s.streak>=30&&s.tasks>=10},
+{id:'b_hedefine_kos',icon:'🏃',name:'Hedefe Koş!',desc:'Hedef üniversite seç + 100 soru çöz',chk:s=>(s.unis||[]).some(function(u){return u.hedefDept!=null;})&&s.questions>=100},
+{id:'b_yks_azmi',icon:'💪',name:'YKS Azmi',desc:'60 gün seri + 60 saat toplam + 60 net',chk:s=>s.streak>=60&&(s.totalMinutes||0)>=3600&&(s.totalNet||0)>=60},
 ];
 const ALL_BDGS=[...BDGS_S,...BDGS_L];
 
@@ -16884,23 +17505,24 @@ function getTrophyMeta(b){
 
   // ── Dakika bazlı ders rozetleri (b_min_xxx_NNN ve b_ing_minNNN) ──
   const minM=id.match(/(?:b_min_[a-z]+_|b_ing_min)(\d+)$/);
-  if(minM){const m=+minM[1];if(m>=1000)return P;if(m>=500)return G;if(m>=100)return S;return B;}
+  if(minM){const m=+minM[1];if(m>=900)return G;if(m>=450)return S;if(m>=100)return S;return B;}
 
   // ── SEVİYE ──
-  // lv30 → ALTIN (kullanıcı isteği: 30.seviye altın değil platin değil)
-  // Ama "30. seviye platin değil" dendi → lv30 ALTIN kalıyor, platin yok seviye için
   if(id==='b_lv30')return G;
   if(id==='b_lv28'||id==='b_lv25'||id==='b_lv20')return G;
   if(id==='b_lv18'||id==='b_lv15'||id==='b_lv12')return S;
   if(id==='b_lv10'||id==='b_lv7'||id==='b_lv5'||id==='b_lv3'||id==='b_lv2')return B;
 
-  // ── GENEL BOSS (0-12) ──
-  if(id==='b_boss12')return G;
-  if(id==='b_boss11'||id==='b_boss10')return G;
+  // ── GENEL BOSS ──
+  if(id==='b_boss50')return P;
+  if(id==='b_boss30')return P;
+  if(id==='b_boss20')return G;
+  if(id==='b_boss15')return G;
+  if(id==='b_boss12'||id==='b_boss11'||id==='b_boss10')return G;
   if(id==='b_boss9'||id==='b_boss8'||id==='b_boss7'||id==='b_boss6')return S;
   if(id==='b_boss5'||id==='b_boss4'||id==='b_boss3'||id==='b_boss2'||id==='b_boss1')return B;
 
-  // ── DERS BOSS: _8→GÜMÜŞ, _10→ALTIN, _15→ALTIN, _3→BRONZ, _1→BRONZ ──
+  // ── DERS BOSS ──
   if(id.match(/^b_boss_[a-z]+_15$/))return G;
   if(id.match(/^b_boss_[a-z]+_10$/))return G;
   if(id.match(/^b_boss_[a-z]+_8$/))return S;
@@ -16915,20 +17537,19 @@ function getTrophyMeta(b){
   if(id==='b_banka5'||id==='b_banka3'||id==='b_banka2'||id==='b_banka1')return B;
 
   // ── BANKA TAMAMLA (done) ──
-  // 3 banka gümüş, 5 banka altın, 10 banka platin
   if(id==='b_bankadone20')return P;
   if(id==='b_bankadone10')return P;
   if(id==='b_bankadone5')return G;
   if(id==='b_bankadone3')return S;
   if(id==='b_bankadone2'||id==='b_bankadone1')return B;
 
-  // ── DERS BANKA TAMAMLA: _3→GÜMÜŞ, _5→ALTIN, _10→PLATİN ──
+  // ── DERS BANKA TAMAMLA ──
   if(id.match(/^b_banka_[a-z]+_10$/))return P;
   if(id.match(/^b_banka_[a-z]+_5$/))return G;
   if(id.match(/^b_banka_[a-z]+_3$/))return S;
   if(id.match(/^b_banka_[a-z]+_1$/))return B;
 
-  // ── KONU TAMAMLAMA (ders bazlı: _25→BRONZ, _50→GÜMÜŞ, _75→ALTIN, _100→PLATİN) ──
+  // ── KONU TAMAMLAMA (ders bazlı) ──
   if(id.match(/^b_topic_[a-z]+_100$/))return P;
   if(id.match(/^b_topic_[a-z]+_75$/))return G;
   if(id.match(/^b_topic_[a-z]+_50$/))return S;
@@ -16936,39 +17557,46 @@ function getTrophyMeta(b){
 
   // ── GENEL KONU ──
   if(id==='b_all_topics_full')return P;
-  if(id==='b_all_topics')return G;
+  if(id==='b_all_topics'||id==='b_topic_all_25')return S;
 
-  // ── DERS BAZLI SORU: _200→GÜMÜŞ, _500→ALTIN, _1000→PLATİN ──
+  // ── DERS BAZLI SORU (pattern) ──
   if(id.match(/^b_q_[a-z]+_1000$/))return P;
+  if(id.match(/^b_q_[a-z]+_750$/))return P;
   if(id.match(/^b_q_[a-z]+_500$/))return G;
+  if(id.match(/^b_q_[a-z]+_300$/))return G;
   if(id.match(/^b_q_[a-z]+_200$/))return S;
+  if(id.match(/^b_q_[a-z]+_150$/))return S;
   if(id.match(/^b_q_[a-z]+_100$/))return S;
+  if(id.match(/^b_q_[a-z]+_75$/))return B;
   if(id.match(/^b_q_[a-z]+_50$/))return B;
   if(id.match(/^b_q_[a-z]+_25$/))return B;
   if(id.match(/^b_q_[a-z]+_10$/))return B;
 
   // ── TOPLAM SORU ──
-  if(id==='b_q5000')return P;
+  if(id==='b_q10000')return P;
+  if(id==='b_q7500'||id==='b_q5000')return P;
   if(id==='b_q3000'||id==='b_q2000'||id==='b_q1500'||id==='b_q1000')return G;
-  if(id==='b_q750'||id==='b_q500'||id==='b_q300'||id==='b_q200')return S;
-  if(id==='b_q150'||id==='b_q100'||id==='b_q75'||id==='b_q50'||id==='b_q25'||id==='b_q10'||id==='b_q5')return B;
+  if(id==='b_q750'||id==='b_q500'||id==='b_q350'||id==='b_q300'||id==='b_q200'||id==='b_q175')return S;
+  if(id==='b_q150'||id==='b_q125'||id==='b_q100'||id==='b_q75'||id==='b_q50'||id==='b_q25'||id==='b_q10'||id==='b_q5')return B;
 
   // ── SERİ (streak) ──
   if(id==='b_str365')return P;
-  if(id==='b_str180'||id==='b_str120'||id==='b_str90')return G;
+  if(id==='b_str300'||id==='b_str250')return P;
+  if(id==='b_str200'||id==='b_str180'||id==='b_str120'||id==='b_str90')return G;
   if(id==='b_str60'||id==='b_str45'||id==='b_str30')return S;
   if(id==='b_str21'||id==='b_str14'||id==='b_str10'||id==='b_str7'||id==='b_str5'||id==='b_str3')return B;
   if(id==='b_streak_rec100')return P;
   if(id==='b_streak_rec30')return G;
 
   // ── XP ──
+  if(id==='b_xp500000')return P;
   if(id==='b_xp100000'||id==='b_xp75000')return P;
   if(id==='b_xp50000'||id==='b_xp25000'||id==='b_xp20000'||id==='b_xp15000'||id==='b_xp_milestone')return G;
-  if(id==='b_xp10000'||id==='b_xp7500'||id==='b_xp5000'||id==='b_xp3000'||id==='b_xp2000')return S;
-  if(id==='b_xp1000'||id==='b_xp500'||id==='b_xp250'||id==='b_xp100')return B;
+  if(id==='b_xp10000'||id==='b_xp7500'||id==='b_xp5000'||id==='b_xp3000'||id==='b_xp2000'||id==='b_xp1000')return S;
+  if(id==='b_xp500'||id==='b_xp250'||id==='b_xp100')return B;
 
   // ── NET ──
-  if(id==='b_net_master')return P;
+  if(id==='b_net_master'||id==='b_net1000'||id==='b_net750')return P;
   if(id==='b_net500'||id==='b_net300'||id==='b_net200')return G;
   if(id==='b_net150'||id==='b_net100'||id==='b_net75'||id==='b_net50')return S;
   if(id==='b_net30'||id==='b_net20'||id==='b_net15'||id==='b_net10'||id==='b_net5')return B;
@@ -16979,80 +17607,146 @@ function getTrophyMeta(b){
   if(id==='b_den10'||id==='b_den5')return S;
   if(id==='b_den3'||id==='b_den1'||id==='b_first_deneme')return B;
 
-  // ── TYT NET: +80→GÜMÜŞ, +100→ALTIN, +110→PLATİN (b_tyt_net80 kaldırılmadı ama tier düzeltildi) ──
+  // ── DENEME NET (tek denemede) ──
+  if(id==='b_den_net100')return P;
+  if(id==='b_den_mat_30')return S;
+  if(id==='b_den_mat_20'||id==='b_den_fiz_15'||id==='b_den_kim_15'||id==='b_den_bio_15')return B;
+  if(id==='b_den_tur_20'||id==='b_den_tar_15'||id==='b_den_cog_12')return B;
+
+  // ── TYT NET ──
   if(id==='b_tyt_net110')return P;
   if(id==='b_tyt_net100')return G;
   if(id==='b_tyt_net80')return S;
   if(id==='b_tyt_net50')return B;
 
-  // ── AYT NET: +50→GÜMÜŞ, +65→ALTIN, +75→PLATİN ──
+  // ── AYT NET ──
   if(id==='b_ayt_net75')return P;
   if(id==='b_ayt_net65')return G;
   if(id==='b_ayt_net50')return S;
   if(id==='b_ayt_net30')return B;
 
-  // ── YDT: +50→GÜMÜŞ, +65→ALTIN, +75→PLATİN (b_ydt_net80 kaldırılmamış ama ALTIN'a indirildi) ──
+  // ── YDT ──
   if(id==='b_ydt_net75')return P;
-  if(id==='b_ydt_net80')return G;  // mantıksız rozet ama varsa altın olsun
-  if(id==='b_ydt_net65')return G;
+  if(id==='b_ydt_net80'||id==='b_ydt_net65')return G;
   if(id==='b_ydt_net50')return S;
+  if(id==='b_ydt_full'||id==='b_ydt_10deneme')return G;
+  if(id==='b_ydt_yukselen')return S;
+  if(id==='b_ydt_ilk')return B;
 
   // ── İNGİLİZCE ──
-  // Tam konu → ALTIN, konu10 → GÜMÜŞ
   if(id==='b_ing_konu_all'||id==='b_ing_tam')return G;
   if(id==='b_ing_konu10'||id==='b_ing_fluent')return S;
   if(id==='b_ing_topic5'||id==='b_ing_grammar'||id==='b_ing_vocab'||id==='b_ing_ilk')return B;
-  // İngilizce soru: 200→GÜMÜŞ, 500→ALTIN, platin yok (ing_q1000 varsa platin)
   if(id==='b_ing_q500')return G;
   if(id==='b_ing_q200')return S;
   if(id==='b_ing_q50')return B;
-  // İngilizce XP
   if(id==='b_ing_xp2000')return G;
   if(id==='b_ing_xp500')return S;
-  // YDT (İngilizce deneme): +75→PLATİN, +65→ALTIN, +50→GÜMÜŞ
-  if(id==='b_ydt_full')return G;
-  if(id==='b_ydt_ilk')return B;
-  if(id==='b_ydt_yukselen')return S;
-  if(id==='b_ydt_10deneme')return G;
 
   // ── GÜNLÜK DAKİKA ──
-  // 3 saat(180dk)→GÜMÜŞ, 4saat(240)→GÜMÜŞ, 5saat(300)→GÜMÜŞ
-  // 6saat(360)→ALTIN, 8saat(480)→ALTIN, 10saat(600)→ALTIN
-  if(id==='b_daily600'||id==='b_daily480'||id==='b_daily360')return G;
+  if(id==='b_daily_720')return P;   // 12 saat → PLATİN
+  if(id==='b_daily600'||id==='b_daily_420'||id==='b_daily480'||id==='b_daily360')return G;
   if(id==='b_daily300'||id==='b_daily240'||id==='b_daily180'||id==='b_daily120')return S;
   if(id==='b_daily90'||id==='b_daily60'||id==='b_daily30')return B;
   if(id==='b_daily8'||id==='b_daily4')return S; // eski format (saat)
 
+  // ── GÜNLÜK XP ──
+  if(id==='b_daily_1000xp')return P;
+  if(id==='b_daily_xp200')return S;
+  if(id==='b_daily_xp100'||id==='b_daily_xp50')return B;
+
+  // ── GÜNLÜK SORU ──
+  if(id==='b_daily_q50')return S;
+  if(id==='b_daily_q20'||id==='b_daily_q10')return B;
+
+  // ── ART ARDA GÜNLÜK ÇALIŞMA SERILERI ──
+  if(id==='b_daily_2h_7streak')return G;
+  if(id==='b_daily_1h_14streak')return G;
+  if(id==='b_daily_30dk_30streak')return S;
+  if(id==='b_daily_4h_3streak')return S;
+
   // ── HAFTALIK DAKİKA ──
-  // 15saat(900)→GÜMÜŞ .. 30saat(1800)→GÜMÜŞ
-  // 35saat(2100)→ALTIN .. 65saat(3900)→ALTIN
-  // 70saat(4200)→PLATİN .. 80saat(4800)→PLATİN
-  // Mevcut rozet IDs: b_week60(1sa), b_week180(3sa), b_week300(5sa), b_week600(10sa),
-  //                   b_week900(15sa), b_week1200(20sa), b_week1800(30sa),
-  //                   b_week2400(40sa), b_week3000(50sa)
-  // Haftalık: 15-30sa → GÜMÜŞ, 35-65sa → ALTIN, 70sa+ → PLATİN
-  // Mevcut ID'ler: 1sa,3sa,5sa,10sa,15sa,20sa,30sa,40sa,50sa
+  if(id==='b_week_4800'||id==='b_week_4200'||id==='b_week_3600')return P; // 60-80 saat → PLATİN
   if(id==='b_week3000')return P;     // 50 saat → PLATİN
   if(id==='b_week2400')return G;     // 40 saat → ALTIN
-  if(id==='b_week1800')return G;     // 30 saat → ALTIN
-  if(id==='b_week1200')return S;     // 20 saat → GÜMÜŞ
+  if(id==='b_week_1500'||id==='b_week1800')return G;
+  if(id==='b_week_720'||id==='b_week1200')return S;
   if(id==='b_week900')return S;      // 15 saat → GÜMÜŞ
-  if(id==='b_week600')return B;      // 10 saat → BRONZ
-  if(id==='b_week300')return B;      // 5 saat → BRONZ
-  if(id==='b_week180')return B;      // 3 saat → BRONZ
-  if(id==='b_week60')return B;       // 1 saat → BRONZ
+  if(id==='b_week_420'||id==='b_week600')return B;
+  if(id==='b_week_120'||id==='b_week300'||id==='b_week180'||id==='b_week60')return B;
+
+  // ── HAFTALIK XP ──
+  if(id==='b_week_xp5000')return P;
 
   // ── GÖREV SAYISI ──
-  if(id==='b_task500'||id==='b_task300')return G;
+  if(id==='b_task2000'||id==='b_task1000')return P;
+  if(id==='b_task750'||id==='b_task500'||id==='b_task300')return G;
   if(id==='b_task200'||id==='b_task150'||id==='b_task100'||id==='b_task75')return S;
   if(id==='b_task50'||id==='b_task30'||id==='b_task20'||id==='b_task10'||id==='b_task5'||id==='b_task1')return B;
 
+  // ── AKTİVİTE LOG ──
+  if(id==='b_log500'||id==='b_log250')return G;
+  if(id==='b_log100')return S;
+  if(id==='b_log50')return B;
+
+  // ── SUPER ROZETLER ──
+  if(id==='b_super_500saat_1yil'||id==='b_super_allsubj10h')return P;
+  if(id==='b_super_marathon'||id==='b_super_nonstop'||id==='b_super_pro'||id==='b_super_5banka_5fasikul'||id==='b_super_100net_100boss'||id==='b_super_scholar')return G;
+  if(id==='b_super_allsubj1h'||id==='b_super_25ders_cepte'||id==='b_super_allstar'||id==='b_super_hafta')return S;
+
+  // ── ULTIMATE ROZETLER ──
+  if(id==='b_ultimate_3'||id==='b_ultimate_2')return P;
+  if(id==='b_ultimate_1')return G;
+
+  // ── YKS BÜYÜK BAŞARIMLAR ──
+  if(id==='b_yks_sampiyon')return P;
+  if(id==='b_yks_hazir'||id==='b_yks_savasci')return G;
+
+  // ── SAYISAL / SÖZEL KOMBO ──
+  if(id==='b_sayisal_500')return P;
+  if(id==='b_ayt_say_focus'||id==='b_ayt_soz_focus')return S;
+  if(id==='b_tyt_focus'||id==='b_sayisal_basl'||id==='b_sozel_basl'||id==='b_mat_geo'||id==='b_fiz_kim')return B;
+
+  // ── DOĞRULUK (İSABET) ──
+  if(id==='b_accuracy_pro')return G;
+  if(id==='b_accuracy_high')return S;
+
+  // ── MESAJ / MOTİVASYON ROZETLER ──
+  if(id==='b_msg_goat'||id==='b_msg_legend'||id==='b_msg_unstoppable')return P;
+  if(id==='b_msg_almost_there')return G;
+  if(id==='b_msg_halfway'||id==='b_msg_keep_going')return S;
+  if(id==='b_msg_start')return B;
+
+  // ── ÖZEL / AZIM ROZETLER ──
+  if(id==='b_yks_azmi'||id==='b_hedefine_kos')return G;
+  if(id==='b_azimkar'||id==='b_caliskan_ari'||id==='b_mutluluk_formulu'||id==='b_perfect_week'||id==='b_rutin_streak')return S;
+  if(id==='b_toprak_calisi'||id==='b_umut_yolculugu'||id==='b_improve_daily5'||id==='b_improve_month_growth')return B;
+
+  // ── ZAMAN ROZETLER ──
+  if(id==='b_gece_sabah_combo')return S;
+  if(id==='b_morning_evening'||id==='b_time_3days_row')return S;
+  if(id==='b_time_weekend_3h'||id==='b_time_afternoon'||id==='b_time_midnight')return B;
+  if(id==='b_calendar_every_day')return S;
+  if(id==='b_calendar_monday'||id==='b_calendar_sunday')return B;
+
+  // ── ARKADAŞ ──
+  if(id==='b_friends_10')return G;
+  if(id==='b_friends_5')return S;
+  if(id==='b_friends_3'||id==='b_arkadas_ekle')return B;
+
+  // ── ÜNİVERSİTE ──
+  if(id==='b_uni_hedef_net')return G;
+  if(id==='b_uni_5')return S;
+  if(id==='b_uni_3'||id==='b_hedef_uni'||id==='b_uni_dept'||id==='b_uni_hedef'||id==='b_uni_foto')return B;
+
+  // ── HEDEF ──
+  if(id==='b_goal_done25')return G;
+  if(id==='b_goal_done10'||id==='b_goal_create10')return S;
+  if(id==='b_goal_done5'||id==='b_goal_create5')return B;
+
   // ── EFSANELER / PLATİN ──
   if(id==='b_legend'||id==='b_efsanevi'||id==='b_allboss_banka'||id==='b_net_master'||id==='b_tum_100')return P;
-  if(id==='b_all_topics_full')return P;
-
-  // ── YKS SAVAŞÇISI ve benzeri büyük başarımlar ──
-  if(id==='b_yks_savasci')return G;
+  if(id==='b_msg_goat'||id==='b_msg_legend')return P;
 
   // ── Pattern bazlı genel kurallar ──
   if(id.includes('_king')||id.endsWith('_efsanesi'))return G;
@@ -19151,7 +19845,7 @@ async function searchDept(uid){
         ? `<span style="font-size:7px;background:rgba(30,136,229,0.15);color:var(--bl);border-radius:4px;padding:2px 5px;font-weight:800;">🤖 AI</span>`
         : `<span style="font-size:7px;background:rgba(255,255,255,0.08);color:var(--t3);border-radius:4px;padding:2px 5px;font-weight:800;">DB</span>`;
 
-    return`<div style="background:var(--c2);border-radius:11px;padding:12px;margin-bottom:7px;border:1px solid ${isFromYok?'rgba(67,160,71,0.25)':isFromClaude?'rgba(30,136,229,0.2)':'rgba(255,255,255,0.06)'};transition:border-color .2s;" onmouseenter="this.style.borderColor='rgba(124,77,255,0.4)'" onmouseleave="this.style.borderColor='${isFromYok?'rgba(67,160,71,0.25)':isFromClaude?'rgba(30,136,229,0.2)':'rgba(255,255,255,0.06)}'"">
+    return`<div style="background:var(--c2);border-radius:11px;padding:12px;margin-bottom:7px;border:1px solid ${isFromYok?'rgba(67,160,71,0.25)':isFromClaude?'rgba(30,136,229,0.2)':'rgba(255,255,255,0.06)'};transition:border-color .2s;" onmouseenter="this.style.borderColor='rgba(124,77,255,0.4)'" onmouseleave="this.style.borderColor='${isFromYok?'rgba(67,160,71,0.25)':isFromClaude?'rgba(30,136,229,0.2)':'rgba(255,255,255,0.06)'}'">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
         <div style="font-size:12px;font-weight:900;flex:1;line-height:1.3;">${d.name}</div>
         <div style="display:flex;gap:3px;flex-shrink:0;margin-left:6px;">
@@ -21177,7 +21871,7 @@ window._fbAuth = auth;
 window._fbDb   = db;
 window._fbAuth2    = { signInWithPopup, signOut, GoogleAuthProvider };
 window._fbFirestore = { doc, setDoc, getDoc, deleteDoc };
-window._fbFirestoreExtra = { collection, getDocs, query, orderBy, limit, deleteDoc, doc, addDoc };
+window._fbFirestoreExtra = { collection, getDocs, query, orderBy, limit, deleteDoc, doc, addDoc, onSnapshot };
 
 const overlay = document.getElementById('fb-login-overlay');
 
@@ -22188,3 +22882,164 @@ window.renderKutuphane=function(){
 
 window._premiumFeaturesV1Active=true;
 </script>
+
+<!-- ═══ CHROME PUSH BİLDİRİM SİSTEMİ ═══ -->
+<script>
+(function(){
+'use strict';
+
+const NOTIF_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23120c2e'/%3E%3Ctext y='46' x='10' font-size='44' font-family='system-ui'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E";
+const NOTIF_BADGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%237c4dff'/%3E%3C/svg%3E";
+
+let _notifUnsubscribe = null;
+let _notifStartTs = Date.now();
+let _swRegistration = null;
+let _notifEnabled = null;
+
+try { _notifEnabled = JSON.parse(localStorage.getItem('yksNotifEnabled')); } catch(e){}
+
+function feedItemToNotif(item){
+  const name = item.name || 'Birisi';
+  if(item.type === 'badge'){
+    const tier = {platinum:'🏆 PLATİN',gold:'🥇 ALTIN',silver:'🥈 GÜMÜŞ',bronze:'🥉 BRONZ'}[item.badgeTier||'bronze'];
+    return { title: (item.avatar||'⚔️')+' '+name, body: (item.badgeIcon||'🏅')+' "'+( item.badgeName||'Rozet')+'" kazandı! ['+tier+']', tag:'badge_'+item.ts };
+  }
+  if(item.type === 'levelup'){
+    return { title:(item.avatar||'⚔️')+' '+name, body:'⬆️ '+(item.level||'?')+'. seviyeye ulaştı!', tag:'lv_'+item.ts };
+  }
+  if(item.type === 'welcome'){
+    return { title:'🎉 Yeni Üye!', body:(item.avatar||'⚔️')+' '+name+" YKS RPG'ye katıldı!", tag:'welcome_'+item.ts };
+  }
+  return null;
+}
+
+function showNotif(n){
+  if(!n) return;
+  const opts = { body:n.body, icon:NOTIF_ICON, badge:NOTIF_BADGE, tag:n.tag, requireInteraction:false, data:{url:window.location.href} };
+  try {
+    if(_swRegistration){ _swRegistration.showNotification(n.title, opts); }
+    else { new Notification(n.title, opts); }
+  } catch(e){ console.warn('[YKS Notif]',e); }
+}
+
+async function registerSW(){
+  if(!('serviceWorker' in navigator)) return;
+  try {
+    const swCode = `self.addEventListener('notificationclick',function(e){e.notification.close();var url=e.notification.data&&e.notification.data.url;if(url){e.waitUntil(clients.openWindow(url));}});`;
+    const blob = new Blob([swCode],{type:'text/javascript'});
+    const url = URL.createObjectURL(blob);
+    _swRegistration = await navigator.serviceWorker.register(url,{scope:'./'});
+  } catch(e){ console.log('[YKS Notif] SW:',e.message); }
+}
+
+function startFeedListener(){
+  if(_notifUnsubscribe){ _notifUnsubscribe(); _notifUnsubscribe=null; }
+  const db=window._fbDb, extra=window._fbFirestoreExtra;
+  if(!db||!extra||!extra.onSnapshot) return;
+  const {collection,query,orderBy,limit,onSnapshot}=extra;
+  const q=query(collection(db,'feed'),orderBy('ts','desc'),limit(20));
+  _notifUnsubscribe=onSnapshot(q,(snap)=>{
+    snap.docChanges().forEach(change=>{
+      if(change.type!=='added') return;
+      const item={id:change.doc.id,...change.doc.data()};
+      if(!item.ts||item.ts<=_notifStartTs) return;
+      try{ if(window._fbUser&&item.uid===window._fbUser.uid) return; }catch(e){}
+      showNotif(feedItemToNotif(item));
+    });
+  },(err)=>console.warn('[YKS Notif]',err));
+  console.log('[YKS Notif] Feed dinleyici aktif');
+}
+
+async function requestAndStart(){
+  if(!('Notification' in window)){ typeof toast==='function'&&toast('Tarayıcı bildirimleri desteklemiyor 😕'); return false; }
+  let perm=Notification.permission;
+  if(perm==='default') perm=await Notification.requestPermission();
+  if(perm!=='granted'){
+    typeof toast==='function'&&toast('Bildirimler engellendi 🔕');
+    localStorage.setItem('yksNotifEnabled','false'); _notifEnabled=false; updateBellUI(); return false;
+  }
+  await registerSW();
+  _notifStartTs=Date.now();
+  waitForFirebase(startFeedListener);
+  localStorage.setItem('yksNotifEnabled','true'); _notifEnabled=true; updateBellUI();
+  typeof toast==='function'&&toast("🔔 Bildirimler açık! Etkinlikler Chrome'a gelecek.");
+  return true;
+}
+
+function disableNotifs(){
+  if(_notifUnsubscribe){ _notifUnsubscribe(); _notifUnsubscribe=null; }
+  localStorage.setItem('yksNotifEnabled','false'); _notifEnabled=false; updateBellUI();
+  typeof toast==='function'&&toast('🔕 Bildirimler kapatıldı.');
+}
+
+function updateBellUI(){
+  const btn=document.getElementById('notif-bell-btn');
+  if(!btn) return;
+  const on=_notifEnabled===true&&Notification.permission==='granted';
+  btn.style.background=on?'rgba(124,77,255,0.18)':'rgba(255,255,255,0.04)';
+  btn.style.borderColor=on?'rgba(124,77,255,0.5)':'rgba(255,255,255,0.08)';
+  btn.title=on?'Bildirimleri kapat':'Bildirimleri aç';
+  btn.innerHTML=on
+    ?'<span style="font-size:15px;line-height:1;">🔔</span><span style="font-size:6.5px;font-weight:900;color:#a78bfa;letter-spacing:.3px;margin-top:1px;">AÇIK</span>'
+    :'<span style="font-size:15px;line-height:1;">🔕</span><span style="font-size:6.5px;font-weight:800;color:var(--t3);letter-spacing:.3px;margin-top:1px;">BİLDİRİM</span>';
+}
+
+window.toggleNotifBell=async function(){
+  if(_notifEnabled===true&&Notification.permission==='granted'){ disableNotifs(); }
+  else { await requestAndStart(); }
+};
+
+function injectBellButton(){
+  if(document.getElementById('notif-bell-btn')) return;
+  const btn=document.createElement('button');
+  btn.id='notif-bell-btn';
+  btn.onclick=window.toggleNotifBell;
+  btn.style.cssText='position:fixed;top:10px;right:10px;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:42px;height:42px;border-radius:11px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);cursor:pointer;font-family:Nunito,sans-serif;backdrop-filter:blur(6px);transition:all .2s;';
+  document.body.appendChild(btn);
+  updateBellUI();
+}
+
+function showFirstPrompt(){
+  if(_notifEnabled!==null) return;
+  if(!('Notification' in window)||Notification.permission==='denied') return;
+  setTimeout(()=>{
+    if(document.getElementById('notif-prompt')) return;
+    const d=document.createElement('div');
+    d.id='notif-prompt';
+    d.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a35;border:1px solid rgba(124,77,255,0.45);border-radius:16px;padding:14px 16px;z-index:500;font-family:Nunito,sans-serif;max-width:310px;width:calc(100% - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:popIn .3s cubic-bezier(.4,0,.2,1);';
+    d.innerHTML='<div style="font-size:12px;font-weight:900;color:#fff;margin-bottom:5px;">🔔 Chrome Bildirimleri</div>'
+      +'<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:11px;line-height:1.55;">Arkadaşların rozet kazandığında veya sıralamada üst sıralara çıktığında bildirim almak ister misin?</div>'
+      +'<div style="display:flex;gap:8px;">'
+      +'<button onclick="window.toggleNotifBell().then(()=>document.getElementById('notif-prompt')?.remove())" style="flex:1;padding:9px;border-radius:9px;border:none;background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">✅ Evet, açık</button>'
+      +'<button onclick="localStorage.setItem('yksNotifEnabled','false');document.getElementById('notif-prompt')?.remove();" style="flex:1;padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">❌ Hayır</button>'
+      +'</div>';
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),18000);
+  },4000);
+}
+
+function waitForFirebase(cb,n){
+  n=n||0;
+  if(window._fbDb&&window._fbFirestoreExtra&&window._fbFirestoreExtra.onSnapshot&&window._fbUser){ cb(); }
+  else if(n<40){ setTimeout(()=>waitForFirebase(cb,n+1),500); }
+}
+
+function init(){
+  injectBellButton();
+  if(_notifEnabled===true&&Notification.permission==='granted'){
+    registerSW().then(()=>{ _notifStartTs=Date.now(); waitForFirebase(startFeedListener); });
+  } else {
+    showFirstPrompt();
+  }
+}
+
+if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>setTimeout(init,1200)); }
+else { setTimeout(init,1200); }
+
+window._yksNotif={ enable:requestAndStart, disable:disableNotifs };
+
+})();
+</script>
+
+</body>
+</html>
