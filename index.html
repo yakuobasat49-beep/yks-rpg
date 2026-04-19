@@ -442,7 +442,7 @@ input::placeholder{color:var(--t3);}
 .uni-dp{font-size:10px;font-weight:800;color:var(--t2);}
 .uni-sc{font-size:9px;color:var(--gold);font-weight:700;margin-top:2px;}
 /* OVERLAYS */
-.ov{display:none;position:fixed;inset:0;background:rgba(4,4,16,.92);align-items:center;justify-content:center;z-index:200;padding:14px;}
+.ov{display:none;position:fixed;inset:0;height:var(--vh);background:rgba(4,4,16,.92);align-items:center;justify-content:center;z-index:200;padding:14px;}
 .ov.show{display:flex;}
 @keyframes popIn{from{transform:scale(.7);opacity:0;}to{transform:scale(1);opacity:1;}}
 @keyframes trophySlideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
@@ -544,7 +544,7 @@ input::placeholder{color:var(--t3);}
 .uni-info-spinner{width:16px;height:16px;border:2px solid rgba(124,77,255,0.2);border-top-color:var(--pu);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
 
 /* ══ ONBOARDING ══ */
-.ob-ov{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;}
+.ob-ov{position:fixed;inset:0;height:var(--vh);background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;}
 .ob-ov.hide{display:none;}
 @keyframes obIn{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
 .ob-step{animation:obIn .45s cubic-bezier(.4,0,.2,1);width:100%;max-width:360px;}
@@ -703,7 +703,7 @@ input::placeholder{color:var(--t3);}
 
 /* ═══ TIMER FULLSCREEN MODE ═══ */
 #timer-fs-overlay{
-  display:none;position:fixed;inset:0;z-index:9999;
+  display:none;position:fixed;inset:0;height:var(--vh);z-index:9999;
   background:#07071a;
   flex-direction:column;align-items:center;justify-content:center;
   font-family:'Nunito',sans-serif;
@@ -953,7 +953,13 @@ input[type=text],input[type=number]{font-size:13px;padding:9px 12px;border-radiu
 .ct-s{font-size:10px;}
 
 /* TOAST */
-.toast{left:calc(var(--nav-w) + 20px);right:20px;max-width:none;bottom:20px;border-radius:12px;}
+.toast{
+  left:50%;right:auto;transform:translateX(-50%) translateY(16px);
+  max-width:calc(100% - var(--nav-w) - 40px);
+  bottom:28px;border-radius:12px;
+  text-align:center;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 
 /* NOTIF BELL */
 #notif-bell-btn{top:14px;right:16px;}
@@ -961,8 +967,8 @@ input[type=text],input[type=number]{font-size:13px;padding:9px 12px;border-radiu
 /* PWA bar */
 #pwa-install-bar{bottom:20px;left:calc(var(--nav-w) + 12px);width:calc(100% - var(--nav-w) - 24px);max-width:none;}
 
-/* Timer fullscreen */
-#timer-fs-overlay{padding-left:var(--nav-w);}
+/* Timer fullscreen — tam ekran, sidebar yok */
+#timer-fs-overlay{padding-left:0;}
 
 /* OVERLAY modals */
 .ov{z-index:200;}
@@ -1061,12 +1067,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <!-- TOURNAMENT OVERLAY -->
 <div class="ov" id="ov-trn" style="align-items:flex-end;padding:0;">
-  <div id="ov-trn-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:20px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:80vh;overflow-y:auto;"></div>
+  <div id="ov-trn-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:20px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:calc(var(--vh) * 0.80);overflow-y:auto;"></div>
 </div>
 
 <!-- KULLANIM REHBERİ -->
 <div class="ov" id="ov-guide" style="align-items:flex-end;padding:0;">
-  <div id="ov-guide-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:20px 18px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:88vh;overflow-y:auto;"></div>
+  <div id="ov-guide-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:20px 18px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:calc(var(--vh) * 0.88);overflow-y:auto;"></div>
 </div>
 
 <!-- LEVEL UP -->
@@ -1143,7 +1149,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <!-- UNI DETAIL -->
 <div class="ov" id="ov-uni" style="align-items:flex-end;padding:0;background:rgba(4,4,16,.85);">
-  <div id="uni-det-in" style="max-width:500px;width:100%;max-height:92vh;overflow-y:auto;background:var(--c1);border-radius:22px 22px 0 0;"></div>
+  <div id="uni-det-in" style="max-width:500px;width:100%;max-height:calc(var(--vh) * 0.92);overflow-y:auto;background:var(--c1);border-radius:22px 22px 0 0;"></div>
 </div>
 <!-- STREAK EDIT OVERLAY KALDIRILDI - otomatik sistem -->
 <div id="ov-streak" style="display:none;"></div>
@@ -11418,7 +11424,7 @@ function showUniDet(id){
 
   document.getElementById('uni-det-in').innerHTML=`
   <div style="background:var(--c1);border-radius:22px;overflow:hidden;max-width:500px;width:100%;
-    animation:popIn .3s cubic-bezier(.4,0,.2,1);max-height:93vh;overflow-y:auto;border:1px solid rgba(255,255,255,0.09);"
+    animation:popIn .3s cubic-bezier(.4,0,.2,1);max-height:calc(var(--vh) * 0.93);overflow-y:auto;border:1px solid rgba(255,255,255,0.09);"
     id="uni-det-scroll">
 
     <!-- ══ HEADER ══ -->
@@ -15894,7 +15900,7 @@ function qlDeletePhoto(fid,pid){
 function qlViewPhoto(src){
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
-  ov.innerHTML='<div style="max-width:460px;width:100%;position:relative;"><img src="'+src+'" style="width:100%;border-radius:14px;border:1px solid rgba(124,77,255,.3);display:block;max-height:80vh;object-fit:contain;"><button onclick="this.closest(\'div\').parentNode.remove()" style="position:absolute;top:-14px;right:-14px;width:32px;height:32px;border-radius:50%;background:#0a0a1a;border:1px solid rgba(124,77,255,.3);color:#b08fff;font-size:16px;cursor:pointer;">✕</button></div>';
+  ov.innerHTML='<div style="max-width:460px;width:100%;position:relative;"><img src="'+src+'" style="width:100%;border-radius:14px;border:1px solid rgba(124,77,255,.3);display:block;max-height:calc(var(--vh) * 0.80);object-fit:contain;"><button onclick="this.closest(\'div\').parentNode.remove()" style="position:absolute;top:-14px;right:-14px;width:32px;height:32px;border-radius:50%;background:#0a0a1a;border:1px solid rgba(124,77,255,.3);color:#b08fff;font-size:16px;cursor:pointer;">✕</button></div>';
   document.body.appendChild(ov);ov.onclick=e=>{if(e.target===ov)ov.remove();};
 }
 
@@ -15932,7 +15938,7 @@ function libShowInviteFriends(){
   ov.id='room-invite-overlay';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9998;display:flex;align-items:flex-end;justify-content:center;';
   ov.innerHTML=`
-    <div style="width:100%;max-width:500px;background:#12122a;border-radius:20px 20px 0 0;border:1px solid rgba(124,77,255,.3);border-bottom:none;padding:20px 16px 32px;max-height:75vh;display:flex;flex-direction:column;">
+    <div style="width:100%;max-width:500px;background:#12122a;border-radius:20px 20px 0 0;border:1px solid rgba(124,77,255,.3);border-bottom:none;padding:20px 16px 32px;max-height:calc(var(--vh) * 0.75);display:flex;flex-direction:column;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div style="font-size:14px;font-weight:900;color:#fff;">👥 Arkadaşını Davet Et</div>
         <button onclick="document.getElementById('room-invite-overlay').remove()" style="background:rgba(255,255,255,.08);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:14px;cursor:pointer;">✕</button>
@@ -16082,7 +16088,7 @@ function showAllRoomInvites(){
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9995;display:flex;align-items:flex-end;justify-content:center;';
   ov.innerHTML=`
-    <div style="width:100%;max-width:500px;background:#12122a;border-radius:20px 20px 0 0;border:1px solid rgba(124,77,255,.3);border-bottom:none;padding:20px 16px 32px;max-height:60vh;overflow-y:auto;">
+    <div style="width:100%;max-width:500px;background:#12122a;border-radius:20px 20px 0 0;border:1px solid rgba(124,77,255,.3);border-bottom:none;padding:20px 16px 32px;max-height:calc(var(--vh) * 0.60);overflow-y:auto;">
       <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:14px;">🏰 Oda Davetleri (${invites.length})</div>
       ${invites.map(inv=>`
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(67,160,71,.2);border-radius:12px;padding:12px;margin-bottom:8px;">
@@ -18917,7 +18923,7 @@ function _renderTourCard(step){
     </div>`:'';
 
   card.innerHTML=`
-    <div style="background:var(--c1);border:1.5px solid rgba(124,77,255,0.4);border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.7);overflow:hidden;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="background:var(--c1);border:1.5px solid rgba(124,77,255,0.4);border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.7);overflow:hidden;max-height:calc(var(--vh) * 0.80);display:flex;flex-direction:column;">
       <!-- başlık + kapat — sabit -->
       <div style="padding:14px 15px 0;flex-shrink:0;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -21448,7 +21454,7 @@ window.showUniDet = function(id) {
   const inner = document.getElementById('uni-det-in');
   if(!inner) return;
 
-  inner.innerHTML = `<div style="background:var(--c1);border-radius:22px 22px 0 0;overflow:hidden;max-height:93vh;overflow-y:auto;" id="_uds">
+  inner.innerHTML = `<div style="background:var(--c1);border-radius:22px 22px 0 0;overflow:hidden;max-height:calc(var(--vh) * 0.93);overflow-y:auto;" id="_uds">
 
     <!-- ══ HEADER BANNER ══ -->
     <div style="position:relative;height:155px;background:${bg};overflow:hidden;flex-shrink:0;">
@@ -21809,7 +21815,7 @@ console.log('✅ Uni v8 ATLAS PRO loaded —', _BD.length, 'bölüm,', Object.ke
      YASAL ONAY MODALI (İlk Kullanım)
 ═══════════════════════════════════════════ -->
 <div id="legal-consent-overlay" style="display:none;position:fixed;inset:0;background:#08081a;z-index:10000;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
-  <div style="width:100%;max-width:420px;background:#12122a;border:1px solid rgba(124,77,255,0.3);border-radius:20px;padding:24px;max-height:90vh;display:flex;flex-direction:column;">
+  <div style="width:100%;max-width:420px;background:#12122a;border:1px solid rgba(124,77,255,0.3);border-radius:20px;padding:24px;max-height:calc(var(--vh) * 0.90);display:flex;flex-direction:column;">
     <div style="text-align:center;margin-bottom:18px;">
       <div style="font-size:40px;margin-bottom:8px;">⚔️</div>
       <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:4px;">YKS RPG'ye Hoş Geldin!</div>
@@ -22721,17 +22727,17 @@ onAuthStateChanged(auth, async user => {
 
 <!-- ═══ YETENEK AĞACI OVERLAY ═══ -->
 <div class="ov" id="ov-skill" style="align-items:flex-end;padding:0;">
-  <div id="ov-skill-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:18px 16px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto;"></div>
+  <div id="ov-skill-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:18px 16px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:calc(var(--vh) * 0.90);overflow-y:auto;"></div>
 </div>
 
 <!-- ═══ AVATAR OVERLAY ═══ -->
 <div class="ov" id="ov-avatar" style="align-items:flex-end;padding:0;">
-  <div id="ov-avatar-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:18px 16px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:85vh;overflow-y:auto;"></div>
+  <div id="ov-avatar-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:18px 16px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:calc(var(--vh) * 0.85);overflow-y:auto;"></div>
 </div>
 
 <!-- ═══ LİDERLİK TABLOSU OVERLAY ═══ -->
 <div class="ov" id="ov-lb" style="align-items:flex-end;padding:0;">
-  <div id="ov-lb-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:18px 16px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:88vh;overflow-y:auto;"></div>
+  <div id="ov-lb-inner" style="background:var(--c1);border:1px solid var(--br);border-radius:17px 17px 0 0;padding:18px 16px 28px;max-width:500px;width:100%;animation:popIn .35s cubic-bezier(.4,0,.2,1);max-height:calc(var(--vh) * 0.88);overflow-y:auto;"></div>
 </div>
 
 <script>
