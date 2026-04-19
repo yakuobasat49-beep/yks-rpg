@@ -11,11 +11,8 @@
   gtag('config', 'G-58CSCJSZM8');
 </script>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="YKS RPG"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-title" content="YKS RPG PC"/>
 <meta name="theme-color" content="#08081a"/>
 <link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;YKS RPG Tracker&quot;,&quot;short_name&quot;:&quot;YKS RPG&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%2308081a&quot;,&quot;theme_color&quot;:&quot;%2308081a&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23120c2e'/%3E%3Ctext y='320' x='120' font-size='300' font-family='system-ui'%3E⚔️%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;512x512&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}"/>
 <title>YKS RPG Tracker</title>
@@ -34,18 +31,123 @@ window._fbAuth = null;
 window._fbDb = null;
 </script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-:root{--gold:#f5a623;--gl:#ffd97d;--pu:#7c4dff;--pk:#e040fb;--gr:#43a047;--rd:#e53935;--bl:#1e88e5;--bg:#08081a;--c1:#12122a;--c2:#1a1a35;--br:rgba(255,255,255,0.07);--t1:#fff;--t2:rgba(255,255,255,0.7);--t3:rgba(255,255,255,0.38);}
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--gold:#f5a623;--gl:#ffd97d;--pu:#7c4dff;--pk:#e040fb;--gr:#43a047;--rd:#e53935;--bl:#1e88e5;--bg:#08081a;--c1:#12122a;--c2:#1a1a35;--br:rgba(255,255,255,0.07);--t1:#fff;--t2:rgba(255,255,255,0.7);--t3:rgba(255,255,255,0.38);--nav-w:210px;--zoom:1;}
+/* zoom-corrected viewport height: 100vh / zoom */
+:root{--vh:calc(100vh / var(--zoom));}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-family:'Nunito',sans-serif;}
-/* Mouse tekerleği ile scroll desteği — faresi bozuk kullanıcılar için */
-#root{height:100%;display:flex;flex-direction:column;max-width:500px;margin:0 auto;overflow:hidden;}
-.page{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 12px 76px;-webkit-overflow-scrolling:touch;}
-.page::-webkit-scrollbar{display:none;}
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:500px;background:var(--c1);border-top:1px solid var(--br);display:flex;z-index:100;}
-.ni{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 2px 6px;cursor:pointer;border:none;background:none;color:var(--t3);font-family:'Nunito',sans-serif;transition:color .2s;position:relative;}
-.ni.on{color:var(--pu);}
-.ni-ico{font-size:19px;margin-bottom:1px;position:relative;}
-.ni-lbl{font-size:7px;font-weight:800;}
+
+/* ═══ PC ROOT LAYOUT ═══ */
+#root{height:100%;display:flex;flex-direction:row;max-width:100%;margin:0;overflow:hidden;}
+
+/* ═══ SIDEBAR NAV ═══ */
+.bnav{
+  position:fixed;left:0;top:0;
+  width:var(--nav-w);height:var(--vh);
+  background:var(--c1);
+  border-right:1px solid var(--br);
+  border-top:none;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  z-index:100;
+  padding:0;
+}
+/* Scrollable nav items container */
+.nav-items{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:6px 0 20px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(124,77,255,0.3) transparent;
+}
+.nav-items::-webkit-scrollbar{width:3px;}
+.nav-items::-webkit-scrollbar-thumb{background:rgba(124,77,255,0.3);border-radius:100px;}
+.nav-items::-webkit-scrollbar-track{background:transparent;}
+
+/* ═══ SIDEBAR TOGGLE ═══ */
+.bnav{transition:width .3s cubic-bezier(.4,0,.2,1), opacity .3s;}
+
+/* Sidebar header — clickable */
+.nav-header{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px 12px;
+  border-bottom:1px solid var(--br);
+  margin-bottom:0;
+  cursor:pointer;
+  user-select:none;
+  flex-shrink:0;
+  background:var(--c1);
+  position:sticky;
+  top:0;
+  z-index:2;
+}
+.nav-header:hover{background:rgba(124,77,255,0.07);border-radius:0;}
+.nav-header-ico{font-size:20px;flex-shrink:0;}
+.nav-header-txt{font-size:14px;font-weight:900;color:#fff;letter-spacing:.4px;white-space:nowrap;}
+.nav-header-arr{margin-left:auto;font-size:11px;color:var(--t3);transition:transform .3s;}
+
+/* Collapsed state */
+body.nav-collapsed{--nav-w:0px;}
+body.nav-collapsed .bnav{width:0;padding:0;border-right:none;overflow:hidden;}
+body.nav-collapsed .page{margin-left:0;}
+body.nav-collapsed #nav-toggle-btn{left:12px;}
+body.nav-collapsed #notif-bell-btn{right:16px;}
+body.nav-collapsed #pwa-install-bar{left:12px;width:calc(100% - 24px);}
+
+/* Floating hamburger — always visible when collapsed */
+#nav-toggle-btn{
+  position:fixed;top:12px;left:12px;z-index:300;
+  width:40px;height:40px;
+  background:var(--c1);
+  border:1px solid var(--br);
+  border-radius:11px;
+  display:none;
+  align-items:center;justify-content:center;
+  font-size:18px;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+  transition:left .3s;
+}
+#nav-toggle-btn:hover{background:rgba(124,77,255,0.15);}
+body.nav-collapsed #nav-toggle-btn{display:flex;}
+
+/* Overlay when sidebar open on narrow screens */
+#nav-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.5);z-index:99;
+}
+
+
+.ni{
+  flex:0 0 auto;
+  display:flex;flex-direction:row;align-items:center;
+  gap:10px;
+  padding:9px 16px;
+  margin:1px 8px;
+  cursor:pointer;border:none;background:none;
+  color:var(--t3);
+  font-family:'Nunito',sans-serif;
+  transition:all .2s;
+  position:relative;
+  border-radius:9px;
+  text-align:left;
+  width:calc(100% - 16px);
+}
+.ni:hover{background:rgba(255,255,255,0.05);color:var(--t2);}
+.ni.on{color:var(--pu);background:rgba(124,77,255,0.12);}
+.ni.on .ni-lbl{color:var(--pu);}
+.ni-ico{font-size:18px;flex-shrink:0;position:relative;}
+.ni-lbl{font-size:12px;font-weight:800;white-space:nowrap;}
+
+/* ═══ MAIN CONTENT ═══ */
+.page{
+  margin-left:var(--nav-w);
+  flex:1;
+  overflow-y:auto;overflow-x:hidden;
+  padding:20px 28px 30px;
+  height:var(--vh);
+}
 .ni-dot{position:absolute;top:-2px;right:-4px;width:8px;height:8px;background:#e53935;border-radius:50%;border:1.5px solid var(--c1);display:none;}
 .ni-dot.show{display:block;}
 /* HERO */
@@ -665,16 +767,212 @@ input::placeholder{color:var(--t3);}
   .timer-fs-digits{font-size:68px;letter-spacing:2px;}
   .timer-fs-btn{padding:12px 24px;font-size:13px;}
 }
-/* Desktop: hafif geniş görünüm */
-@media(min-width:501px){
-  #root{border-left:1px solid rgba(255,255,255,0.04);border-right:1px solid rgba(255,255,255,0.04);}
-  .bnav{border-left:1px solid rgba(255,255,255,0.04);border-right:1px solid rgba(255,255,255,0.04);}
-  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(124,77,255,.06),transparent 60%);pointer-events:none;z-index:-1;}
+/* ═══ PS NAV ARROWS ═══ */
+.nav-arrow{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  height:28px;
+  color:rgba(124,77,255,0.5);
+  font-size:13px;cursor:pointer;
+  transition:all .2s;
+  background:var(--c1);
+  border:none;width:100%;
+  user-select:none;
 }
+.nav-arrow:hover{color:var(--pu);background:rgba(124,77,255,0.07);}
+.nav-arrow:active{color:#fff;}
+.nav-arrow.hidden{opacity:0;pointer-events:none;}
+/* Active nav item PS glow */
+.ni.on{color:var(--pu);background:rgba(124,77,255,0.12);box-shadow:inset 3px 0 0 var(--pu);}
+/* PS nav pulse on arrow key */
+@keyframes navPing{0%{box-shadow:inset 3px 0 0 var(--pu),0 0 0 0 rgba(124,77,255,0.5);}100%{box-shadow:inset 3px 0 0 var(--pu),0 0 0 8px rgba(124,77,255,0);}}
+.ni.nav-ping{animation:navPing .35s ease-out;}
+html.is-mobile .nav-arrow{display:none;}
+html.is-mobile #root{flex-direction:column;max-width:100%;margin:0;overflow:hidden;}
+html.is-mobile .bnav{
+  position:fixed;
+  bottom:0;top:auto;left:0;right:0;
+  width:100%;max-width:100%;
+  transform:none;
+  height:auto;
+  flex-direction:column;
+  padding:0;border-right:none;
+  border-top:1px solid var(--br);
+  overflow:hidden;
+}
+html.is-mobile .bnav::before{display:none;}
+html.is-mobile .nav-header{display:none;}
+html.is-mobile .nav-items{
+  display:flex;
+  flex-direction:row;
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding:0;
+  flex:none;
+}
+html.is-mobile .nav-items::-webkit-scrollbar{display:none;}
+html.is-mobile .ni{
+  flex:0 0 auto;
+  min-width:52px;
+  flex-direction:column;
+  align-items:center;
+  padding:8px 4px 6px;
+  border-radius:0;
+  margin:0;
+  width:auto;
+}
+html.is-mobile .ni-lbl{font-size:7px;}
+html.is-mobile .ni-ico{font-size:19px;margin-bottom:1px;}
+html.is-mobile .page{margin-left:0;padding:12px 12px 76px;height:var(--vh);}
+html.is-mobile #nav-toggle-btn{display:none!important;}
+html.is-mobile .sg{grid-template-columns:1fr 1fr;}
+html.is-mobile .tm-grid{grid-template-columns:repeat(3,1fr);}
+html.is-mobile .bg-g{grid-template-columns:repeat(3,1fr);}
+html.is-mobile body{zoom:1!important;}
+html.is-mobile{zoom:1!important;}
+
+/* Toast PC */
+.toast{
+  position:fixed;bottom:20px;
+  left:calc(var(--nav-w) + 20px);
+  right:20px;max-width:none;
+  background:rgba(30,30,60,.95);
+  color:#fff;padding:12px 18px;
+  border-radius:12px;font-size:13px;font-weight:700;
+  z-index:9999;opacity:0;pointer-events:none;
+  transition:opacity .3s;border:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(8px);
+}
+.toast.show{opacity:1;}
+html.is-mobile .toast{left:12px;right:12px;bottom:80px;}
+
+/* ═══ MOBİL RESPONSIVE — media query ile ek destek ═══ */
+@media(max-width:768px){
+  html:not(.is-mobile) .bnav{
+    position:fixed!important;
+    bottom:0!important;top:auto!important;left:0!important;right:0!important;
+    transform:none!important;width:100%!important;height:auto!important;
+    flex-direction:column!important;padding:0!important;border-right:none!important;
+    border-top:1px solid var(--br)!important;overflow:hidden!important;
+  }
+  html:not(.is-mobile) .nav-header{display:none!important;}
+  html:not(.is-mobile) .nav-items{
+    display:flex!important;flex-direction:row!important;width:100%!important;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    -webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;
+    padding:0!important;flex:none!important;
+  }
+  html:not(.is-mobile) .ni{
+    flex:0 0 auto!important;min-width:52px!important;
+    flex-direction:column!important;align-items:center!important;
+    padding:8px 4px 6px!important;border-radius:0!important;margin:0!important;width:auto!important;
+  }
+  html:not(.is-mobile) .ni-lbl{font-size:7px!important;}
+  html:not(.is-mobile) .ni-ico{font-size:19px!important;margin-bottom:1px!important;}
+  html:not(.is-mobile) .page{margin-left:0!important;padding:12px 12px 76px!important;height:var(--vh)!important;}
+  html:not(.is-mobile) #nav-toggle-btn{display:none!important;}
+  html:not(.is-mobile) #root{flex-direction:column!important;}
+}
+
+/* ═══ MOBİL: nav-items içinde is-mobile'da içerik görünür ═══ */
+
+.ni-dot{position:absolute;top:2px;right:2px;width:8px;height:8px;background:#e53935;border-radius:50%;border:1.5px solid var(--c1);display:none;}
+.ni-dot.show{display:block;}
+
+/* HERO larger on PC */
+.hero{padding:18px 20px;margin-bottom:14px;}
+.av{width:68px;height:68px;font-size:30px;}
+.h-nm{font-size:17px;}
+.h-rk{font-size:11px;}
+.xpr span{font-size:10px;}
+.sc .v{font-size:14px;}
+.sc .l{font-size:8px;}
+
+/* SECTIONS & CARDS */
+.sec{font-size:11px;margin:14px 0 8px;}
+.card{padding:16px;border-radius:13px;}
+
+/* SUBJECT GRID - 3 cols on PC */
+.sg{grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.sk{padding:13px;}
+.sk-n{font-size:12px;}
+.sk-x{font-size:10px;}
+.sk-st{font-size:10px;}
+
+/* INPUTS */
+input[type=text],input[type=number]{font-size:13px;padding:9px 12px;border-radius:9px;}
+
+/* BUTTONS */
+.btn{padding:10px 14px;font-size:13px;border-radius:10px;}
+
+/* NET STATS */
+.ns-v{font-size:16px;}
+.ns-l{font-size:9px;}
+.bs-v{font-size:18px;}
+.bs-l{font-size:9px;}
+
+/* TOPIC MAP - 4 cols on PC */
+.tm-grid{grid-template-columns:repeat(4,1fr);gap:7px;}
+.tm-tn{font-size:10px;}
+.tm-pct{font-size:13px;}
+
+/* BADGES - 4 cols on PC */
+.bg-g{grid-template-columns:repeat(5,1fr);gap:8px;}
+.bg-ico{font-size:26px;}
+.bg-n{font-size:9px;}
+
+/* BOSS */
+.boss-nm{font-size:22px;}
+.boss-em{font-size:72px;}
+
+/* BAR CHART */
+.bc{height:140px;}
+.bd{font-size:9px;}
+.bv{font-size:8px;}
+
+/* STATS BARS */
+.sn{width:90px;font-size:10px;}
+.sv{font-size:10px;}
+
+/* LOG */
+.li{padding:9px 12px;}
+.li-t{font-size:11px;}
+.li-x{font-size:11px;}
+
+/* DAILY */
+.dc{padding:14px;}
+.dc-t{font-size:14px;}
+.dc-d{font-size:10px;}
+.gt{font-size:11px;}
+
+/* CUSTOM TASK */
+.ct-n{font-size:12px;}
+.ct-s{font-size:10px;}
+
+/* TOAST */
+.toast{left:calc(var(--nav-w) + 20px);right:20px;max-width:none;bottom:20px;border-radius:12px;}
+
+/* NOTIF BELL */
+#notif-bell-btn{top:14px;right:16px;}
+
+/* PWA bar */
+#pwa-install-bar{bottom:20px;left:calc(var(--nav-w) + 12px);width:calc(100% - var(--nav-w) - 24px);max-width:none;}
+
+/* Timer fullscreen */
+#timer-fs-overlay{padding-left:var(--nav-w);}
+
+/* OVERLAY modals */
+.ov{z-index:200;}
+
+/* Desktop media query */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(124,77,255,.06),transparent 60%);pointer-events:none;z-index:-1;}
 
 </style>
 <style>
-#pwa-install-bar{display:none;position:fixed;bottom:76px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:476px;background:linear-gradient(135deg,#1a1a35,#12122a);border:1.5px solid rgba(124,77,255,0.45);border-radius:14px;padding:11px 14px;z-index:200;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+#pwa-install-bar{display:none;position:fixed;bottom:20px;left:calc(var(--nav-w) + 12px);width:calc(100% - var(--nav-w) - 24px);background:linear-gradient(135deg,#1a1a35,#12122a);border:1.5px solid rgba(124,77,255,0.45);border-radius:14px;padding:11px 14px;z-index:200;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
 #pwa-install-bar.show{display:flex;}
 .pwa-txt{flex:1;min-width:0;}
 .pwa-ttl{font-size:11px;font-weight:900;color:#fff;margin-bottom:1px;}
@@ -684,6 +982,28 @@ input::placeholder{color:var(--t3);}
 </style>
 </head>
 <body>
+<script>
+// ═══ PC / MOBİL ALGILAMA + OTO ZOOM ═══
+(function(){
+  var ua=navigator.userAgent;
+  var isMobile=/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|webOS/i.test(ua)
+    ||(navigator.maxTouchPoints>1&&window.innerWidth<900);
+  if(isMobile){
+    var mv=document.querySelector('meta[name=viewport]');
+    if(mv)mv.content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no';
+    document.documentElement.classList.add('is-mobile');
+    document.documentElement.style.setProperty('--zoom','1');
+  } else {
+    // PC: otomatik %175 zoom
+    var Z=1.75;
+    document.documentElement.style.zoom=Z;
+    document.documentElement.style.setProperty('--zoom',Z);
+    document.documentElement.classList.add('is-pc');
+  }
+})();
+</script>
+<div id="nav-toggle-btn" onclick="toggleSidebar()" title="Menüyü Aç">☰</div>
+<div id="nav-overlay" onclick="toggleSidebar()"></div>
 <div id="root">
   <div class="page" id="page"></div>
   <nav class="bnav" id="bnav"></nav>
@@ -693,20 +1013,26 @@ input::placeholder{color:var(--t3);}
 (function(){
 // [REMOVED DEAD CODE: getPage() — superseded by definition below]
   // 1) Mouse wheel — sayfa dışında bile çalışsın
+  // Not: nav-items sidebar üzerindeyse müdahale etme, kendi scroll etsin
   document.addEventListener('wheel', function(e){
+    const bnav = document.getElementById('bnav');
+    if(bnav && bnav.contains(e.target)) return;
     const page = getPage(); if(!page) return;
     page.scrollTop += e.deltaY;
   }, {passive:true});
 
-  // 2) Klavye ile scroll (ArrowDown/Up, PageDown/Up, Space, End, Home)
+  // 2) Klavye ile scroll + PS tarzı sekme navigasyonu
   document.addEventListener('keydown', function(e){
     const page = getPage(); if(!page) return;
     // Input/textarea odaklanmışsa müdahale etme
     const tag = document.activeElement && document.activeElement.tagName;
     if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    // PC modunda ArrowUp/Down = sekme değiştir (PS tarzı)
+    if(!document.documentElement.classList.contains('is-mobile')){
+      if(e.key === 'ArrowDown' && !e.shiftKey && !e.ctrlKey){ e.preventDefault(); if(typeof navStep==='function') navStep(1); return; }
+      if(e.key === 'ArrowUp'   && !e.shiftKey && !e.ctrlKey){ e.preventDefault(); if(typeof navStep==='function') navStep(-1); return; }
+    }
     const map = {
-      'ArrowDown': 80,
-      'ArrowUp': -80,
       'PageDown': page.clientHeight * 0.85,
       'PageUp': -(page.clientHeight * 0.85),
       'End': 999999,
@@ -16252,12 +16578,20 @@ function recalcLevel(){ /* no-op: seviye getLvl(S.xp) ile anlık hesaplanır */ 
 // renderAll: mevcut sekmeyi yeniden render et
 function renderAll(){ nav(S.curTab||'home'); }
 
-function nav(tab){
+function nav(tab,fromKey){
   if(tab!=="ranking"&&typeof stopRankingAutoRefresh==="function")stopRankingAutoRefresh();
   S.curTab=tab;
-  document.querySelectorAll('.ni').forEach(b=>b.classList.remove('on'));
-  document.getElementById('nav-'+tab).classList.add('on');
+  document.querySelectorAll('.ni').forEach(b=>b.classList.remove('on','nav-ping'));
+  const activeBtn=document.getElementById('nav-'+tab);
+  if(activeBtn){
+    activeBtn.classList.add('on');
+    // PS tarzı: aktif sekmeyi görünür yap
+    if(fromKey) activeBtn.classList.add('nav-ping');
+    setTimeout(()=>activeBtn.classList.remove('nav-ping'),400);
+    activeBtn.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
   document.getElementById('page').scrollTop=0;
+  updateNavArrows();
   // Kütüphane sekmesine geçince public odaları tazele
   if(tab==='kutuphane'){
     const stale=!window._pubRoomsTs||(Date.now()-window._pubRoomsTs)>60000;
@@ -16266,8 +16600,40 @@ function nav(tab){
   ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings})[tab]?.();
   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
 }
+function updateNavArrows(){
+  const idx=TABS.findIndex(t=>t.id===S.curTab);
+  const up=document.getElementById('nav-arrow-up');
+  const dn=document.getElementById('nav-arrow-dn');
+  if(up) up.classList.toggle('hidden', idx<=0);
+  if(dn) dn.classList.toggle('hidden', idx>=TABS.length-1);
+}
+function navStep(dir){
+  const idx=TABS.findIndex(t=>t.id===S.curTab);
+  const next=TABS[idx+dir];
+  if(next) nav(next.id, true);
+}
+function toggleSidebar(){
+  document.body.classList.toggle('nav-collapsed');
+  const collapsed=document.body.classList.contains('nav-collapsed');
+  localStorage.setItem('yks_nav_collapsed', collapsed?'1':'0');
+  // overlay only on narrow screens
+  const ov=document.getElementById('nav-overlay');
+  if(ov) ov.style.display='none';
+}
 function buildNav(){
-  document.getElementById('bnav').innerHTML=TABS.map(t=>`<button class="ni" id="nav-${t.id}" onclick="nav('${t.id}')"><span class="ni-ico">${t.ico}<span class="ni-dot" id="dot-${t.id}"></span></span><span class="ni-lbl">${t.lbl}</span></button>`).join('');
+  const header=`<div class="nav-header" onclick="toggleSidebar()" title="Menüyü Kapat">
+    <span class="nav-header-ico">⚔️</span>
+    <span class="nav-header-txt">YKS RPG</span>
+    <span class="nav-header-arr">◀</span>
+  </div>`;
+  const arrowUp=`<button class="nav-arrow hidden" id="nav-arrow-up" onclick="navStep(-1)" title="Yukarı sekme">▲</button>`;
+  const arrowDn=`<button class="nav-arrow" id="nav-arrow-dn" onclick="navStep(1)" title="Aşağı sekme">▼</button>`;
+  const items=`<div class="nav-items">`+TABS.map(t=>`<button class="ni" id="nav-${t.id}" onclick="nav('${t.id}')"><span class="ni-ico">${t.ico}<span class="ni-dot" id="dot-${t.id}"></span></span><span class="ni-lbl">${t.lbl}</span></button>`).join('')+`</div>`;
+  document.getElementById('bnav').innerHTML=header+arrowUp+items+arrowDn;
+  // restore collapsed state
+  if(localStorage.getItem('yks_nav_collapsed')==='1'){
+    document.body.classList.add('nav-collapsed');
+  }
 }
 function updateFriendReqBadge(){
   const count=(S.friendRequests||[]).length;
@@ -23201,7 +23567,7 @@ function showFirstPrompt(){
     if(document.getElementById('notif-prompt')) return;
     const d=document.createElement('div');
     d.id='notif-prompt';
-    d.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a35;border:1px solid rgba(124,77,255,0.45);border-radius:16px;padding:14px 16px;z-index:500;font-family:Nunito,sans-serif;max-width:310px;width:calc(100% - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:popIn .3s cubic-bezier(.4,0,.2,1);';
+    d.style.cssText='position:fixed;bottom:80px;left:calc(var(--nav-w, 210px) + 20px);transform:none;background:#1a1a35;border:1px solid rgba(124,77,255,0.45);border-radius:16px;padding:14px 16px;z-index:500;font-family:Nunito,sans-serif;max-width:310px;width:calc(100% - var(--nav-w, 210px) - 40px);box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:popIn .3s cubic-bezier(.4,0,.2,1);';
     d.innerHTML='<div style="font-size:12px;font-weight:900;color:#fff;margin-bottom:5px;">🔔 Chrome Bildirimleri</div>'
       +'<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:11px;line-height:1.55;">Arkadaşların rozet kazandığında veya sıralamada üst sıralara çıktığında bildirim almak ister misin?</div>'
       +'<div style="display:flex;gap:8px;">'
