@@ -4411,6 +4411,28 @@ function mkState(){
     _avCat:'all',
     sentFriendRequests:{},  // {uid: timestamp} — gönderilen istekler (buton durumu + tekrar engeli)
     rejectedFriendRequests:{},  // {uid: timestamp} — reddedilen istekler (tekrar istek engeli)
+    // ═══ YENİ ÖZELLİKLER ═══
+    // Combo sistemi
+    comboCount:0,          // ardışık görev sayacı
+    comboLastTs:0,         // son görev zamanı
+    comboPeakToday:0,      // bugünkü en yüksek combo
+    // Görev zinciri
+    chainMissions:[],      // aktif zincir görevler [{id,title,icon,subj,type,target,progress,xpReward,streak,streakReq,expiresAt}]
+    chainLastReset:null,   // son zincir sıfırlama tarihi
+    // Haftalık turnuva
+    tourneyWeek:null,      // o anki turnuva haftası (ISO week string)
+    tourneyXp:0,           // bu haftaki turnuva XP'si
+    tourneyLastReset:null, // son sıfırlanma zamanı
+    // Pomodoro
+    pomodoroMode:false,    // pomodoro aktif mi
+    pomodoroWork:25,       // çalışma süresi (dk)
+    pomodoroBreak:5,       // mola süresi (dk)
+    pomodoroSession:0,     // tamamlanan pomodoro sayısı
+    pomodoroPhase:'work',  // 'work' | 'break'
+    pomodoroStartTs:null,  // faz başlangıcı
+    pomodoroSecsLeft:0,    // kalan saniye
+    // Haftalık rapor
+    weekReportSeen:null,   // son görülen rapor haftası
   };
 }
 
@@ -5398,14 +5420,26 @@ function addLog(ico,txt,xp,meta){
   // daySlot: bu entry hangi haftalık slot'ta → silme sırasında doğru slot'tan çıkarmak için
   S.log.unshift({id:S.logId++,ico,txt,xp,ts:Date.now(),daySlot:dIdx(),meta:meta||null});
   if(S.log.length>600) S.log=S.log.slice(0,500); // log maksimum 500 girişle sınırlı
-  
-  // ✨ YENİ: Soru tipine göre ses ve titreşim
+
+  // ── Combo & Zincir tetikle ──
+  const mtype = meta?.type;
+  if(mtype==='topic'||mtype==='question'||mtype==='minute'||mtype==='custom'||mtype==='task'){
+    // Turnuva XP
+    S.tourneyXp = (S.tourneyXp||0) + xp;
+    checkTourneyReset();
+    // Combo
+    if(mtype!=='minute') triggerCombo();
+    // Zincir
+    if(mtype==='topic'||mtype==='task') updateChainProgress('task', meta?.subjId, 1);
+    if(mtype==='question') updateChainProgress('questions', null, meta?.questions||1);
+    if(mtype==='minute') updateChainProgress('minutes', null, meta?.mins||5);
+  }
+
+  // ✨ Soru tipine göre ses ve titreşim
   if(meta&&meta.type==='question'){
     if(meta.correct&&meta.correct>0&&meta.wrong===0){
-      // ✓ Tamamen doğru
       playSound('success');
     } else if(meta.wrong&&meta.wrong>0){
-      // ✗ Yanlış var
       playSound('error');
     }
   }
@@ -6120,6 +6154,10 @@ window.addEventListener('pagehide',function(){
 });
 
 function renderHome(){
+  // Haftalık rapor kontrolü (Pazartesi günü)
+  checkWeeklyReport();
+  checkTourneyReset();
+  initChainMissions();
   // Her render öncesi ders istatistiklerini log'dan güncelle
   recalcSubjectStatsFromLog();
   // Timer restore (timestamp-based, no interval on renderHome)
@@ -6326,6 +6364,7 @@ function renderHome(){
 
   document.getElementById('page').innerHTML=heroH()+
     `<div class="timer-ring-wrap">${timerCardHTML()}</div>
+    <div class="card" style="margin-bottom:10px;" id="pomodoro-widget"></div>
     <div class="sec">📚 Dersler</div><div class="sg">${sCards}</div>${tp}
     <div class="card" style="margin-top:8px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -6358,8 +6397,9 @@ function renderHome(){
       </button>`:''}
     </div>`:''}
     ${logH}`;
+  // Pomodoro widget'ı renderHome sonrası güncelle
+  setTimeout(()=>{ if(typeof updatePomodoroDOM==='function') updatePomodoroDOM(); }, 50);
 }
-
 
 function selSubj(id){
   // Toggle: same subject clicked again = deselect
@@ -16574,8 +16614,11 @@ const TABS=[
   {id:'badges',ico:'🏅',lbl:'Rozetler'},
   {id:'stats',ico:'📊',lbl:'İstatistik'},
   {id:'boss',ico:'👹',lbl:'Boss'},
+  {id:'gboss',ico:'🐉',lbl:'Grup Boss'},
   {id:'kutuphane',ico:'📖',lbl:'Kütüphane'},
   {id:'ranking',ico:'🏆',lbl:'Sıralama'},
+  {id:'tourney',ico:'⚡',lbl:'Turnuva'},
+  {id:'chain',ico:'🔗',lbl:'Zincir'},
   {id:'settings',ico:'⚙️',lbl:'Ayarlar'},
 ];
 
@@ -16603,7 +16646,7 @@ function nav(tab,fromKey){
     const stale=!window._pubRoomsTs||(Date.now()-window._pubRoomsTs)>60000;
     if(stale){window._pubRooms=null;loadPublicRooms();}
   }
-  ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings})[tab]?.();
+  ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings,tourney:renderTourney,chain:renderChain,gboss:()=>renderGroupBoss(null)})[tab]?.();
   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
 }
 function updateNavArrows(){
@@ -16626,6 +16669,680 @@ function toggleSidebar(){
   const ov=document.getElementById('nav-overlay');
   if(ov) ov.style.display='none';
 }
+
+// ═══════════════════════════════════════════════
+// ⚡ 1. COMBO SİSTEMİ
+// ═══════════════════════════════════════════════
+const COMBO_WINDOW_MS = 10 * 60 * 1000; // 10 dakika içinde görev → combo
+const COMBO_BONUSES = [0,0,0,5,10,15,25,40]; // [0..7+] indeks=combo, bonus XP
+function getComboBonus(n){ return COMBO_BONUSES[Math.min(n, COMBO_BONUSES.length-1)] || (n>=7?50:0); }
+function comboMultLabel(n){
+  if(n<3)return null;
+  if(n<5)return{txt:'COMBO x'+n+'🔥',col:'#f5a623'};
+  if(n<7)return{txt:'SÜPER COMBO x'+n+'🔥🔥',col:'#e040fb'};
+  return{txt:'EFSANE COMBO x'+n+'⚡🔥',col:'#ff5252'};
+}
+
+function triggerCombo(){
+  const now = Date.now();
+  const elapsed = now - (S.comboLastTs||0);
+  if(elapsed > COMBO_WINDOW_MS) S.comboCount = 0; // süresi geçmiş, sıfırla
+  S.comboCount = (S.comboCount||0) + 1;
+  S.comboLastTs = now;
+  if(S.comboCount > (S.comboPeakToday||0)) S.comboPeakToday = S.comboCount;
+
+  const bonus = getComboBonus(S.comboCount);
+  const lbl = comboMultLabel(S.comboCount);
+
+  if(bonus > 0){
+    S.xp += bonus;
+    addWXP(bonus);
+    S.tourneyXp = (S.tourneyXp||0) + bonus;
+    if(lbl){
+      playSound('combo');
+      setTimeout(()=>showComboFX(lbl.txt, lbl.col, bonus), 200);
+    } else {
+      toast(`🔥 Combo x${S.comboCount}! +${bonus} bonus XP`);
+    }
+  }
+  return bonus;
+}
+
+function showComboFX(txt, col, bonus){
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;top:30%;left:50%;transform:translateX(-50%) scale(0.5);
+    background:linear-gradient(135deg,${col}22,${col}11);border:2px solid ${col};
+    border-radius:20px;padding:14px 28px;z-index:9999;font-family:Nunito,sans-serif;
+    text-align:center;pointer-events:none;
+    animation:comboFX .9s cubic-bezier(.4,0,.2,1) forwards;`;
+  el.innerHTML = `<div style="font-size:18px;font-weight:900;color:${col};">${txt}</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px;">+${bonus} bonus XP</div>`;
+  if(!document.getElementById('_comboStyle')){
+    const s=document.createElement('style');s.id='_comboStyle';
+    s.textContent=`@keyframes comboFX{0%{opacity:0;transform:translateX(-50%) scale(0.5)}
+      30%{opacity:1;transform:translateX(-50%) scale(1.15)}
+      70%{opacity:1;transform:translateX(-50%) scale(1)}
+      100%{opacity:0;transform:translateX(-50%) scale(0.9) translateY(-30px)}}`;
+    document.head.appendChild(s);
+  }
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1000);
+}
+
+// ═══════════════════════════════════════════════
+// 🔗 2. GÖREV ZİNCİRİ
+// ═══════════════════════════════════════════════
+const CHAIN_TEMPLATES = [
+  {id:'mat7',title:'Matematik Ustası',icon:'📐',subj:'mat',type:'tasks',target:3,xpReward:80,streakReq:3,desc:'3 gün üst üste 3+ Matematik görevi'},
+  {id:'tur7',title:'Türkçe Şampiyonu',icon:'📚',subj:'tur',type:'tasks',target:3,xpReward:80,streakReq:3,desc:'3 gün üst üste 3+ Türkçe görevi'},
+  {id:'fiz5',title:'Fizik Kaşifi',icon:'⚡',subj:'fiz',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Fizik görevi'},
+  {id:'kim5',title:'Kimya Sihirbazı',icon:'🧪',subj:'kim',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Kimya görevi'},
+  {id:'bio5',title:'Biyoloji Avcısı',icon:'🌿',subj:'bio',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Biyoloji görevi'},
+  {id:'q50',title:'Soru Makinesi',icon:'✏️',subj:null,type:'questions',target:20,xpReward:100,streakReq:3,desc:'3 gün üst üste 20+ soru'},
+  {id:'time3',title:'Çalışkan Öğrenci',icon:'⏱️',subj:null,type:'minutes',target:60,xpReward:90,streakReq:3,desc:'3 gün üst üste 60+ dakika çalışma'},
+  {id:'all5',title:'Her Şeyden Bir Tık',icon:'🎯',subj:null,type:'tasks',target:5,xpReward:120,streakReq:5,desc:'5 gün üst üste 5+ görev'},
+];
+
+function getISOWeek(d){ const t=new Date(d);t.setHours(0,0,0,0);t.setDate(t.getDate()+3-(t.getDay()+6)%7);const w=new Date(t.getFullYear(),0,4);return Math.round(((t-w)/86400000-3+(w.getDay()+6)%7)/7)+1; }
+function weekKey(){ const n=new Date();return n.getFullYear()+'-W'+getISOWeek(n); }
+
+function initChainMissions(){
+  const today = toDS();
+  if(S.chainLastReset !== today){
+    S.chainLastReset = today;
+    // Her gün günün progress'ini sıfırla ama streak'i koru
+    if(!S.chainMissions || !S.chainMissions.length){
+      S.chainMissions = CHAIN_TEMPLATES.slice(0,4).map(t=>({...t,progress:0,streak:0,completedToday:false}));
+    } else {
+      S.chainMissions.forEach(m=>{
+        if(m.completedToday){ m.streak=(m.streak||0)+1; } 
+        else { m.streak=0; } // gün kaçırıldı, zincir kırıldı
+        m.progress=0; m.completedToday=false;
+      });
+    }
+    save();
+  }
+}
+
+function updateChainProgress(type, subjId, amount){
+  if(!S.chainMissions) return;
+  initChainMissions();
+  let anyCompleted = false;
+  S.chainMissions.forEach(m=>{
+    if(m.completedToday) return;
+    let matches = false;
+    if(m.type==='tasks' && type==='task') matches = (!m.subj || m.subj===subjId);
+    if(m.type==='questions' && type==='questions') matches = true;
+    if(m.type==='minutes' && type==='minutes') matches = true;
+    if(!matches) return;
+    m.progress = (m.progress||0) + amount;
+    if(m.progress >= m.target){
+      m.completedToday = true;
+      anyCompleted = true;
+      const totalStreak = (m.streak||0) + 1;
+      // Zincir tamamlandı mı?
+      if(totalStreak >= m.streakReq){
+        const reward = m.xpReward;
+        S.xp += reward; addWXP(reward);
+        S.tourneyXp = (S.tourneyXp||0) + reward;
+        save(); maybeLU(S.xp-reward);
+        setTimeout(()=>showChainReward(m, reward), 300);
+        if(typeof pushFeedEvent==='function') pushFeedEvent('chain',{chainTitle:m.title,chainIcon:m.icon,xp:reward});
+      } else {
+        toast(`🔗 ${m.icon} ${m.title}: ${totalStreak}/${m.streakReq} gün! Devam et!`);
+      }
+    }
+  });
+  if(anyCompleted) save();
+}
+
+function showChainReward(m, xp){
+  const el=document.createElement('div');
+  el.style.cssText=`position:fixed;inset:0;height:var(--vh);background:rgba(0,0,0,0.85);
+    z-index:10000;display:flex;align-items:center;justify-content:center;
+    font-family:Nunito,sans-serif;animation:_bannerIn .4s ease;`;
+  el.innerHTML=`<div style="background:linear-gradient(135deg,#1a0a40,#0a1a30);border:2px solid #f5a623;
+    border-radius:24px;padding:32px 28px;text-align:center;max-width:300px;width:90%;
+    box-shadow:0 0 60px rgba(245,166,35,0.3);">
+    <div style="font-size:54px;margin-bottom:12px;">${m.icon}</div>
+    <div style="font-size:10px;font-weight:900;color:#f5a623;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">🔗 ZİNCİR TAMAMLANDI</div>
+    <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:6px;">${m.title}</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:20px;">${m.streakReq} gün üst üste başardın!</div>
+    <div style="font-size:32px;font-weight:900;color:#f5a623;margin-bottom:20px;">+${xp} XP 🏆</div>
+    <button onclick="this.closest('[style]').remove()" style="background:linear-gradient(135deg,#7c4dff,#e040fb);border:none;
+      border-radius:12px;color:#fff;padding:12px 32px;font-size:14px;font-weight:900;cursor:pointer;
+      font-family:Nunito,sans-serif;width:100%;">🎉 Harika!</button>
+  </div>`;
+  document.body.appendChild(el);
+  playSound('badge');
+}
+
+function renderChain(){
+  initChainMissions();
+  const pg=document.getElementById('page');
+  const today=toDS();
+
+  const cards = (S.chainMissions||[]).map((m,i)=>{
+    const pct = Math.min(100, Math.round((m.progress||0)/m.target*100));
+    const streak = m.streak||0;
+    const done = m.completedToday;
+    const streakDots = Array.from({length:m.streakReq},(_,j)=>{
+      const filled = j < streak + (done?1:0);
+      return `<div style="width:14px;height:14px;border-radius:50%;
+        background:${filled?'#f5a623':'rgba(255,255,255,0.1)'};
+        border:1.5px solid ${filled?'#f5a623':'rgba(255,255,255,0.2)'};" title="Gün ${j+1}"></div>`;
+    }).join('');
+    return `<div style="background:${done?'rgba(67,160,71,0.08)':'var(--c1)'};border:1.5px solid ${done?'rgba(67,160,71,0.4)':'var(--br)'};
+      border-radius:14px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:28px;">${m.icon}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:900;color:${done?'var(--gr)':'#fff'};">${m.title} ${done?'✅':''}</div>
+          <div style="font-size:9px;color:var(--t3);margin-top:2px;">${m.desc}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;font-weight:900;color:#f5a623;">${m.progress||0}/${m.target}</div>
+          <div style="font-size:9px;color:var(--t3);">+${m.xpReward} XP</div>
+        </div>
+      </div>
+      <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;margin-bottom:8px;">
+        <div style="width:${pct}%;height:100%;background:${done?'var(--gr)':'linear-gradient(90deg,#7c4dff,#e040fb)'};border-radius:100px;transition:width .4s;"></div>
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <span style="font-size:9px;color:var(--t3);margin-right:4px;">Zincir:</span>
+        ${streakDots}
+        <span style="font-size:9px;color:#f5a623;margin-left:auto;">${streak+(done?1:0)}/${m.streakReq} gün</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Combo bilgisi
+  const comboAge = Date.now() - (S.comboLastTs||0);
+  const comboActive = comboAge < COMBO_WINDOW_MS;
+  const comboLeft = comboActive ? Math.ceil((COMBO_WINDOW_MS - comboAge)/60000) : 0;
+  const comboHTML = `<div style="background:linear-gradient(135deg,rgba(245,166,35,0.1),rgba(124,77,255,0.08));
+    border:1px solid rgba(245,166,35,0.3);border-radius:14px;padding:14px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="font-size:32px;">${comboActive?'🔥':'💤'}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:900;color:#f5a623;">Combo Sistemi</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:2px;">${comboActive?`Aktif! ${comboLeft} dk kaldı · x${S.comboCount||0} combo`:'10 dakika içinde görev tamamla → bonus XP!'}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:22px;font-weight:900;color:#f5a623;">${S.comboCount||0}x</div>
+        <div style="font-size:9px;color:var(--t3);">Bugün max: ${S.comboPeakToday||0}</div>
+      </div>
+    </div>
+  </div>`;
+
+  pg.innerHTML = `
+    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">⚡ COMBO & ZINCIR</div>
+    ${comboHTML}
+    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">🔗 GÖREV ZİNCİRLERİ</div>
+    ${cards}
+    <button onclick="resetChainMissions()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--br);
+      background:transparent;color:var(--t3);font-size:10px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;margin-top:4px;">
+      🔄 Zincirleri Sıfırla (Debug)
+    </button>`;
+}
+
+function resetChainMissions(){
+  if(!confirm('Tüm zincirleri sıfırla?'))return;
+  S.chainMissions=[];S.chainLastReset=null;save();renderChain();
+}
+
+// ═══════════════════════════════════════════════
+// 🏆 3. HAFTALIK TURNUVA
+// ═══════════════════════════════════════════════
+function getTourneyWeek(){ return weekKey(); }
+
+function checkTourneyReset(){
+  const wk = getTourneyWeek();
+  if(S.tourneyWeek !== wk){
+    // Yeni hafta — skoru Firebase'e yaz ve sıfırla
+    if(S.tourneyWeek && S.tourneyXp > 0 && typeof pushTourneyScore==='function'){
+      pushTourneyScore(S.tourneyWeek, S.tourneyXp).catch(()=>{});
+    }
+    S.tourneyWeek = wk;
+    S.tourneyXp = 0;
+    S.tourneyLastReset = Date.now();
+    save();
+  }
+}
+
+async function pushTourneyScore(week, xp){
+  if(!_fbUser||!window._fbDb) return;
+  const {doc,setDoc}=window._fbFirestore||{};
+  if(!doc||!setDoc) return;
+  try{
+    await setDoc(doc(window._fbDb,'tourney',week,'scores',_fbUser.uid),{
+      uid:_fbUser.uid, name:S.myName||'YKS Savaşçısı',
+      avatar:S.avatarEmoji||'⚔️', xp, ts:Date.now(),
+      level:getLvl(S.xp)
+    });
+  }catch(e){console.warn('[Tourney]',e);}
+}
+
+async function fetchTourneyScores(week){
+  if(!window._fbDb) return [];
+  const {collection,getDocs,query,orderBy,limit}=window._fbFirestoreExtra||{};
+  if(!collection) return [];
+  try{
+    const q=query(collection(window._fbDb,'tourney',week,'scores'),orderBy('xp','desc'),limit(50));
+    const snap=await getDocs(q);
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){ return []; }
+}
+
+async function renderTourney(){
+  checkTourneyReset();
+  // Her görev tamamlandığında skoru güncelle
+  if(S.tourneyXp>0) pushTourneyScore(S.tourneyWeek, S.tourneyXp).catch(()=>{});
+
+  const pg=document.getElementById('page');
+  pg.innerHTML=`<div style="text-align:center;padding:40px;color:var(--t3);">⏳ Turnuva yükleniyor...</div>`;
+
+  const wk = getTourneyWeek();
+  const scores = await fetchTourneyScores(wk);
+
+  const myRank = scores.findIndex(s=>s.uid===(_fbUser?.uid))+1;
+  const myScore = scores.find(s=>s.uid===(_fbUser?.uid));
+
+  // Puan sıralaması
+  const rows = scores.map((s,i)=>{
+    const isMe = s.uid===(_fbUser?.uid);
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
+    const prizes = ['3000 bonus XP 🎁','2000 bonus XP','1000 bonus XP','500 bonus XP','200 bonus XP'];
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+      margin-bottom:5px;background:${isMe?'rgba(124,77,255,0.15)':'rgba(255,255,255,0.03)'};
+      border:1px solid ${isMe?'rgba(124,77,255,0.4)':'rgba(255,255,255,0.05)'};">
+      <div style="font-size:16px;min-width:28px;text-align:center;">${medal}</div>
+      <div style="font-size:20px;">${s.avatar||'⚔️'}</div>
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:900;color:${isMe?'var(--pu)':'#fff'};">${s.name||'?'} ${isMe?'(Sen)':''}</div>
+        <div style="font-size:9px;color:var(--t3);">Sv ${s.level||1} · ${prizes[i]||''}</div>
+      </div>
+      <div style="font-size:13px;font-weight:900;color:#f5a623;">${s.xp||0} XP</div>
+    </div>`;
+  }).join('');
+
+  // Kalan süre
+  const now=new Date();
+  const monday=new Date(now);monday.setDate(now.getDate()+(8-now.getDay())%7||7);monday.setHours(0,0,0,0);
+  const diff=monday-now;
+  const daysLeft=Math.floor(diff/86400000);
+  const hoursLeft=Math.floor((diff%86400000)/3600000);
+
+  pg.innerHTML=`
+    <div style="background:linear-gradient(135deg,rgba(245,166,35,0.12),rgba(124,77,255,0.08));
+      border:1.5px solid rgba(245,166,35,0.35);border-radius:16px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden;">
+      <div style="position:absolute;right:12px;top:10px;font-size:48px;opacity:0.06;">🏆</div>
+      <div style="font-size:9px;font-weight:900;color:#f5a623;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">⚡ HAFTALIK TURNUVA · ${wk}</div>
+      <div style="display:flex;gap:14px;align-items:flex-end;">
+        <div>
+          <div style="font-size:11px;color:var(--t3);">Sıraman</div>
+          <div style="font-size:32px;font-weight:900;color:#f5a623;">${myRank||'—'}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--t3);">Bu hafta XP</div>
+          <div style="font-size:28px;font-weight:900;color:#fff;">${S.tourneyXp||0}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right;">
+          <div style="font-size:9px;color:var(--t3);">Bitiş</div>
+          <div style="font-size:13px;font-weight:900;color:var(--t2);">${daysLeft}g ${hoursLeft}s</div>
+        </div>
+      </div>
+      ${myScore?`<div style="margin-top:10px;font-size:9px;color:rgba(255,255,255,0.5);">💡 Her görev & kronometer XP'si + combo bonusları turnuvaya sayılır</div>`:''}
+    </div>
+    <div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.2);border-radius:12px;padding:10px 12px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:800;color:#f5a623;margin-bottom:5px;">🎁 Bu Haftanın Ödülleri</div>
+      <div style="font-size:9px;color:var(--t2);line-height:1.8;">
+        🥇 1. · 3000 bonus XP<br>🥈 2. · 2000 XP<br>🥉 3. · 1000 XP<br>4-5. · 500 XP<br>6-10. · 200 XP
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📋 SIRALAMA (${scores.length} katılımcı)</div>
+    ${scores.length?rows:`<div style="text-align:center;padding:30px;color:var(--t3);font-size:11px;">Henüz kimse yok.<br>İlk sıraya sen gir! 🚀</div>`}`;
+}
+
+// ═══════════════════════════════════════════════
+// 🍅 4. POMODORO SİSTEMİ
+// ═══════════════════════════════════════════════
+let _pomInterval = null;
+
+function pomodoroStart(){
+  if(_pomInterval) return;
+  S.pomodoroPhase = S.pomodoroPhase||'work';
+  S.pomodoroStartTs = Date.now();
+  const totalSecs = (S.pomodoroPhase==='work' ? (S.pomodoroWork||25) : (S.pomodoroBreak||5)) * 60;
+  S.pomodoroSecsLeft = totalSecs;
+  _pomInterval = setInterval(pomodoroTick, 1000);
+  updatePomodoroDOM();
+  save();
+}
+
+function pomodoroStop(){
+  clearInterval(_pomInterval); _pomInterval=null;
+  S.pomodoroStartTs=null;
+  save(); updatePomodoroDOM();
+}
+
+function pomodoroReset(){
+  pomodoroStop();
+  S.pomodoroPhase='work';
+  S.pomodoroSecsLeft=(S.pomodoroWork||25)*60;
+  S.pomodoroStartTs=null;
+  save(); updatePomodoroDOM();
+}
+
+function pomodoroTick(){
+  if(!S.pomodoroStartTs) return;
+  const elapsed = Math.floor((Date.now()-S.pomodoroStartTs)/1000);
+  const total = (S.pomodoroPhase==='work'?(S.pomodoroWork||25):(S.pomodoroBreak||5))*60;
+  S.pomodoroSecsLeft = Math.max(0, total-elapsed);
+
+  updatePomodoroDOM();
+
+  if(S.pomodoroSecsLeft<=0){
+    // Faz bitti
+    clearInterval(_pomInterval); _pomInterval=null;
+    if(S.pomodoroPhase==='work'){
+      S.pomodoroSession=(S.pomodoroSession||0)+1;
+      // Bonus XP
+      const bonus = 25;
+      S.xp+=bonus; addWXP(bonus); S.tourneyXp=(S.tourneyXp||0)+bonus;
+      save(); maybeLU(S.xp-bonus);
+      if(typeof pushFeedEvent==='function') pushFeedEvent('pomodoro',{session:S.pomodoroSession});
+      showPomodoroComplete('work', bonus);
+    } else {
+      showPomodoroComplete('break', 0);
+    }
+    // Sonraki faza geç
+    S.pomodoroPhase = S.pomodoroPhase==='work'?'break':'work';
+    S.pomodoroStartTs=null;
+    save(); updatePomodoroDOM();
+  }
+}
+
+function showPomodoroComplete(phase, bonus){
+  const msg = phase==='work'
+    ? `🍅 Pomodoro #${S.pomodoroSession} tamamlandı! +${bonus} XP 🎉`
+    : `☕ Mola bitti! Çalışmaya devam et!`;
+  toast(msg);
+  playSound(phase==='work'?'badge':'combo');
+  // Tarayıcı bildirimi
+  if(typeof Notification!=='undefined' && Notification.permission==='granted'){
+    new Notification('YKS RPG - Pomodoro', {body:msg, icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><text y="50" font-size="55">🍅</text></svg>'});
+  }
+}
+
+function updatePomodoroDOM(){
+  const el=document.getElementById('pomodoro-widget');
+  if(!el) return;
+  const phase=S.pomodoroPhase||'work';
+  const secs=S.pomodoroSecsLeft||((phase==='work'?(S.pomodoroWork||25):(S.pomodoroBreak||5))*60);
+  const m=Math.floor(secs/60).toString().padStart(2,'0');
+  const s=(secs%60).toString().padStart(2,'0');
+  const total=(phase==='work'?(S.pomodoroWork||25):(S.pomodoroBreak||5))*60;
+  const pct=Math.round((1-secs/total)*100);
+  const running=!!_pomInterval;
+  const col=phase==='work'?'#e040fb':'#43a047';
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <div style="font-size:18px;">${phase==='work'?'🍅':'☕'}</div>
+      <div style="flex:1;">
+        <div style="font-size:10px;font-weight:900;color:${col};text-transform:uppercase;letter-spacing:1px;">
+          ${phase==='work'?'ÇALIŞMA':'MOLA'} · Oturum #${S.pomodoroSession||0}
+        </div>
+      </div>
+      <select onchange="S.pomodoroWork=parseInt(this.value);pomodoroReset();" style="background:var(--c2);border:1px solid var(--br);border-radius:6px;color:var(--t2);font-size:9px;padding:3px;font-family:Nunito,sans-serif;">
+        ${[15,20,25,30,45,60].map(v=>`<option value="${v}" ${(S.pomodoroWork||25)===v?'selected':''}>${v}dk</option>`).join('')}
+      </select>
+    </div>
+    <div style="font-size:42px;font-weight:900;text-align:center;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:2px;margin-bottom:8px;">${m}:${s}</div>
+    <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;margin-bottom:10px;">
+      <div style="width:${pct}%;height:100%;background:${col};border-radius:100px;transition:width 1s linear;"></div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button onclick="${running?'pomodoroStop()':'pomodoroStart()'}" style="flex:2;padding:8px;border-radius:9px;border:none;
+        background:${running?'rgba(229,57,53,0.15)':'linear-gradient(135deg,'+col+','+col+'99)'};
+        color:${running?'#ef9090':'#fff'};font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">
+        ${running?'⏸ Durdur':'▶ Başlat'}
+      </button>
+      <button onclick="pomodoroReset()" style="flex:1;padding:8px;border-radius:9px;border:1px solid var(--br);
+        background:transparent;color:var(--t3);font-size:11px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">↺</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// 📊 5. HAFTALIK RAPOR
+// ═══════════════════════════════════════════════
+function checkWeeklyReport(){
+  const wk = weekKey();
+  if(S.weekReportSeen === wk) return; // Bu hafta zaten gösterildi
+  // Sadece Pazartesi günü göster
+  const day = new Date().getDay(); // 0=Paz 1=Pzt
+  if(day !== 1) return;
+  // Geçen hafta verisi var mı?
+  if(!S.weekHistory || S.weekHistory.length===0) return;
+  const lastWeek = S.weekHistory[S.weekHistory.length-1];
+  if(!lastWeek || !lastWeek.wx) return;
+  setTimeout(()=>showWeeklyReport(lastWeek), 2000);
+  S.weekReportSeen = wk;
+  save();
+}
+
+function showWeeklyReport(wh){
+  const totalXp = wh.wx||0;
+  const totalMins = wh.totalMins||0;
+  const totalDays = wh.days||0;
+  const h=Math.floor(totalMins/60),m=totalMins%60;
+
+  // En çok çalışılan ders
+  const subjMins = wh.subjMins||{};
+  const topSubj = Object.entries(subjMins).sort((a,b)=>b[1]-a[1])[0];
+  const topSubjInfo = topSubj ? SUBJ.find(s=>s.id===topSubj[0]) : null;
+
+  const el=document.createElement('div');
+  el.id='_weeklyReport';
+  el.style.cssText=`position:fixed;inset:0;height:var(--vh);background:rgba(0,0,0,0.9);
+    z-index:10001;display:flex;align-items:center;justify-content:center;
+    font-family:Nunito,sans-serif;padding:20px;`;
+  el.innerHTML=`<div style="background:linear-gradient(135deg,#0e0e28,#1a0d40);border:1.5px solid rgba(124,77,255,0.4);
+    border-radius:24px;padding:24px;max-width:340px;width:100%;
+    box-shadow:0 0 80px rgba(124,77,255,0.2);max-height:calc(var(--vh)*0.9);overflow-y:auto;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:42px;margin-bottom:8px;">📊</div>
+      <div style="font-size:9px;font-weight:900;color:#a78bfa;letter-spacing:2px;text-transform:uppercase;">HAFTALIK RAPOR</div>
+      <div style="font-size:18px;font-weight:900;color:#fff;margin-top:4px;">${wh.wk||'Geçen Hafta'}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <div style="background:rgba(124,77,255,0.1);border:1px solid rgba(124,77,255,0.2);border-radius:12px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:900;color:#a78bfa;">${totalXp}</div>
+        <div style="font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;">Toplam XP</div>
+      </div>
+      <div style="background:rgba(67,160,71,0.1);border:1px solid rgba(67,160,71,0.2);border-radius:12px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:900;color:#81c784;">${h>0?h+'s ':''} ${m}dk</div>
+        <div style="font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;">Çalışma Süresi</div>
+      </div>
+      <div style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.2);border-radius:12px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:900;color:#f5a623;">${totalDays}/7</div>
+        <div style="font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;">Aktif Gün</div>
+      </div>
+      <div style="background:rgba(30,136,229,0.1);border:1px solid rgba(30,136,229,0.2);border-radius:12px;padding:12px;text-align:center;">
+        <div style="font-size:24px;">${topSubjInfo?topSubjInfo.icon:'📚'}</div>
+        <div style="font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;">${topSubjInfo?topSubjInfo.name:'—'}</div>
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:12px;margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🏆 Değerlendirme</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.7;">${getWeeklyGrade(totalXp,totalMins,totalDays)}</div>
+    </div>
+    <button onclick="document.getElementById('_weeklyReport').remove()" style="width:100%;padding:12px;border-radius:12px;
+      border:none;background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:13px;font-weight:900;
+      cursor:pointer;font-family:Nunito,sans-serif;">💪 Bu hafta daha iyi olacak!</button>
+  </div>`;
+  document.body.appendChild(el);
+}
+
+function getWeeklyGrade(xp, mins, days){
+  if(xp>=3000&&days>=6) return '⭐⭐⭐ Mükemmel bir haftaydı! Harika bir tempo tutturuyorsun, YKS\'de başarı seni bekliyor!';
+  if(xp>=1500&&days>=4) return '⭐⭐ İyi bir haftaydı! Küçük adımlar büyük başarılar getirir, devam et!';
+  if(xp>=500&&days>=2) return '⭐ Başlangıç iyiydi! Bu hafta biraz daha itmeni bekliyorum.';
+  return '💡 Zor bir hafta geçirdin. Sorun değil — bugün yeniden başla! Her gün küçük bir adım yeterli.';
+}
+
+// ═══════════════════════════════════════════════
+// 👹 6. GRUP BOSS SİSTEMİ
+// ═══════════════════════════════════════════════
+async function joinGroupBoss(bossId){
+  if(!_fbUser||!window._fbDb){toast('Giriş yapman gerekiyor!');return;}
+  const {doc,setDoc,getDoc}=window._fbFirestore||{};
+  if(!doc||!setDoc) return;
+  try{
+    const ref=doc(window._fbDb,'groupBoss',bossId,'fighters',_fbUser.uid);
+    await setDoc(ref,{
+      uid:_fbUser.uid, name:S.myName||'YKS Savaşçısı',
+      avatar:S.avatarEmoji||'⚔️', dmg:0, joinedAt:Date.now(), level:getLvl(S.xp)
+    },{merge:true});
+    toast('👹 Grup Boss\'una katıldın!');
+    renderGroupBoss(bossId);
+  }catch(e){ toast('Hata: '+e.message); }
+}
+
+async function attackGroupBoss(bossId){
+  if(!_fbUser||!window._fbDb) return;
+  const {doc,getDoc,setDoc,runTransaction}=window._fbFirestore||{};
+  if(!doc) return;
+
+  const dmg = 10 + Math.floor(getLvl(S.xp)*2.5);
+  const bonus = getComboBonus(triggerCombo());
+  const totalDmg = dmg + bonus;
+
+  try{
+    const bossRef=doc(window._fbDb,'groupBoss',bossId);
+    const fighterRef=doc(window._fbDb,'groupBoss',bossId,'fighters',_fbUser.uid);
+
+    // Boss HP'sini düşür
+    await runTransaction(window._fbDb,async(tx)=>{
+      const bossDoc=await tx.get(bossRef);
+      const curHp=bossDoc.exists()?(bossDoc.data().hp||1000):1000;
+      const newHp=Math.max(0,curHp-totalDmg);
+      tx.set(bossRef,{hp:newHp,maxHp:bossDoc.data()?.maxHp||1000,bossId,lastHit:Date.now()},{merge:true});
+      tx.set(fighterRef,{dmg:(bossDoc.data()?.fighters?.[_fbUser.uid]?.dmg||0)+totalDmg,name:S.myName,avatar:S.avatarEmoji},{merge:true});
+      if(newHp<=0){
+        // Boss yenildi! XP dağıt
+        tx.set(bossRef,{defeated:true,defeatedAt:Date.now(),defeatUid:_fbUser.uid},{merge:true});
+      }
+    });
+
+    toast(`⚔️ ${totalDmg} hasar! (${bonus>0?'+'+bonus+' combo ':''}) Boss vuruldu!`);
+    await renderGroupBoss(bossId);
+
+  }catch(e){ toast('Saldırı hatası: '+e.message); }
+}
+
+const GROUP_BOSSES=[
+  {id:'gb_tyt',name:'TYT Ejderhası',icon:'🐉',maxHp:5000,minLevel:1,xpReward:500,col:'#e53935'},
+  {id:'gb_ayt',name:'AYT Devi',icon:'👾',maxHp:10000,minLevel:10,xpReward:1000,col:'#7c4dff'},
+  {id:'gb_yks',name:'YKS Tanrısı',icon:'💀',maxHp:25000,minLevel:20,xpReward:2500,col:'#f5a623'},
+];
+
+async function renderGroupBoss(selectedId){
+  const pg=document.getElementById('page');
+  if(!selectedId) selectedId=GROUP_BOSSES[0].id;
+
+  const gb=GROUP_BOSSES.find(b=>b.id===selectedId)||GROUP_BOSSES[0];
+
+  // Boss verisi çek
+  let bossData={hp:gb.maxHp,maxHp:gb.maxHp,defeated:false,fighters:{}};
+  let fighters=[];
+  if(_fbUser&&window._fbDb){
+    const {doc,getDoc,collection,getDocs}=window._fbFirestore||{};
+    const extra=window._fbFirestoreExtra||{};
+    try{
+      const bossSnap=await getDoc(doc(window._fbDb,'groupBoss',selectedId));
+      if(bossSnap.exists()) bossData={...bossData,...bossSnap.data()};
+      const fSnap=await extra.getDocs(extra.collection(window._fbDb,'groupBoss',selectedId,'fighters'));
+      fighters=fSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.dmg||0)-(a.dmg||0));
+    }catch(e){}
+  }
+
+  const hp=bossData.hp;
+  const maxHp=bossData.maxHp||gb.maxHp;
+  const hpPct=Math.max(0,Math.round((hp/maxHp)*100));
+  const defeated=bossData.defeated||hp<=0;
+  const myLevel=getLvl(S.xp);
+  const canJoin=myLevel>=gb.minLevel;
+  const isJoined=fighters.some(f=>f.id===_fbUser?.uid);
+
+  const bossSelector=GROUP_BOSSES.map(b=>`
+    <button onclick="renderGroupBoss('${b.id}')" style="flex:1;padding:7px 4px;border-radius:8px;
+      border:1px solid ${b.id===selectedId?b.col:'rgba(255,255,255,0.1)'};
+      background:${b.id===selectedId?b.col+'22':'transparent'};
+      color:${b.id===selectedId?'#fff':'var(--t3)'};font-size:9px;font-weight:800;cursor:pointer;
+      font-family:Nunito,sans-serif;">${b.icon} ${b.name}</button>`).join('');
+
+  const fighterRows=fighters.slice(0,10).map((f,i)=>{
+    const isMe=f.id===_fbUser?.uid;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;
+      background:${isMe?'rgba(124,77,255,0.12)':'rgba(255,255,255,0.03)'};margin-bottom:3px;">
+      <span style="font-size:11px;color:var(--t3);min-width:16px;">${i+1}.</span>
+      <span style="font-size:16px;">${f.avatar||'⚔️'}</span>
+      <span style="flex:1;font-size:10px;font-weight:800;color:${isMe?'var(--pu)':'var(--t2)'};">${f.name||'?'} ${isMe?'(Sen)':''}</span>
+      <span style="font-size:11px;font-weight:900;color:#e53935;">${f.dmg||0} hasar</span>
+    </div>`;
+  }).join('');
+
+  pg.innerHTML=`
+    <div style="display:flex;gap:5px;margin-bottom:14px;">${bossSelector}</div>
+    <div style="background:linear-gradient(160deg,#080818,#110830);border:2px solid ${gb.col};
+      border-radius:16px;padding:16px;text-align:center;margin-bottom:12px;position:relative;overflow:hidden;">
+      <div style="font-size:9px;font-weight:900;color:${gb.col};letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">
+        ${defeated?'⚰️ YENİLDİ':'👹 GRUP BOSS'} · Min Sv ${gb.minLevel}
+      </div>
+      <div style="font-size:64px;margin:8px 0;${defeated?'filter:grayscale(1) opacity(0.4);':''}">${gb.icon}</div>
+      <div style="font-size:18px;font-weight:900;margin-bottom:12px;">${gb.name}</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-bottom:4px;">
+        <span>HP</span><span>${hp}/${maxHp}</span>
+      </div>
+      <div style="height:13px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;margin-bottom:12px;">
+        <div style="width:${hpPct}%;height:100%;background:linear-gradient(90deg,#c62828,#e53935);border-radius:100px;transition:width .6s;"></div>
+      </div>
+      ${defeated
+        ?`<div style="color:var(--gr);font-size:14px;font-weight:900;">✅ Boss Yenildi! +${gb.xpReward} XP dağıtıldı</div>`
+        :canJoin
+          ?(isJoined
+            ?`<button onclick="attackGroupBoss('${selectedId}')" style="width:100%;padding:12px;border-radius:12px;border:none;
+                background:linear-gradient(135deg,${gb.col},${gb.col}99);color:#fff;font-size:14px;font-weight:900;
+                cursor:pointer;font-family:Nunito,sans-serif;letter-spacing:.5px;">
+                ⚔️ SALDIR! (+${10+Math.floor(myLevel*2.5)} hasar)
+              </button>`
+            :`<button onclick="joinGroupBoss('${selectedId}')" style="width:100%;padding:12px;border-radius:12px;border:none;
+                background:rgba(255,255,255,0.08);color:#fff;font-size:14px;font-weight:900;
+                cursor:pointer;font-family:Nunito,sans-serif;border:1px solid rgba(255,255,255,0.2);">
+                🤝 Grubu Katıl
+              </button>`)
+          :`<div style="color:var(--t3);font-size:11px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;">
+              🔒 Bu boss için Seviye ${gb.minLevel} gerekiyor (Sen: Sv ${myLevel})
+            </div>`
+      }
+    </div>
+    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">
+      ⚔️ SAVAŞÇILAR (${fighters.length})
+    </div>
+    ${fighterRows||'<div style="color:var(--t3);font-size:10px;text-align:center;padding:20px;">Henüz kimse katılmadı. İlk savaşçı sen ol!</div>'}
+    <button onclick="renderGroupBoss('${selectedId}')" style="width:100%;margin-top:10px;padding:9px;border-radius:9px;
+      border:1px solid var(--br);background:transparent;color:var(--t3);font-size:10px;font-weight:700;
+      cursor:pointer;font-family:Nunito,sans-serif;">🔄 Yenile</button>`;
+}
+
+// ═══════════════════════════════════════════════
+// BOSS SEKMESİNE GRUP BOSS ENTEGRASYONU
+// ═══════════════════════════════════════════════
+// renderBoss'u wrap et — üst kısma grup boss linki ekle
+const _origRenderBoss = typeof renderBoss==='function'?renderBoss:null;
+
 function buildNav(){
   const header=`<div class="nav-header" onclick="toggleSidebar()" title="Menüyü Kapat">
     <span class="nav-header-ico">⚔️</span>
@@ -23467,27 +24184,109 @@ try { _notifEnabled = JSON.parse(localStorage.getItem('yksNotifEnabled')); } cat
 
 function feedItemToNotif(item){
   const name = item.name || 'Birisi';
+  const av = item.avatar||'⚔️';
   if(item.type === 'badge'){
     const tier = {platinum:'🏆 PLATİN',gold:'🥇 ALTIN',silver:'🥈 GÜMÜŞ',bronze:'🥉 BRONZ'}[item.badgeTier||'bronze'];
-    return { title: (item.avatar||'⚔️')+' '+name, body: (item.badgeIcon||'🏅')+' "'+( item.badgeName||'Rozet')+'" kazandı! ['+tier+']', tag:'badge_'+item.ts };
+    return { title: av+' '+name, body: (item.badgeIcon||'🏅')+' "'+( item.badgeName||'Rozet')+'" kazandı! ['+tier+']', tag:'badge_'+item.ts, emoji: item.badgeIcon||'🏅', color:'#f5a623' };
   }
   if(item.type === 'levelup'){
-    return { title:(item.avatar||'⚔️')+' '+name, body:'⬆️ '+(item.level||'?')+'. seviyeye ulaştı!', tag:'lv_'+item.ts };
+    return { title: av+' '+name, body:'⬆️ '+(item.level||'?')+'. seviyeye ulaştı!', tag:'lv_'+item.ts, emoji:'⬆️', color:'#7c4dff' };
   }
   if(item.type === 'welcome'){
-    return { title:'🎉 Yeni Üye!', body:(item.avatar||'⚔️')+' '+name+" YKS RPG'ye katıldı!", tag:'welcome_'+item.ts };
+    return { title:'🎉 Yeni Üye!', body: av+' '+name+" YKS RPG'ye katıldı!", tag:'welcome_'+item.ts, emoji:'🎉', color:'#43a047' };
   }
   return null;
 }
 
-function showNotif(n){
+// ─── Uygulama içi bildirim banner ───
+const _inAppQueue = [];
+let _inAppShowing = false;
+
+function showInAppBanner(n){
   if(!n) return;
+  _inAppQueue.push(n);
+  if(!_inAppShowing) _popInAppBanner();
+}
+
+function _popInAppBanner(){
+  if(!_inAppQueue.length){ _inAppShowing=false; return; }
+  _inAppShowing = true;
+  const n = _inAppQueue.shift();
+
+  // Var olan banner varsa kaldır
+  const old = document.getElementById('_yks_inapp_banner');
+  if(old) old.remove();
+
+  const el = document.createElement('div');
+  el.id = '_yks_inapp_banner';
+  const isPC = document.documentElement.classList.contains('is-pc');
+  const navW = isPC ? 'calc(210px * 1.75 + 16px)' : '12px';
+  el.style.cssText = `
+    position:fixed;
+    top:14px;
+    left:${navW};
+    right:12px;
+    max-width:320px;
+    background:linear-gradient(135deg,#1a1a35,#12122a);
+    border:1px solid ${n.color||'rgba(124,77,255,0.5)'};
+    border-radius:14px;
+    padding:10px 14px;
+    z-index:9998;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    box-shadow:0 4px 24px rgba(0,0,0,0.6);
+    animation:_bannerIn .35s cubic-bezier(.4,0,.2,1);
+    font-family:Nunito,sans-serif;
+    cursor:pointer;
+  `;
+  el.innerHTML = `
+    <div style="font-size:22px;flex-shrink:0;">${n.emoji||'🔔'}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:10px;font-weight:900;color:#fff;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.title}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.6);line-height:1.4;">${n.body}</div>
+    </div>
+    <button onclick="this.parentNode.remove();" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:14px;cursor:pointer;padding:0 2px;flex-shrink:0;line-height:1;">✕</button>
+  `;
+  el.onclick = function(e){ if(e.target.tagName!=='BUTTON') el.remove(); };
+
+  // CSS animasyon ekle (bir kez)
+  if(!document.getElementById('_yks_banner_style')){
+    const s = document.createElement('style');
+    s.id = '_yks_banner_style';
+    s.textContent = `
+      @keyframes _bannerIn{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:translateY(0);}}
+      @keyframes _bannerOut{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-14px);}}
+    `;
+    document.head.appendChild(s);
+  }
+
+  document.body.appendChild(el);
+
+  // 4.5 saniye sonra kapat, sonra sıradakini göster
+  setTimeout(()=>{
+    if(el.parentNode){
+      el.style.animation='_bannerOut .3s ease forwards';
+      setTimeout(()=>{ el.remove(); setTimeout(_popInAppBanner, 200); }, 300);
+    } else {
+      setTimeout(_popInAppBanner, 200);
+    }
+  }, 4500);
+}
+
+// ─── Chrome sistem bildirimi ───
+function showChromeNotif(n){
+  if(!n) return;
+  if(!(_notifEnabled===true && typeof Notification!=='undefined' && Notification.permission==='granted')) return;
   const opts = { body:n.body, icon:NOTIF_ICON, badge:NOTIF_BADGE, tag:n.tag, requireInteraction:false, data:{url:window.location.href} };
   try {
     if(_swRegistration){ _swRegistration.showNotification(n.title, opts); }
     else { new Notification(n.title, opts); }
   } catch(e){ console.warn('[YKS Notif]',e); }
 }
+
+// Eski showNotif uyumluluğu
+function showNotif(n){ showChromeNotif(n); }
 
 async function registerSW(){
   if(!('serviceWorker' in navigator)) return;
@@ -23499,6 +24298,7 @@ async function registerSW(){
   } catch(e){ console.log('[YKS Notif] SW:',e.message); }
 }
 
+// ─── Feed dinleyici — HER ZAMAN çalışır, izinden bağımsız ───
 function startFeedListener(){
   if(_notifUnsubscribe){ _notifUnsubscribe(); _notifUnsubscribe=null; }
   const db=window._fbDb, extra=window._fbFirestoreExtra;
@@ -23509,12 +24309,18 @@ function startFeedListener(){
     snap.docChanges().forEach(change=>{
       if(change.type!=='added') return;
       const item={id:change.doc.id,...change.doc.data()};
+      // Sadece uygulama açıldıktan SONRA gelen olaylar
       if(!item.ts||item.ts<=_notifStartTs) return;
+      // Kendi olaylarımızı gösterme
       try{ if(window._fbUser&&item.uid===window._fbUser.uid) return; }catch(e){}
-      showNotif(feedItemToNotif(item));
+      const n = feedItemToNotif(item);
+      // Her zaman uygulama içi banner
+      showInAppBanner(n);
+      // Ek olarak Chrome bildirimi (izin verilmişse)
+      showChromeNotif(n);
     });
   },(err)=>console.warn('[YKS Notif]',err));
-  console.log('[YKS Notif] Feed dinleyici aktif');
+  console.log('[YKS Notif] Feed dinleyici aktif (uygulama içi + Chrome)');
 }
 
 async function requestAndStart(){
@@ -23526,17 +24332,14 @@ async function requestAndStart(){
     localStorage.setItem('yksNotifEnabled','false'); _notifEnabled=false; updateBellUI(); return false;
   }
   await registerSW();
-  _notifStartTs=Date.now();
-  waitForFirebase(startFeedListener);
   localStorage.setItem('yksNotifEnabled','true'); _notifEnabled=true; updateBellUI();
-  typeof toast==='function'&&toast("🔔 Bildirimler açık! Etkinlikler Chrome'a gelecek.");
+  typeof toast==='function'&&toast("🔔 Chrome bildirimleri açık!");
   return true;
 }
 
 function disableNotifs(){
-  if(_notifUnsubscribe){ _notifUnsubscribe(); _notifUnsubscribe=null; }
   localStorage.setItem('yksNotifEnabled','false'); _notifEnabled=false; updateBellUI();
-  typeof toast==='function'&&toast('🔕 Bildirimler kapatıldı.');
+  typeof toast==='function'&&toast('🔕 Chrome bildirimleri kapatıldı. Uygulama içi bildirimler hâlâ açık.');
 }
 
 function updateBellUI(){
@@ -23545,7 +24348,7 @@ function updateBellUI(){
   const on=_notifEnabled===true&&Notification.permission==='granted';
   btn.style.background=on?'rgba(124,77,255,0.18)':'rgba(255,255,255,0.04)';
   btn.style.borderColor=on?'rgba(124,77,255,0.5)':'rgba(255,255,255,0.08)';
-  btn.title=on?'Bildirimleri kapat':'Bildirimleri aç';
+  btn.title=on?'Chrome bildirimlerini kapat':'Chrome bildirimlerini aç';
   btn.innerHTML=on
     ?'<span style="font-size:15px;line-height:1;">🔔</span><span style="font-size:6.5px;font-weight:900;color:#a78bfa;letter-spacing:.3px;margin-top:1px;">AÇIK</span>'
     :'<span style="font-size:15px;line-height:1;">🔕</span><span style="font-size:6.5px;font-weight:800;color:var(--t3);letter-spacing:.3px;margin-top:1px;">BİLDİRİM</span>';
@@ -23575,7 +24378,7 @@ function showFirstPrompt(){
     d.id='notif-prompt';
     d.style.cssText='position:fixed;bottom:80px;left:calc(var(--nav-w, 210px) + 20px);transform:none;background:#1a1a35;border:1px solid rgba(124,77,255,0.45);border-radius:16px;padding:14px 16px;z-index:500;font-family:Nunito,sans-serif;max-width:310px;width:calc(100% - var(--nav-w, 210px) - 40px);box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:popIn .3s cubic-bezier(.4,0,.2,1);';
     d.innerHTML='<div style="font-size:12px;font-weight:900;color:#fff;margin-bottom:5px;">🔔 Chrome Bildirimleri</div>'
-      +'<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:11px;line-height:1.55;">Arkadaşların rozet kazandığında veya sıralamada üst sıralara çıktığında bildirim almak ister misin?</div>'
+      +'<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:11px;line-height:1.55;">Uygulama içi bildirimler zaten aktif! Chrome bildirimleri de açmak ister misin? (Sekme kapalıyken de gelir)</div>'
       +'<div style="display:flex;gap:8px;">'
       +'<button onclick="window.toggleNotifBell().then(()=>document.getElementById(&quot;notif-prompt&quot;)?.remove())" style="flex:1;padding:9px;border-radius:9px;border:none;background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">✅ Evet, açık</button>'
       +'<button onclick="localStorage.setItem(&quot;yksNotifEnabled&quot;,&quot;false&quot;);document.getElementById(&quot;notif-prompt&quot;)?.remove();" style="flex:1;padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">❌ Hayır</button>'
@@ -23593,8 +24396,12 @@ function waitForFirebase(cb,n){
 
 function init(){
   injectBellButton();
+  // Feed dinleyiciyi HER ZAMAN başlat (uygulama içi bildirimler için)
+  _notifStartTs = Date.now();
+  waitForFirebase(startFeedListener);
+  // Chrome bildirimleri için SW kaydet (sadece izin varsa)
   if(_notifEnabled===true&&Notification.permission==='granted'){
-    registerSW().then(()=>{ _notifStartTs=Date.now(); waitForFirebase(startFeedListener); });
+    registerSW();
   } else {
     showFirstPrompt();
   }
