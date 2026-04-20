@@ -8433,58 +8433,258 @@ let fbConnected=false,fbPollInterval=null;
 // ═══════════════════════════════════════════════════════════════
 
 // Herkese açık oda listesini Firestore'dan çek
-async function fetchPublicRooms(){
-  // Firestore hazır değilse bekle
-  if(!window._fbDb||!window._fbFirestoreExtra){
-    // Fallback: boş liste
-    return [];
-  }
+// ═══════════════════════════════════════════════════════════
+// KÜTÜPHANE ODA SİSTEMİ — TAM FIRESTORE (cross-device sync)
+// ═══════════════════════════════════════════════════════════
+
+// Firestore hazır mı kontrol et
+function _fsReady(){ return !!(window._fbDb && window._fbFirestore && window._fbFirestoreExtra && _fbUser); }
+async function _waitFs(maxMs=8000){
+  const t=Date.now();
+  while(!_fsReady()){ if(Date.now()-t>maxMs) return false; await new Promise(r=>setTimeout(r,300)); }
+  return true;
+}
+
+// ── Oda verisi okuma ──
+async function fsReadRoom(roomId){
+  if(!await _waitFs()) return null;
   try{
-    const{collection,getDocs,query,orderBy,limit}=window._fbFirestoreExtra;
+    const{doc,getDoc}=window._fbFirestore;
+    const snap=await getDoc(doc(window._fbDb,'rooms',roomId));
+    return snap.exists()?{id:snap.id,...snap.data()}:null;
+  }catch(e){ console.warn('[fsReadRoom]',e.message); return null; }
+}
+
+// ── Oda listesi (herkese açık) ──
+async function fetchPublicRooms(){
+  if(!await _waitFs(3000)) return [];
+  try{
+    const{collection,getDocs,query,orderBy,where,limit}=window._fbFirestoreExtra;
     const snap=await getDocs(query(
-      collection(window._fbDb,'publicRooms'),
-      orderBy('ts','desc'),
+      collection(window._fbDb,'rooms'),
+      where('isPublic','==',true),
+      orderBy('updatedAt','desc'),
       limit(50)
     ));
-    const rooms=[];
-    snap.forEach(d=>rooms.push({binId:d.id,...d.data()}));
-    return rooms;
-  }catch(e){
-    console.warn('[fetchPublicRooms]',e.message);
-    return[];
-  }
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){ console.warn('[fetchPublicRooms]',e.message); return []; }
 }
 
-// Yeni odayı Firestore'a kaydet
-async function registerRoomInIndex(binId,name,desc,isPublic,hasPassword){
-  if(!isPublic||!binId)return;
-  // Firestore hazır değilse bekle (max 5sn)
-  for(let i=0;i<10;i++){
-    if(window._fbDb&&window._fbFirestore)break;
-    await new Promise(r=>setTimeout(r,500));
-  }
-  if(!window._fbDb||!window._fbFirestore){console.warn('Firestore hazır değil, registerRoomInIndex atlandı');return;}
+// ── Oda oluşturma — tamamen Firestore ──
+async function libCreateRoom(name,desc,password,isPublic){
+  if(!name||!name.trim()){toast('Oda adı girin!');window._libCreating=false;return;}
+  if(!await _waitFs(6000)){toast('Bağlantı kurulamadı, tekrar dene');window._libCreating=false;return;}
+  const{collection,doc,setDoc,addDoc}=window._fbFirestore;
+  const{serverTimestamp}=window._fbFirestoreExtra||{};
+  const myUid=_fbUser.uid;
+  const hasPassword=!!(password&&password.trim());
+  const pub=!!isPublic;
+  const now=Date.now();
+  const roomData={
+    name:name.trim(),
+    desc:(desc||'').trim(),
+    isPublic:pub,
+    passwordHash:hasPassword?btoa(password.trim()):'',
+    createdBy:myUid,
+    createdByName:S.myName||'YKS Savaşçısı',
+    createdAt:now,
+    updatedAt:now,
+    memberCount:1,
+    members:{
+      [myUid]:{name:S.myName||'YKS Savaşçısı',xp:S.xp||0,streak:S.streak||0,
+               mins:S.dailyMins||0,studying:!!S.timerRunning,ts:now,avatar:S.avatarEmoji||'⚔️'}
+    }
+  };
+  toast('Oda oluşturuluyor…');
   try{
-    const{doc,setDoc}=window._fbFirestore;
-    const createdBy=(_fbUser&&_fbUser.uid)||S.friendCode||'anon';
-    const createdByName=S.myName||(_fbUser&&_fbUser.displayName)||'YKS Savaşçısı';
-    await setDoc(doc(window._fbDb,'publicRooms',binId),{
-      binId,name,desc:desc||'',isPublic:true,hasPassword:!!hasPassword,
-      ts:Date.now(),memberCount:1,
-      createdBy,createdByName
-    });
-  }catch(e){console.warn('[registerRoomInIndex]',e.message);}
+    const ref=doc(collection(window._fbDb,'rooms'));
+    await setDoc(ref,roomData);
+    const roomId=ref.id;
+    S.activeRoom={id:roomId,name:name.trim(),desc:(desc||'').trim(),
+                  isPublic:pub,hasPassword,createdBy:myUid,joinedAt:now};
+    window._libRoomData={...roomData,id:roomId};
+    window._libView='room';
+    window._libCreateForm={show:false,name:'',desc:'',password:'',isPublic:false};
+    window._pubRooms=null;
+    save();
+    toast('Oda oluşturuldu! 🏰');
+    renderKutuphane();
+    _startRoomListener(roomId);
+  }catch(e){ toast('Hata: '+e.message); window._libCreating=false; }
 }
 
-// Odayı Firestore'dan sil
-async function unregisterRoomFromIndex(binId){
-  if(!binId)return;
-  if(!window._fbDb||!window._fbFirestoreExtra)return;
+// ── Odaya katılma — kod ile ──
+async function libJoinByCode(shareCode,enteredPassword){
+  const roomId=(shareCode||'').trim();
+  if(!roomId){toast('Geçersiz kod');return;}
+  if(!await _waitFs(6000)){toast('Bağlantı kurulamadı');return;}
+  toast('Odaya bağlanılıyor…');
   try{
-    const{doc,deleteDoc}=window._fbFirestoreExtra;
-    await deleteDoc(doc(window._fbDb,'publicRooms',binId));
-  }catch(e){console.warn('[unregisterRoomFromIndex]',e.message);}
+    const data=await fsReadRoom(roomId);
+    if(!data){toast('Oda bulunamadı! Kodu kontrol et 🔍');return;}
+    // Şifre kontrolü
+    if(data.passwordHash){
+      const entered=(enteredPassword||window._libJoinPassword||'').trim();
+      if(!entered){ window._libPendingJoin={shareCode:roomId}; window._libNeedsPassword=true; renderKutuphane(); return; }
+      if(btoa(entered)!==data.passwordHash){toast('Yanlış şifre! 🔒');return;}
+    }
+    window._libNeedsPassword=false; window._libPendingJoin=null; window._libJoinPassword='';
+    await _joinRoomById(roomId,data);
+  }catch(e){ toast('Bağlantı hatası: '+e.message); }
 }
+
+async function _joinRoomById(roomId,data){
+  const{doc,updateDoc}=window._fbFirestore;
+  const myUid=_fbUser.uid;
+  const now=Date.now();
+  const memberUpdate={};
+  memberUpdate[`members.${myUid}`]={
+    name:S.myName||'YKS Savaşçısı',xp:S.xp||0,streak:S.streak||0,
+    mins:S.dailyMins||0,studying:!!S.timerRunning,ts:now,avatar:S.avatarEmoji||'⚔️'
+  };
+  memberUpdate.updatedAt=now;
+  memberUpdate.memberCount=Object.keys(data.members||{}).length+1;
+  await updateDoc(doc(window._fbDb,'rooms',roomId),memberUpdate);
+  S.activeRoom={id:roomId,name:data.name||'Çalışma Odası',desc:data.desc||'',
+                isPublic:!!data.isPublic,hasPassword:!!data.passwordHash,
+                createdBy:data.createdBy,joinedAt:now};
+  window._libRoomData={...data,...memberUpdate,id:roomId};
+  window._libView='room';
+  save();
+  toast(`${data.name||'Odaya'} katıldın! 🎉`);
+  renderKutuphane();
+  _startRoomListener(roomId);
+}
+
+// ── Herkese açık odaya direkt katıl ──
+async function libJoinPublicRoom(roomId){
+  if(!await _waitFs(6000)){toast('Bağlantı kurulamadı');return;}
+  const data=await fsReadRoom(roomId);
+  if(!data){toast('Oda bulunamadı!');return;}
+  if(data.passwordHash){
+    window._libPendingJoin={shareCode:roomId};
+    window._libNeedsPassword=true;
+    renderKutuphane();
+    return;
+  }
+  await _joinRoomById(roomId,data);
+}
+
+async function libJoinDirect(roomId){ await libJoinPublicRoom(roomId); }
+
+// ── Odadan ayrıl ──
+async function libLeaveRoom(){
+  if(!S.activeRoom)return;
+  const roomId=S.activeRoom.id;
+  const myUid=_fbUser?.uid;
+  _stopRoomListener();
+  S.activeRoom=null; window._libRoomData=null; window._libView='main';
+  save(); toast('Odadan ayrıldın 👋'); renderKutuphane();
+  if(!myUid||!await _waitFs(3000)) return;
+  try{
+    const{doc,updateDoc,FieldValue}=window._fbFirestore;
+    const extra=window._fbFirestoreExtra;
+    if(extra?.deleteField){
+      const upd={updatedAt:Date.now()};
+      upd[`members.${myUid}`]=extra.deleteField();
+      await updateDoc(doc(window._fbDb,'rooms',roomId),upd);
+    }
+  }catch(e){}
+}
+
+// ── Oda sil ──
+async function libDeleteRoom(){
+  if(!S.activeRoom){toast('Aktif oda yok');return;}
+  const roomId=S.activeRoom.id;
+  const myUid=_fbUser?.uid;
+  if(S.activeRoom.createdBy!==myUid){toast('Sadece oda sahibi silebilir! 🔒');return;}
+  if(!confirm(`"${S.activeRoom.name}" odasını kalıcı olarak sil?`))return;
+  _stopRoomListener();
+  S.activeRoom=null; window._libRoomData=null; window._libView='main';
+  save(); window._pubRooms=null; renderKutuphane();
+  if(!await _waitFs(3000)){toast('Oda silindi (yerel)');return;}
+  try{
+    const{doc,deleteDoc}=window._fbFirestore;
+    await deleteDoc(doc(window._fbDb,'rooms',roomId));
+    toast('Oda silindi 🗑️');
+    loadPublicRooms();
+  }catch(e){ toast('Oda silindi (yerel) 🗑️'); }
+}
+
+// ── Gerçek zamanlı oda dinleyicisi ──
+let _roomUnsubscribe=null;
+function _startRoomListener(roomId){
+  _stopRoomListener();
+  if(!window._fbFirestoreExtra?.onSnapshot) return;
+  const{doc,onSnapshot}=window._fbFirestoreExtra;
+  _roomUnsubscribe=onSnapshot(doc(window._fbDb,'rooms',roomId),(snap)=>{
+    if(!snap.exists()){
+      toast('Oda kapatıldı 👋'); S.activeRoom=null; window._libRoomData=null;
+      window._libView='main'; save(); renderKutuphane(); return;
+    }
+    window._libRoomData={id:snap.id,...snap.data()};
+    if(S.curTab==='kutuphane'&&window._libView==='room'){
+      const pg=document.getElementById('page');
+      const st=pg?pg.scrollTop:0;
+      renderKutuphane();
+      if(pg)requestAnimationFrame(()=>{pg.scrollTop=st;});
+    }
+  },(err)=>console.warn('[roomListener]',err));
+}
+function _stopRoomListener(){ if(_roomUnsubscribe){_roomUnsubscribe();_roomUnsubscribe=null;} }
+
+// ── Oda sync — kendi verimizi güncelle ──
+async function libSyncRoom(){
+  if(!S.activeRoom||!_fbUser) return;
+  const roomId=S.activeRoom.id;
+  if(!await _waitFs(3000)) return;
+  const{doc,updateDoc}=window._fbFirestore;
+  const myUid=_fbUser.uid;
+  const upd={updatedAt:Date.now()};
+  upd[`members.${myUid}`]={
+    name:S.myName||'YKS Savaşçısı',xp:S.xp||0,streak:S.streak||0,
+    mins:S.dailyMins||0,studying:!!S.timerRunning,ts:Date.now(),avatar:S.avatarEmoji||'⚔️'
+  };
+  try{ await updateDoc(doc(window._fbDb,'rooms',roomId),upd); }catch(e){}
+}
+
+// ── Oda paylaşma: artık sadece roomId ──
+function libRoomShareCode(){ return S.activeRoom?.id||''; }
+function libShare(){
+  const code=libRoomShareCode(); if(!code) return;
+  const room=S.activeRoom;
+  const text='🏰 "'+room.name+'" çalışma odasına davet edildiniz!'
+    +'\n\nOda Kodu: '+code
+    +(room.hasPassword?'\n🔒 Bu oda şifrelidir — şifreyi ayrıca iletin.':'')
+    +'\n\n📱 YKS RPG\'yi açın → Kütüphane → Odaya Katıl';
+  if(navigator.share) navigator.share({title:'YKS RPG Çalışma Odası',text});
+  else navigator.clipboard.writeText(text).then(()=>toast('Davet kopyalandı! 📋')).catch(()=>toast('Kod: '+code));
+}
+function libCopyCode(){
+  const code=libRoomShareCode();
+  navigator.clipboard.writeText(code).then(()=>toast('Kod kopyalandı! 📋')).catch(()=>alert('Kod: '+code));
+}
+
+// ── Mevcut odayı restore et ──
+async function libRestoreRoom(){
+  if(!S.activeRoom?.id) return;
+  const data=await fsReadRoom(S.activeRoom.id);
+  if(!data){ S.activeRoom=null; window._libView='main'; save(); return; }
+  window._libRoomData=data;
+  _startRoomListener(S.activeRoom.id);
+}
+
+// Sync interval — 30sn'de bir kendi datamızı güncelle
+if(window._roomSyncInterval) clearInterval(window._roomSyncInterval);
+window._roomSyncInterval=setInterval(()=>{if(S.activeRoom&&_fbUser)libSyncRoom();},30000);
+
+// Sayfa açılışında odayı restore et
+setTimeout(()=>{ if(S.activeRoom?.id) libRestoreRoom(); },2500);
+
+// ── Eski JSONBin fonksiyonları — artık kullanılmıyor ──
+async function registerRoomInIndex(){} // no-op
+async function unregisterRoomFromIndex(){} // no-op
+function libJoinByCodeOld(){} // no-op
 
 // Her kullanıcının kendi bin'i var, binId localStorage'da tutulur
 // Paylaşılan kod = friendCode, bin ID = ayrı tutulur
@@ -15669,237 +15869,6 @@ function libFmtTime(mins){
   return `${m}dk`;
 }
 
-function libRoomShareCode(){
-  if(!S.activeRoom)return '';
-  return `${S.activeRoom.code}:${S.activeRoom.binId}`;
-}
-
-async function libCreateRoom(name,desc,password,isPublic){
-  if(!name||!name.trim()){toast('Oda adı girin!');window._libCreating=false;return;}
-  const code=Math.random().toString(36).substring(2,8).toUpperCase();
-  const myCode=S.friendCode||'GUEST'+Date.now();
-  const myUid=(_fbUser&&_fbUser.uid)||null;
-  const hasPassword=!!(password&&password.trim());
-  const pub=!!isPublic;
-  const initData={
-    code,name:name.trim(),desc:(desc||'').trim(),
-    createdAt:Date.now(),
-    createdBy:myCode,
-    createdByUid:myUid,
-    isPublic:pub,
-    passwordHash:hasPassword?btoa(password.trim()):'',
-    members:{
-      [myCode]:{name:S.myName||'YKS Savaşçısı',mins:S.dailyMins||0,ts:Date.now(),
-                studying:!!(S.timerRunning),xp:S.xp||0,streak:S.streak||0}
-    }
-  };
-  toast('Oda oluşturuluyor…');
-  try{
-    const r=await fetch(`${JB_BASE}/b`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY,'X-Bin-Private':'false'},
-      body:JSON.stringify(initData)
-    });
-    if(!r.ok){toast('Oda oluşturulamadı :(');return;}
-    const d=await r.json();
-    const binId=d.metadata?.id;
-    if(!binId){toast('Oda oluşturulamadı :(');return;}
-    S.activeRoom={code,binId,name:name.trim(),desc:(desc||'').trim(),
-                  isPublic:pub,hasPassword:hasPassword,joinedAt:Date.now(),
-                  createdBy:myCode,createdByUid:myUid};
-    window._libRoomData=initData;
-    window._libView='room';
-    window._libCreateForm={show:false,name:'',desc:'',password:'',isPublic:false};
-    save();
-    toast('Oda oluşturuldu! 🏰');
-    // Herkese açık oda ise merkezi listeye kaydet
-    if(pub) registerRoomInIndex(binId,name.trim(),(desc||'').trim(),true,hasPassword).catch(()=>{});
-    renderKutuphane();
-  }catch(e){toast('Bağlantı hatası.');window._libCreating=false;}
-}
-
-async function libJoinByCode(shareCode,enteredPassword){
-  const parts=(shareCode||'').trim().split(':');
-  if(parts.length<2){toast('Geçersiz kod. Format: ABC123:binId');return;}
-  const code=parts[0].toUpperCase();
-  const binId=parts.slice(1).join(':');
-  toast('Odaya bağlanılıyor…');
-  try{
-    const data=await readBin(binId);
-    if(!data){toast('Oda bulunamadı. Kodu kontrol et!');return;}
-    // Şifre kontrolü
-    if(data.passwordHash){
-      const entered=(enteredPassword||window._libJoinPassword||'').trim();
-      if(!entered){
-        // Şifre isteme alanını göster
-        window._libPendingJoin={shareCode,binId,code};
-        window._libNeedsPassword=true;
-        renderKutuphane();
-        return;
-      }
-      if(btoa(entered)!==data.passwordHash){toast('Yanlış şifre! 🔒');return;}
-    }
-    window._libNeedsPassword=false;
-    window._libPendingJoin=null;
-    window._libJoinPassword='';
-    const myCode=S.friendCode||'GUEST'+Date.now();
-    data.members=data.members||{};
-    data.members[myCode]={name:S.myName||'YKS Savaşçısı',mins:S.dailyMins||0,ts:Date.now(),
-                          studying:!!(S.timerRunning),xp:S.xp||0,streak:S.streak||0};
-    const r=await fetch(`${JB_BASE}/b/${binId}`,{
-      method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
-      body:JSON.stringify(data)
-    });
-    if(!r.ok){toast('Katılım başarısız :(');return;}
-    S.activeRoom={code,binId,name:data.name||'Çalışma Odası',desc:data.desc||'',
-                  isPublic:!!data.isPublic,hasPassword:!!data.passwordHash,joinedAt:Date.now()};
-    window._libRoomData=data;
-    window._libView='room';
-    save();
-    toast(`${data.name||'Odaya'} katıldın! 🎉`);
-    renderKutuphane();
-  }catch(e){toast('Bağlantı hatası.');}
-}
-
-async function libJoinPublicRoom(binId,roomName){
-  await libJoinByCode(binId+':'+binId,'');
-}
-
-async function libJoinDirect(binId){
-  // Public odalar için direkt katılım (şifresiz)
-  window._libJoinCode=binId;
-  await libJoinByCode(binId+':'+binId,'');
-}
-
-async function libLeaveRoom(){
-  if(!S.activeRoom)return;
-  const{binId}=S.activeRoom;
-  const myCode=S.friendCode||'GUEST';
-  const isCreator=S.activeRoom.createdBy===myCode;
-  S.activeRoom=null;
-  window._libRoomData=null;
-  window._libView='main';
-  save();
-  toast('Odadan ayrıldın 👋');
-  renderKutuphane();
-  // Arka planda güncel ver
-  try{
-    const data=await readBin(binId);
-    if(data&&data.members){
-      delete data.members[myCode];
-      await fetch(`${JB_BASE}/b/${binId}`,{method:'PUT',
-        headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
-        body:JSON.stringify(data)});
-    }
-  }catch(e){}
-}
-
-// ✨ ODA SİLME FONKSİYONU — oda sahibi veya oturumu açık olan oluşturucu silebilir
-async function libDeleteRoom(){
-  if(!S.activeRoom){toast('Aktif oda yok');return;}
-  const{binId,name}=S.activeRoom;
-  const myCode=S.friendCode||'GUEST';
-  const myUid=_fbUser&&_fbUser.uid;
-
-  // createdBy kontrolü — code veya uid bazında
-  const isOwnerByCode=S.activeRoom.createdBy===myCode;
-  const isOwnerByUid=myUid&&S.activeRoom.createdByUid===myUid;
-  // Oda verilerini Firestore'dan da kontrol et
-  let isOwner=isOwnerByCode||isOwnerByUid;
-  if(!isOwner&&window._libRoomData){
-    isOwner=window._libRoomData.createdBy===myCode||(myUid&&window._libRoomData.createdByUid===myUid);
-  }
-  if(!isOwner){toast('Sadece oda sahibi silebilir! 🔒');return;}
-  if(!confirm(`"${name}" odasını kalıcı olarak sil?\nTüm üyeler odadan çıkacak.`))return;
-  toast('Oda siliniyor…');
-  try{
-    // JSONBin'den sil
-    const delR=await fetch(`${JB_BASE}/b/${binId}`,{
-      method:'DELETE',
-      headers:{'X-Master-Key':JB_KEY,'X-Access-Key':JB_KEY}
-    });
-    // JSONBin delete başarısız olsa bile devam et (oda zaten erişilemez olacak)
-    if(!delR.ok) console.warn('[libDeleteRoom] JSONBin DELETE status:',delR.status);
-    // Firestore public rooms listesinden kaldır
-    await unregisterRoomFromIndex(binId).catch(()=>{});
-    S.activeRoom=null;
-    window._libRoomData=null;
-    window._libView='main';
-    save();
-    toast('Oda silindi 🗑️');
-    // Public oda listesini tazele
-    window._pubRooms=null;
-    loadPublicRooms();
-    renderKutuphane();
-  }catch(e){
-    console.warn('Oda silme hatası:',e);
-    // Hata olsa bile local state'i temizle
-    S.activeRoom=null;
-    window._libRoomData=null;
-    window._libView='main';
-    save();
-    toast('Oda kaldırıldı (yerel) 🗑️');
-    window._pubRooms=null;
-    loadPublicRooms();
-    renderKutuphane();
-  }
-}
-
-async function libSyncRoom(){
-  if(!S.activeRoom)return;
-  const{binId}=S.activeRoom;
-  const myCode=S.friendCode||'GUEST';
-  try{
-    const data=await readBin(binId);
-    if(!data)return;
-    data.members=data.members||{};
-    // Sadece gerekli alanlar güncelle (hızlı)
-    if(!data.members[myCode]){
-      data.members[myCode]={};
-    }
-    data.members[myCode]={
-      name:S.myName||'YKS Savaşçısı',
-      mins:S.dailyMins||0,
-      ts:Date.now(),
-      studying:!!(S.timerRunning),
-      xp:S.xp||0,
-      streak:S.streak||0
-    };
-    // Optimize: Sadece member data'yı gönder
-    await fetch(`${JB_BASE}/b/${binId}`,{method:'PUT',
-      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY},
-      body:JSON.stringify(data)});
-    window._libRoomData=data;
-    if(S.curTab==='kutuphane'&&window._libView==='room'){
-      const pg=document.getElementById('page');
-      const st=pg?pg.scrollTop:0;
-      renderKutuphane();
-      if(pg)requestAnimationFrame(()=>{pg.scrollTop=st;});
-    }
-  }catch(e){}
-}
-
-// Senkronizasyon aralığını 15sn'den 10sn'ye kısalt (hızlı)
-setTimeout(()=>{
-  if(window._roomSyncInterval)clearInterval(window._roomSyncInterval);
-  window._roomSyncInterval=setInterval(()=>{if(S.activeRoom)libSyncRoom();},10000);
-},3000);
-
-function libShare(){
-  const code=libRoomShareCode();if(!code)return;
-  const room=S.activeRoom;
-  const text='🏰 "'+room.name+'" çalışma odasına davet edildiniz!'
-    +'\n\nOda Kodu: '+code
-    +(room.hasPassword?'\n🔒 Bu oda şifrelidir — şifreyi ayrıca iletin.':'')
-    +'\n\n📱 YKS RPG\'yi açın → Kütüphane → Odaya Katıl';
-  if(navigator.share){navigator.share({title:'YKS RPG Çalışma Odası',text});}
-  else{navigator.clipboard.writeText(text).then(()=>toast('Davet kopyalandı! 📋')).catch(()=>toast('Kod: '+code));}
-}
-function libCopyCode(){
-  const code=libRoomShareCode();
-  navigator.clipboard.writeText(code).then(()=>toast('Kod kopyalandı! 📋')).catch(()=>alert('Kod: '+code));
-}
-
 // ── Soru Kütüphanesi ──
 function qlCreateFolder(){
   const name=prompt('Klasör adı:');
@@ -16046,13 +16015,14 @@ async function libSendRoomInvite(targetUid,targetName){
   try{
     const{doc,setDoc}=window._fbFirestore;
     const shareCode=libRoomShareCode();
-    const notifRef=doc(window._fbDb,'roomInvites',targetUid,'invites',_fbUser.uid+'_'+S.activeRoom.binId);
+    const roomId=S.activeRoom.id||S.activeRoom.binId||'';
+    const notifRef=doc(window._fbDb,'roomInvites',targetUid,'invites',_fbUser.uid+'_'+roomId);
     await setDoc(notifRef,{
       fromUid:_fbUser.uid,
       fromName:S.myName||_fbUser.displayName||'YKS Savaşçısı',
       roomName:S.activeRoom.name,
-      roomBinId:S.activeRoom.binId,
-      shareCode:shareCode,
+      roomId:roomId,
+      shareCode:roomId,
       hasPassword:S.activeRoom.hasPassword||false,
       ts:Date.now(),
       read:false
@@ -16527,13 +16497,15 @@ function renderKutuphane(){
       <div style="font-size:10px;color:rgba(255,255,255,.2);">Henüz herkese açık oda yok.<br>İlk odayı sen oluştur!</div>
     </div>
   `:(()=>{
-    const myBinId=S.activeRoom?.binId||null;
+    const myRoomId=S.activeRoom?.id||null;
     return window._pubRooms.map(r=>{
-      const isJoined=myBinId===r.binId;
+      const rid=r.id||r.binId;
+      const isJoined=myRoomId===rid;
       const isLocked=r.hasPassword;
-      const ageMin=Math.round((Date.now()-(r.ts||Date.now()))/60000);
+      const ageMin=Math.round((Date.now()-(r.updatedAt||r.ts||Date.now()))/60000);
       const ageTxt=ageMin<60?ageMin+'dk önce':Math.round(ageMin/60)+'s önce';
-      return`<div class="pub-room-card" onclick="${isJoined?`window._libView='room';libSyncRoom();renderKutuphane();`:`window._libJoinPub('${r.binId}','${(r.name||'').replace(/'/g,"\\'")}',${isLocked})`}">
+      const memberCount=r.memberCount||Object.keys(r.members||{}).length||1;
+      return`<div class="pub-room-card" onclick="${isJoined?`window._libView='room';renderKutuphane();`:`window._libJoinPub('${rid}','${(r.name||'').replace(/'/g,"\\'")}',${isLocked})`}">
         <div style="width:42px;height:42px;border-radius:13px;background:rgba(124,77,255,.12);border:1.5px solid rgba(124,77,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🏰</div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;">
@@ -16541,7 +16513,7 @@ function renderKutuphane(){
             ${isLocked?'<span style="font-size:9px;color:#f5a623;">🔒</span>':'<span style="font-size:9px;color:#81c784;">🌐</span>'}
           </div>
           ${r.desc?`<div style="font-size:9px;color:rgba(255,255,255,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.desc}</div>`:''}
-          <div style="font-size:8px;color:rgba(255,255,255,.2);margin-top:2px;">${ageTxt}</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.2);margin-top:2px;">${memberCount} üye · ${ageTxt}</div>
         </div>
         <div style="flex-shrink:0;">
           ${isJoined
@@ -16587,21 +16559,19 @@ function renderQLSection(){
   ${ql.folders.length===0?`<div class="room-empty">📂 Henüz klasör yok — "Yeni Klasör" ile başla!</div>`:''}`;
 }
 
-// Herkese açık odaya tıklama — şifreli ise prompt, şifresiz ise direkt katıl
-window._libJoinPub=async function(binId,name,isLocked){
+// Herkese açık odaya tıklama
+window._libJoinPub=async function(roomId,name,isLocked){
   if(isLocked){
-    // Şifre giriş alanını göster — shareCode formatına çevir: binId:binId
-    window._libPendingJoin={shareCode:binId+':'+binId,binId,code:''};
+    window._libPendingJoin={shareCode:roomId};
     window._libNeedsPassword=true;
     renderKutuphane();
     return;
   }
-  // Şifresiz: direkt katıl
-  toast('Odaya bağlanılıyor…');
-  await libJoinByCode(binId+':'+binId,'');
+  await libJoinPublicRoom(roomId);
 };
 
-if(S.activeRoom){window._libView='room';libSyncRoom();}
+if(S.activeRoom?.id){window._libView='room';libRestoreRoom().then(()=>{if(S.curTab==='kutuphane')renderKutuphane();});}
+else if(S.activeRoom){S.activeRoom=null;save();} // eski format temizle
 
 
 const TABS=[
@@ -16619,6 +16589,8 @@ const TABS=[
   {id:'ranking',ico:'🏆',lbl:'Sıralama'},
   {id:'tourney',ico:'⚡',lbl:'Turnuva'},
   {id:'chain',ico:'🔗',lbl:'Zincir'},
+  {id:'map',ico:'🗺️',lbl:'Harita'},
+  {id:'pet',ico:'🐾',lbl:'Hayvan'},
   {id:'settings',ico:'⚙️',lbl:'Ayarlar'},
 ];
 
@@ -16646,7 +16618,7 @@ function nav(tab,fromKey){
     const stale=!window._pubRoomsTs||(Date.now()-window._pubRoomsTs)>60000;
     if(stale){window._pubRooms=null;loadPublicRooms();}
   }
-  ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings,tourney:renderTourney,chain:renderChain,gboss:()=>renderGroupBoss(null)})[tab]?.();
+  ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings,tourney:renderTourney,chain:renderChain,gboss:()=>renderGroupBoss(null),map:renderAdventureMap,pet:renderPet})[tab]?.();
   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
 }
 function updateNavArrows(){
@@ -16733,14 +16705,27 @@ function showComboFX(txt, col, bonus){
 // 🔗 2. GÖREV ZİNCİRİ
 // ═══════════════════════════════════════════════
 const CHAIN_TEMPLATES = [
-  {id:'mat7',title:'Matematik Ustası',icon:'📐',subj:'mat',type:'tasks',target:3,xpReward:80,streakReq:3,desc:'3 gün üst üste 3+ Matematik görevi'},
-  {id:'tur7',title:'Türkçe Şampiyonu',icon:'📚',subj:'tur',type:'tasks',target:3,xpReward:80,streakReq:3,desc:'3 gün üst üste 3+ Türkçe görevi'},
-  {id:'fiz5',title:'Fizik Kaşifi',icon:'⚡',subj:'fiz',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Fizik görevi'},
-  {id:'kim5',title:'Kimya Sihirbazı',icon:'🧪',subj:'kim',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Kimya görevi'},
-  {id:'bio5',title:'Biyoloji Avcısı',icon:'🌿',subj:'bio',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Biyoloji görevi'},
-  {id:'q50',title:'Soru Makinesi',icon:'✏️',subj:null,type:'questions',target:20,xpReward:100,streakReq:3,desc:'3 gün üst üste 20+ soru'},
-  {id:'time3',title:'Çalışkan Öğrenci',icon:'⏱️',subj:null,type:'minutes',target:60,xpReward:90,streakReq:3,desc:'3 gün üst üste 60+ dakika çalışma'},
-  {id:'all5',title:'Her Şeyden Bir Tık',icon:'🎯',subj:null,type:'tasks',target:5,xpReward:120,streakReq:5,desc:'5 gün üst üste 5+ görev'},
+  // Ders bazlı — 3 günlük
+  {id:'mat3',title:'Matematik Ustası',icon:'📐',subj:'mat',type:'tasks',target:3,xpReward:80,streakReq:3,desc:'3 gün üst üste 3+ Matematik görevi'},
+  {id:'tur3',title:'Türkçe Şampiyonu',icon:'📚',subj:'tur',type:'tasks',target:3,xpReward:80,streakReq:3,desc:'3 gün üst üste 3+ Türkçe görevi'},
+  {id:'fiz3',title:'Fizik Kaşifi',icon:'⚡',subj:'fiz',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Fizik görevi'},
+  {id:'kim3',title:'Kimya Sihirbazı',icon:'🧪',subj:'kim',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Kimya görevi'},
+  {id:'bio3',title:'Biyoloji Avcısı',icon:'🌿',subj:'bio',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Biyoloji görevi'},
+  {id:'tar3',title:'Tarih Dedektifi',icon:'🏛️',subj:'tar',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Tarih görevi'},
+  {id:'geo3',title:'Coğrafya Gezgini',icon:'🌍',subj:'geo',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ Coğrafya görevi'},
+  {id:'eng3',title:'İngilizce Ustası',icon:'🇬🇧',subj:'ing',type:'tasks',target:2,xpReward:60,streakReq:3,desc:'3 gün üst üste 2+ İngilizce görevi'},
+  // Soru bazlı
+  {id:'q20_3',title:'Soru Makinesi',icon:'✏️',subj:null,type:'questions',target:20,xpReward:100,streakReq:3,desc:'3 gün üst üste 20+ soru'},
+  {id:'q50_5',title:'Soru Fırtınası',icon:'🌪️',subj:null,type:'questions',target:50,xpReward:200,streakReq:5,desc:'5 gün üst üste 50+ soru'},
+  // Dakika bazlı
+  {id:'time60_3',title:'Çalışkan Öğrenci',icon:'⏱️',subj:null,type:'minutes',target:60,xpReward:90,streakReq:3,desc:'3 gün üst üste 60+ dakika'},
+  {id:'time120_5',title:'Azimli Sporcu',icon:'💪',subj:null,type:'minutes',target:120,xpReward:200,streakReq:5,desc:'5 gün üst üste 2 saat çalışma'},
+  // Kombine — 5 günlük
+  {id:'all5_5',title:'Her Şeyden Bir Tık',icon:'🎯',subj:null,type:'tasks',target:5,xpReward:150,streakReq:5,desc:'5 gün üst üste 5+ görev'},
+  // 7 günlük efsane
+  {id:'mat7',title:'Matematik Efsanesi',icon:'🔢',subj:'mat',type:'tasks',target:3,xpReward:300,streakReq:7,desc:'7 gün üst üste 3+ Matematik görevi'},
+  {id:'q30_7',title:'Soru Efsanesi',icon:'🏆',subj:null,type:'questions',target:30,xpReward:350,streakReq:7,desc:'7 gün üst üste 30+ soru'},
+  {id:'time90_7',title:'Demir İrade',icon:'⚙️',subj:null,type:'minutes',target:90,xpReward:400,streakReq:7,desc:'7 gün üst üste 90+ dakika çalışma'},
 ];
 
 function getISOWeek(d){ const t=new Date(d);t.setHours(0,0,0,0);t.setDate(t.getDate()+3-(t.getDay()+6)%7);const w=new Date(t.getFullYear(),0,4);return Math.round(((t-w)/86400000-3+(w.getDay()+6)%7)/7)+1; }
@@ -16752,7 +16737,8 @@ function initChainMissions(){
     S.chainLastReset = today;
     // Her gün günün progress'ini sıfırla ama streak'i koru
     if(!S.chainMissions || !S.chainMissions.length){
-      S.chainMissions = CHAIN_TEMPLATES.slice(0,4).map(t=>({...t,progress:0,streak:0,completedToday:false}));
+      // Tüm şablonlardan başlangıç seti: 3 ders + 1 soru + 1 dakika + 3 günlük zincirler
+      S.chainMissions = CHAIN_TEMPLATES.filter(t=>t.streakReq===3).map(t=>({...t,progress:0,streak:0,completedToday:false}));
     } else {
       S.chainMissions.forEach(m=>{
         if(m.completedToday){ m.streak=(m.streak||0)+1; } 
@@ -16822,39 +16808,60 @@ function renderChain(){
   const pg=document.getElementById('page');
   const today=toDS();
 
-  const cards = (S.chainMissions||[]).map((m,i)=>{
+  const makeCard = (m) => {
     const pct = Math.min(100, Math.round((m.progress||0)/m.target*100));
     const streak = m.streak||0;
     const done = m.completedToday;
+    const isLegend = m.streakReq>=7;
     const streakDots = Array.from({length:m.streakReq},(_,j)=>{
       const filled = j < streak + (done?1:0);
-      return `<div style="width:14px;height:14px;border-radius:50%;
-        background:${filled?'#f5a623':'rgba(255,255,255,0.1)'};
-        border:1.5px solid ${filled?'#f5a623':'rgba(255,255,255,0.2)'};" title="Gün ${j+1}"></div>`;
+      return `<div style="width:${isLegend?11:14}px;height:${isLegend?11:14}px;border-radius:50%;
+        background:${filled?(isLegend?'#f5a623':'#7c4dff'):'rgba(255,255,255,0.1)'};
+        border:1.5px solid ${filled?(isLegend?'#f5a623':'rgba(124,77,255,0.5)'):'rgba(255,255,255,0.2)'};" title="Gün ${j+1}"></div>`;
     }).join('');
-    return `<div style="background:${done?'rgba(67,160,71,0.08)':'var(--c1)'};border:1.5px solid ${done?'rgba(67,160,71,0.4)':'var(--br)'};
+    return `<div style="background:${done?'rgba(67,160,71,0.08)':isLegend?'rgba(245,166,35,0.05)':'var(--c1)'};
+      border:1.5px solid ${done?'rgba(67,160,71,0.4)':isLegend?'rgba(245,166,35,0.3)':'var(--br)'};
       border-radius:14px;padding:14px;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <div style="font-size:28px;">${m.icon}</div>
+        <div style="font-size:26px;">${m.icon}</div>
         <div style="flex:1;">
-          <div style="font-size:13px;font-weight:900;color:${done?'var(--gr)':'#fff'};">${m.title} ${done?'✅':''}</div>
-          <div style="font-size:9px;color:var(--t3);margin-top:2px;">${m.desc}</div>
+          <div style="font-size:12px;font-weight:900;color:${done?'var(--gr)':isLegend?'#f5a623':'#fff'};">${m.title} ${done?'✅':isLegend?'⭐':''}</div>
+          <div style="font-size:9px;color:var(--t3);margin-top:1px;">${m.desc}</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:11px;font-weight:900;color:#f5a623;">${m.progress||0}/${m.target}</div>
+          <div style="font-size:11px;font-weight:900;color:${isLegend?'#f5a623':'var(--pu)'};">${m.progress||0}/${m.target}</div>
           <div style="font-size:9px;color:var(--t3);">+${m.xpReward} XP</div>
         </div>
       </div>
-      <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;margin-bottom:8px;">
-        <div style="width:${pct}%;height:100%;background:${done?'var(--gr)':'linear-gradient(90deg,#7c4dff,#e040fb)'};border-radius:100px;transition:width .4s;"></div>
+      <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;margin-bottom:8px;">
+        <div style="width:${pct}%;height:100%;background:${done?'var(--gr)':isLegend?'linear-gradient(90deg,#f5a623,#ff5252)':'linear-gradient(90deg,#7c4dff,#e040fb)'};border-radius:100px;transition:width .4s;"></div>
       </div>
-      <div style="display:flex;gap:5px;align-items:center;">
-        <span style="font-size:9px;color:var(--t3);margin-right:4px;">Zincir:</span>
+      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:9px;color:var(--t3);margin-right:2px;">Zincir:</span>
         ${streakDots}
-        <span style="font-size:9px;color:#f5a623;margin-left:auto;">${streak+(done?1:0)}/${m.streakReq} gün</span>
+        <span style="font-size:9px;color:${isLegend?'#f5a623':'var(--pu)'};margin-left:auto;">${streak+(done?1:0)}/${m.streakReq} gün</span>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  const activeChains = (S.chainMissions||[]).filter(m=>m.streakReq<7);
+  const legendChains = (S.chainMissions||[]).filter(m=>m.streakReq>=7);
+  const unlockedIds = (S.chainMissions||[]).map(m=>m.id);
+  const lockedLegends = CHAIN_TEMPLATES.filter(t=>t.streakReq>=7 && !unlockedIds.includes(t.id));
+
+  const cards = activeChains.map(makeCard).join('');
+  const legendCards = legendChains.map(makeCard).join('');
+  const lockedCards = lockedLegends.map(t=>`
+    <div style="background:rgba(255,255,255,0.02);border:1.5px dashed rgba(245,166,35,0.2);border-radius:14px;padding:12px;margin-bottom:8px;opacity:0.65;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:24px;filter:grayscale(1);">${t.icon}</div>
+        <div style="flex:1;"><div style="font-size:11px;font-weight:900;color:rgba(255,255,255,0.35);">🔒 ${t.title}</div>
+          <div style="font-size:8px;color:var(--t3);margin-top:2px;">${t.desc}</div></div>
+        <button onclick="unlockChain('${t.id}')" style="background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.3);
+          border-radius:8px;color:#f5a623;font-size:9px;font-weight:800;cursor:pointer;padding:5px 8px;
+          font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;">+ Ekle</button>
+      </div>
+    </div>`).join('');
 
   // Combo bilgisi
   const comboAge = Date.now() - (S.comboLastTs||0);
@@ -16876,19 +16883,30 @@ function renderChain(){
   </div>`;
 
   pg.innerHTML = `
-    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">⚡ COMBO & ZINCIR</div>
+    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">⚡ COMBO</div>
     ${comboHTML}
-    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">🔗 GÖREV ZİNCİRLERİ</div>
-    ${cards}
+    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">🔗 GÖREV ZİNCİRLERİ (${activeChains.length} aktif)</div>
+    ${cards||'<div style="color:var(--t3);text-align:center;padding:20px;font-size:10px;">Zincir bulunamadı, sıfırla butonu ile yeniden başlat.</div>'}
+    ${legendCards?`<div style="font-size:10px;font-weight:800;color:#f5a623;letter-spacing:1px;text-transform:uppercase;margin:14px 0 10px;">⭐ EFSANE ZİNCİRLER (7 Günlük)</div>${legendCards}`:''}
+    ${lockedCards?`<div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin:14px 0 10px;">🔒 KİLİTLİ EFSANE ZİNCİRLER</div>${lockedCards}`:''}
     <button onclick="resetChainMissions()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--br);
-      background:transparent;color:var(--t3);font-size:10px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;margin-top:4px;">
-      🔄 Zincirleri Sıfırla (Debug)
+      background:transparent;color:var(--t3);font-size:10px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;margin-top:8px;">
+      🔄 Zincirleri Sıfırla
     </button>`;
 }
 
 function resetChainMissions(){
   if(!confirm('Tüm zincirleri sıfırla?'))return;
   S.chainMissions=[];S.chainLastReset=null;save();renderChain();
+}
+
+function unlockChain(id){
+  const t=CHAIN_TEMPLATES.find(t=>t.id===id);
+  if(!t)return;
+  if((S.chainMissions||[]).find(m=>m.id===id)){toast('Bu zincir zaten aktif!');return;}
+  if(!S.chainMissions)S.chainMissions=[];
+  S.chainMissions.push({...t,progress:0,streak:0,completedToday:false});
+  save();toast(`🔗 "${t.title}" zinciri açıldı!`);renderChain();
 }
 
 // ═══════════════════════════════════════════════
@@ -16968,8 +16986,13 @@ async function renderTourney(){
 
   // Kalan süre
   const now=new Date();
-  const monday=new Date(now);monday.setDate(now.getDate()+(8-now.getDay())%7||7);monday.setHours(0,0,0,0);
-  const diff=monday-now;
+  // Bir sonraki Pazartesi 00:00
+  const dayOfWeek=now.getDay(); // 0=Paz,1=Pzt,...,6=Cmt
+  const daysUntilMonday=dayOfWeek===1?7:(8-dayOfWeek)%7||7;
+  const monday=new Date(now);
+  monday.setDate(now.getDate()+daysUntilMonday);
+  monday.setHours(0,0,0,0);
+  const diff=Math.max(0,monday-now);
   const daysLeft=Math.floor(diff/86400000);
   const hoursLeft=Math.floor((diff%86400000)/3600000);
 
@@ -17043,20 +17066,24 @@ function pomodoroTick(){
   updatePomodoroDOM();
 
   if(S.pomodoroSecsLeft<=0){
-    // Faz bitti
     clearInterval(_pomInterval); _pomInterval=null;
     if(S.pomodoroPhase==='work'){
       S.pomodoroSession=(S.pomodoroSession||0)+1;
-      // Bonus XP
-      const bonus = 25;
+      const workMins = S.pomodoroWork||25;
+      const bonus = Math.round(workMins * 1.2); // 25dk → 30 XP, 45dk → 54 XP
+      // Günlük çalışma süresine ekle (sid=null, Plan'a EKLEME — sid olmayınca weekDone güncellenmez)
+      addMins(workMins, null);
+      // XP
       S.xp+=bonus; addWXP(bonus); S.tourneyXp=(S.tourneyXp||0)+bonus;
-      save(); maybeLU(S.xp-bonus);
+      // Log'a yaz
+      addLog('🍅',`Pomodoro #${S.pomodoroSession} · ${workMins}dk çalışma`,bonus,{type:'minute',subjId:null,correct:0,wrong:0,questions:0,mins:workMins,topic:'pomodoro'});
+      save(); maybeLU(S.xp-bonus); chkBdgs();
       if(typeof pushFeedEvent==='function') pushFeedEvent('pomodoro',{session:S.pomodoroSession});
       showPomodoroComplete('work', bonus);
     } else {
+      // MOLA bitti — günlük süreye veya plana EKLEME
       showPomodoroComplete('break', 0);
     }
-    // Sonraki faza geç
     S.pomodoroPhase = S.pomodoroPhase==='work'?'break':'work';
     S.pomodoroStartTs=null;
     save(); updatePomodoroDOM();
@@ -17098,6 +17125,9 @@ function updatePomodoroDOM(){
       <select onchange="S.pomodoroWork=parseInt(this.value);pomodoroReset();" style="background:var(--c2);border:1px solid var(--br);border-radius:6px;color:var(--t2);font-size:9px;padding:3px;font-family:Nunito,sans-serif;">
         ${[15,20,25,30,45,60].map(v=>`<option value="${v}" ${(S.pomodoroWork||25)===v?'selected':''}>${v}dk</option>`).join('')}
       </select>
+      <select onchange="S.pomodoroBreak=parseInt(this.value);pomodoroReset();" style="background:var(--c2);border:1px solid var(--br);border-radius:6px;color:var(--t2);font-size:9px;padding:3px;font-family:Nunito,sans-serif;">
+        ${[3,5,10,15,20].map(v=>`<option value="${v}" ${(S.pomodoroBreak||5)===v?'selected':''}>${v}dk mola</option>`).join('')}
+      </select>
     </div>
     <div style="font-size:42px;font-weight:900;text-align:center;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:2px;margin-bottom:8px;">${m}:${s}</div>
     <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;margin-bottom:10px;">
@@ -17133,15 +17163,32 @@ function checkWeeklyReport(){
 }
 
 function showWeeklyReport(wh){
-  const totalXp = wh.wx||0;
+  // wx = weeklyXp array [0..6], sum it
+  const totalXp = Array.isArray(wh.wx) ? wh.wx.reduce((a,b)=>a+(b||0),0) : (wh.wx||0);
   const totalMins = wh.totalMins||0;
-  const totalDays = wh.days||0;
+  // days = array of day objects, count non-empty
+  const totalDays = Array.isArray(wh.days) ? wh.days.filter(d=>d&&(d.xp>0||d.mins>0)).length : (wh.days||0);
   const h=Math.floor(totalMins/60),m=totalMins%60;
+  // Week label — wk is a date string like "Mon Apr 14 2026"
+  const wkLabel = wh.wk ? new Date(wh.wk).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : 'Geçen Hafta';
 
   // En çok çalışılan ders
-  const subjMins = wh.subjMins||{};
-  const topSubj = Object.entries(subjMins).sort((a,b)=>b[1]-a[1])[0];
-  const topSubjInfo = topSubj ? SUBJ.find(s=>s.id===topSubj[0]) : null;
+  const subjMins = (wh.subjMins && typeof wh.subjMins==='object' && !Array.isArray(wh.subjMins)) ? wh.subjMins : {};
+  const topSubjEntry = Object.entries(subjMins).filter(([,v])=>typeof v==='number'&&v>0).sort((a,b)=>b[1]-a[1])[0];
+  const topSubjInfo = topSubjEntry ? (typeof SUBJ!=='undefined'?SUBJ.find(s=>s.id===topSubjEntry[0]):null) : null;
+
+  // Günlük XP dağılımı (wx array'den)
+  const dayNames=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  const wxArr=Array.isArray(wh.wx)?wh.wx:[0,0,0,0,0,0,0];
+  const maxXp=Math.max(...wxArr,1);
+  const dayBars=wxArr.map((xp,i)=>`
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="font-size:7px;color:var(--t3);">${xp||0}</div>
+      <div style="width:100%;background:rgba(255,255,255,0.05);border-radius:3px;height:36px;display:flex;align-items:flex-end;overflow:hidden;">
+        <div style="width:100%;height:${Math.round((xp||0)/maxXp*100)}%;background:linear-gradient(180deg,#7c4dff,#e040fb);min-height:${xp?2:0}px;border-radius:3px;"></div>
+      </div>
+      <div style="font-size:7px;color:var(--t3);">${dayNames[i]}</div>
+    </div>`).join('');
 
   const el=document.createElement('div');
   el.id='_weeklyReport';
@@ -17151,32 +17198,35 @@ function showWeeklyReport(wh){
   el.innerHTML=`<div style="background:linear-gradient(135deg,#0e0e28,#1a0d40);border:1.5px solid rgba(124,77,255,0.4);
     border-radius:24px;padding:24px;max-width:340px;width:100%;
     box-shadow:0 0 80px rgba(124,77,255,0.2);max-height:calc(var(--vh)*0.9);overflow-y:auto;">
-    <div style="text-align:center;margin-bottom:20px;">
-      <div style="font-size:42px;margin-bottom:8px;">📊</div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:38px;margin-bottom:6px;">📊</div>
       <div style="font-size:9px;font-weight:900;color:#a78bfa;letter-spacing:2px;text-transform:uppercase;">HAFTALIK RAPOR</div>
-      <div style="font-size:18px;font-weight:900;color:#fff;margin-top:4px;">${wh.wk||'Geçen Hafta'}</div>
+      <div style="font-size:14px;font-weight:900;color:#fff;margin-top:4px;">${wkLabel}</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
       <div style="background:rgba(124,77,255,0.1);border:1px solid rgba(124,77,255,0.2);border-radius:12px;padding:12px;text-align:center;">
-        <div style="font-size:24px;font-weight:900;color:#a78bfa;">${totalXp}</div>
+        <div style="font-size:22px;font-weight:900;color:#a78bfa;">${totalXp.toLocaleString('tr-TR')}</div>
         <div style="font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;">Toplam XP</div>
       </div>
       <div style="background:rgba(67,160,71,0.1);border:1px solid rgba(67,160,71,0.2);border-radius:12px;padding:12px;text-align:center;">
-        <div style="font-size:24px;font-weight:900;color:#81c784;">${h>0?h+'s ':''} ${m}dk</div>
-        <div style="font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;">Çalışma Süresi</div>
+        <div style="font-size:22px;font-weight:900;color:#81c784;">${h>0?h+'s ':''} ${m}dk</div>
+        <div style="font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;">Çalışma</div>
       </div>
       <div style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.2);border-radius:12px;padding:12px;text-align:center;">
-        <div style="font-size:24px;font-weight:900;color:#f5a623;">${totalDays}/7</div>
+        <div style="font-size:22px;font-weight:900;color:#f5a623;">${totalDays}/7</div>
         <div style="font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;">Aktif Gün</div>
       </div>
       <div style="background:rgba(30,136,229,0.1);border:1px solid rgba(30,136,229,0.2);border-radius:12px;padding:12px;text-align:center;">
-        <div style="font-size:24px;">${topSubjInfo?topSubjInfo.icon:'📚'}</div>
+        <div style="font-size:22px;">${topSubjInfo?topSubjInfo.icon:'📚'}</div>
         <div style="font-size:8px;color:var(--t3);font-weight:700;text-transform:uppercase;">${topSubjInfo?topSubjInfo.name:'—'}</div>
       </div>
     </div>
-    <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:12px;margin-bottom:16px;">
-      <div style="font-size:9px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🏆 Değerlendirme</div>
-      <div style="font-size:12px;color:var(--t2);line-height:1.7;">${getWeeklyGrade(totalXp,totalMins,totalDays)}</div>
+    <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:10px;margin-bottom:12px;">
+      <div style="display:flex;gap:3px;height:60px;align-items:flex-end;">${dayBars}</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:9px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">🏆 Değerlendirme</div>
+      <div style="font-size:11px;color:var(--t2);line-height:1.7;">${getWeeklyGrade(totalXp,totalMins,totalDays)}</div>
     </div>
     <button onclick="document.getElementById('_weeklyReport').remove()" style="width:100%;padding:12px;border-radius:12px;
       border:none;background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:13px;font-weight:900;
@@ -17197,14 +17247,16 @@ function getWeeklyGrade(xp, mins, days){
 // ═══════════════════════════════════════════════
 async function joinGroupBoss(bossId){
   if(!_fbUser||!window._fbDb){toast('Giriş yapman gerekiyor!');return;}
-  const {doc,setDoc,getDoc}=window._fbFirestore||{};
+  const {doc,setDoc}=window._fbFirestore||{};
   if(!doc||!setDoc) return;
   try{
-    const ref=doc(window._fbDb,'groupBoss',bossId,'fighters',_fbUser.uid);
-    await setDoc(ref,{
-      uid:_fbUser.uid, name:S.myName||'YKS Savaşçısı',
-      avatar:S.avatarEmoji||'⚔️', dmg:0, joinedAt:Date.now(), level:getLvl(S.xp)
-    },{merge:true});
+    // Fighter verisini leaderboard altında sakla (mevcut izinler var)
+    const ref=doc(window._fbDb,'leaderboard',_fbUser.uid);
+    const now=Date.now();
+    const upd={};
+    upd[`bossFighter_${bossId}`]={uid:_fbUser.uid,name:S.myName||'YKS Savaşçısı',
+      avatar:S.avatarEmoji||'⚔️',dmg:0,joinedAt:now,level:getLvl(S.xp)};
+    await setDoc(ref,upd,{merge:true});
     toast('👹 Grup Boss\'una katıldın!');
     renderGroupBoss(bossId);
   }catch(e){ toast('Hata: '+e.message); }
@@ -17212,34 +17264,56 @@ async function joinGroupBoss(bossId){
 
 async function attackGroupBoss(bossId){
   if(!_fbUser||!window._fbDb) return;
-  const {doc,getDoc,setDoc,runTransaction}=window._fbFirestore||{};
+  const {doc,getDoc,setDoc}=window._fbFirestore||{};
   if(!doc) return;
 
-  const dmg = 10 + Math.floor(getLvl(S.xp)*2.5);
-  const bonus = getComboBonus(triggerCombo());
+  const myLevel=getLvl(S.xp);
+  const dmg = 10 + Math.floor(myLevel*2.5);
+  const comboN=(S.comboCount||0);
+  const bonus = getComboBonus(comboN);
+  triggerCombo();
   const totalDmg = dmg + bonus;
 
   try{
-    const bossRef=doc(window._fbDb,'groupBoss',bossId);
-    const fighterRef=doc(window._fbDb,'groupBoss',bossId,'fighters',_fbUser.uid);
+    // Boss HP = feed'deki özel boss doc (herkes yazabilir)
+    const bossRef=doc(window._fbDb,'feed','__boss_'+bossId);
+    const bossSnap=await getDoc(bossRef);
+    const gb=GROUP_BOSSES.find(b=>b.id===bossId)||GROUP_BOSSES[0];
+    const curHp=bossSnap.exists()?(bossSnap.data().hp??gb.maxHp):gb.maxHp;
+    const newHp=Math.max(0,curHp-totalDmg);
+    const defeated=newHp<=0;
 
-    // Boss HP'sini düşür
-    await runTransaction(window._fbDb,async(tx)=>{
-      const bossDoc=await tx.get(bossRef);
-      const curHp=bossDoc.exists()?(bossDoc.data().hp||1000):1000;
-      const newHp=Math.max(0,curHp-totalDmg);
-      tx.set(bossRef,{hp:newHp,maxHp:bossDoc.data()?.maxHp||1000,bossId,lastHit:Date.now()},{merge:true});
-      tx.set(fighterRef,{dmg:(bossDoc.data()?.fighters?.[_fbUser.uid]?.dmg||0)+totalDmg,name:S.myName,avatar:S.avatarEmoji},{merge:true});
-      if(newHp<=0){
-        // Boss yenildi! XP dağıt
-        tx.set(bossRef,{defeated:true,defeatedAt:Date.now(),defeatUid:_fbUser.uid},{merge:true});
-      }
-    });
+    // Boss HP güncelle
+    await setDoc(bossRef,{
+      hp:newHp,maxHp:gb.maxHp,bossId,
+      lastHit:Date.now(),lastHitBy:_fbUser.uid,
+      defeated,
+      defeatedAt:defeated?Date.now():null,
+      defeatUid:defeated?_fbUser.uid:null
+    },{merge:true});
 
-    toast(`⚔️ ${totalDmg} hasar! (${bonus>0?'+'+bonus+' combo ':''}) Boss vuruldu!`);
+    // Kendi damage'ımı leaderboard'a yaz
+    const myRef=doc(window._fbDb,'leaderboard',_fbUser.uid);
+    const mySnap=await getDoc(myRef);
+    const prevDmg=mySnap.exists()?(mySnap.data()[`bossDmg_${bossId}`]||0):0;
+    const upd={};
+    upd[`bossDmg_${bossId}`]=prevDmg+totalDmg;
+    upd[`bossFighter_${bossId}`]={uid:_fbUser.uid,name:S.myName||'YKS Savaşçısı',
+      avatar:S.avatarEmoji||'⚔️',dmg:prevDmg+totalDmg,ts:Date.now(),level:myLevel};
+    await setDoc(myRef,upd,{merge:true});
+
+    if(defeated){
+      // Ödül
+      const reward=gb.xpReward;
+      S.xp+=reward;addWXP(reward);save();maybeLU(S.xp-reward);
+      toast(`🏆 Boss yenildi! +${reward} XP kazandın!`);
+      if(typeof pushFeedEvent==='function') pushFeedEvent('boss',{bossName:gb.name,bossIcon:gb.icon,xp:reward});
+    } else {
+      toast(`⚔️ ${totalDmg} hasar!${bonus>0?' (+'+bonus+' combo)':''} HP: ${newHp}/${gb.maxHp}`);
+    }
     await renderGroupBoss(bossId);
 
-  }catch(e){ toast('Saldırı hatası: '+e.message); }
+  }catch(e){ toast('Saldırı hatası: '+e.message); console.warn(e); }
 }
 
 const GROUP_BOSSES=[
@@ -17254,18 +17328,26 @@ async function renderGroupBoss(selectedId){
 
   const gb=GROUP_BOSSES.find(b=>b.id===selectedId)||GROUP_BOSSES[0];
 
-  // Boss verisi çek
-  let bossData={hp:gb.maxHp,maxHp:gb.maxHp,defeated:false,fighters:{}};
+  // Boss verisi çek — feed collection'dan
+  let bossData={hp:gb.maxHp,maxHp:gb.maxHp,defeated:false};
   let fighters=[];
   if(_fbUser&&window._fbDb){
-    const {doc,getDoc,collection,getDocs}=window._fbFirestore||{};
+    const {doc,getDoc}=window._fbFirestore||{};
     const extra=window._fbFirestoreExtra||{};
     try{
-      const bossSnap=await getDoc(doc(window._fbDb,'groupBoss',selectedId));
+      // Boss HP
+      const bossSnap=await getDoc(doc(window._fbDb,'feed','__boss_'+selectedId));
       if(bossSnap.exists()) bossData={...bossData,...bossSnap.data()};
-      const fSnap=await extra.getDocs(extra.collection(window._fbDb,'groupBoss',selectedId,'fighters'));
-      fighters=fSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.dmg||0)-(a.dmg||0));
-    }catch(e){}
+      // Fighters — leaderboard'dan çek
+      const lbSnap=await extra.getDocs(extra.query(
+        extra.collection(window._fbDb,'leaderboard'),
+        extra.where('bossFighter_'+selectedId+'.uid','!=',null)
+      ));
+      fighters=lbSnap.docs
+        .map(d=>{ const f=d.data()['bossFighter_'+selectedId]; return f?{id:d.id,...f}:null; })
+        .filter(Boolean)
+        .sort((a,b)=>(b.dmg||0)-(a.dmg||0));
+    }catch(e){ console.warn('[GroupBoss render]',e.message); }
   }
 
   const hp=bossData.hp;
@@ -17343,6 +17425,490 @@ async function renderGroupBoss(selectedId){
 // renderBoss'u wrap et — üst kısma grup boss linki ekle
 const _origRenderBoss = typeof renderBoss==='function'?renderBoss:null;
 
+
+// ═══════════════════════════════════════════════
+// 🗺️ MACERA HARİTASI
+// ═══════════════════════════════════════════════
+const MAP_REGIONS = [
+  {id:'tyt_mat',name:'Matematik Vadisi',icon:'📐',subj:'mat',color:'#1e88e5',zones:['Temel İşlemler','Cebir','Geometri','Sayılar','İstatistik']},
+  {id:'tyt_tur',name:'Türkçe Ormanı',icon:'📚',subj:'tur',color:'#43a047',zones:['Paragraf','Dil Bilgisi','Sözcük','Noktalama','Anlam']},
+  {id:'tyt_fiz',name:'Fizik Dağları',icon:'⚡',subj:'fiz',color:'#f5a623',zones:['Mekanik','Elektrik','Optik','Dalgalar','Modern']},
+  {id:'tyt_kim',name:'Kimya Mağarası',icon:'🧪',subj:'kim',color:'#e040fb',zones:['Atom','Bağlar','Tepkimeler','Çözeltiler','Organik']},
+  {id:'tyt_bio',name:'Biyoloji Ormanı',icon:'🌿',subj:'bio',color:'#66bb6a',zones:['Hücre','Genetik','Evrim','Sistemler','Ekoloji']},
+  {id:'sos_tar',name:'Tarih Kalesi',icon:'🏛️',subj:'tar',color:'#8d6e63',zones:['İlkçağ','Osmanlı','TC Tarihi','Modern','Dünya']},
+  {id:'sos_geo',name:'Coğrafya Denizi',icon:'🌍',subj:'geo',color:'#26c6da',zones:['Fiziki','Beşeri','Ekonomi','Türkiye','Haritalar']},
+  {id:'dil_ing',name:'İngilizce Kulesi',icon:'🇬🇧',subj:'ing',color:'#ef5350',zones:['Grammar','Vocabulary','Reading','Writing','Listening']},
+];
+
+function getRegionProgress(region){
+  const d=S.subjects[region.subj];
+  if(!d) return {tasks:0,pct:0,zonesUnlocked:0};
+  const tasks=d.tasks||0;
+  const zonesUnlocked=Math.min(region.zones.length,Math.floor(tasks/5));
+  const pct=Math.min(100,Math.round((tasks/(region.zones.length*5))*100));
+  return {tasks,pct,zonesUnlocked};
+}
+
+function renderAdventureMap(){
+  const pg=document.getElementById('page');
+  // Inject map CSS once
+  if(!document.getElementById('_mapStyle')){
+    const s=document.createElement('style');s.id='_mapStyle';
+    s.textContent=`
+      @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+      .map-wrap{position:relative;width:100%;background:linear-gradient(135deg,#c8a96e,#b8925a,#d4b47a,#c09558);
+        border-radius:12px;border:3px solid #8b6914;overflow:hidden;
+        box-shadow:inset 0 0 40px rgba(0,0,0,0.4),0 4px 20px rgba(0,0,0,0.6);}
+      .map-wrap::before{content:'';position:absolute;inset:0;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Cpath d='M0 0h4v4H0z' fill='%23b8925a' opacity='.3'/%3E%3Ccircle cx='2' cy='2' r='.8' fill='%23a07840' opacity='.2'/%3E%3C/svg%3E");
+        pointer-events:none;}
+      .map-region{position:absolute;cursor:pointer;transform:translate(-50%,-50%);
+        text-align:center;transition:transform .2s;}
+      .map-region:active{transform:translate(-50%,-50%) scale(0.9);}
+      .map-pin{font-size:28px;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));}
+      .map-label{font-size:8px;font-weight:900;color:#3d1f00;background:rgba(255,220,130,0.9);
+        border:1px solid #8b6914;border-radius:4px;padding:1px 4px;white-space:nowrap;
+        margin-top:2px;display:inline-block;max-width:80px;overflow:hidden;text-overflow:ellipsis;}
+      .map-pct{font-size:7px;color:#8b6914;font-weight:800;}
+      .map-done{filter:drop-shadow(0 0 8px gold);}
+      .map-locked{filter:grayscale(1) opacity(0.4);}
+      .map-panel{background:rgba(180,130,60,0.15);border:1.5px solid rgba(139,105,20,0.4);
+        border-radius:10px;padding:10px;margin-bottom:8px;}
+      .map-legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;}
+      @keyframes mapGlow{0%,100%{filter:drop-shadow(0 0 6px gold);}50%{filter:drop-shadow(0 0 14px gold);}}
+      .map-active-glow{animation:mapGlow 2s ease-in-out infinite;}
+    `;
+    document.head.appendChild(s);
+  }
+
+  // Map positions for each region (% of map width/height)
+  const MAP_POS=[
+    {id:'tyt_mat', x:22, y:28},
+    {id:'tyt_tur', x:55, y:18},
+    {id:'tyt_fiz', x:78, y:32},
+    {id:'tyt_kim', x:68, y:58},
+    {id:'tyt_bio', x:40, y:65},
+    {id:'sos_tar', x:18, y:60},
+    {id:'sos_geo', x:82, y:75},
+    {id:'dil_ing', x:50, y:42},
+  ];
+
+  // Dashed path SVG between regions
+  const pathData=`M ${MAP_POS.map(p=>`${p.x}% ${p.y}%`).join(' L ')}`;
+
+  const totalTasks=Object.values(S.subjects||{}).reduce((a,d)=>a+(d.tasks||0),0);
+  const completedRegions=MAP_REGIONS.filter(r=>getRegionProgress(r).pct>=100).length;
+
+  const pins=MAP_POS.map(pos=>{
+    const region=MAP_REGIONS.find(r=>r.id===pos.id);
+    if(!region) return '';
+    const{tasks,pct,zonesUnlocked}=getRegionProgress(region);
+    const done=pct>=100;
+    const locked=tasks===0;
+    const cls=done?'map-region map-done map-active-glow':locked?'map-region map-locked':'map-region';
+    return `<div class="${cls}" style="left:${pos.x}%;top:${pos.y}%;" onclick="showMapRegion('${region.id}')">
+      <span class="map-pin">${region.icon}</span>
+      <div class="map-label">${region.name.split(' ')[0]}</div>
+      <div class="map-pct">${done?'✅ TAM':locked?'🔒':pct+'%'}</div>
+    </div>`;
+  }).join('');
+
+  // Detail panel for selected region
+  const sel=window._mapSelRegion?MAP_REGIONS.find(r=>r.id===window._mapSelRegion):null;
+  let detailPanel='';
+  if(sel){
+    const{tasks,pct,zonesUnlocked}=getRegionProgress(sel);
+    const zoneDots=sel.zones.map((z,i)=>`
+      <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(139,105,20,0.2);">
+        <div style="width:14px;height:14px;border-radius:50%;background:${i<zonesUnlocked?sel.color:'rgba(0,0,0,0.2)'};
+          border:1.5px solid ${i<zonesUnlocked?sel.color:'rgba(139,105,20,0.4)'};
+          display:flex;align-items:center;justify-content:center;font-size:7px;flex-shrink:0;color:#fff;">
+          ${i<zonesUnlocked?'✓':i===zonesUnlocked?'→':'·'}
+        </div>
+        <span style="font-size:9px;color:${i<zonesUnlocked?'#3d1f00':i===zonesUnlocked?'#5d3000':'rgba(61,31,0,0.5)'};">${z}</span>
+        ${i<zonesUnlocked?`<span style="font-size:8px;margin-left:auto;color:${sel.color};">⭐</span>`:''}
+      </div>`).join('');
+    detailPanel=`<div class="map-panel" style="margin-top:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:24px;">${sel.icon}</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:900;color:#3d1f00;">${sel.name}</div>
+          <div style="font-size:9px;color:#8b6914;">${zonesUnlocked}/${sel.zones.length} bölge · ${tasks} görev · %${pct}</div>
+        </div>
+        <button onclick="window._mapSelRegion=null;renderAdventureMap();" style="background:rgba(139,105,20,0.2);border:1px solid #8b6914;border-radius:6px;color:#8b6914;font-size:10px;cursor:pointer;padding:3px 7px;">✕</button>
+      </div>
+      <div style="height:5px;background:rgba(0,0,0,0.15);border-radius:100px;overflow:hidden;margin-bottom:8px;">
+        <div style="width:${pct}%;height:100%;background:${sel.color};border-radius:100px;transition:width .4s;"></div>
+      </div>
+      ${zoneDots}
+      <div style="font-size:8px;color:#8b6914;margin-top:6px;text-align:center;">
+        🗺️ Sonraki bölge için ${Math.max(0,(zonesUnlocked+1)*5-tasks)} görev daha
+      </div>
+    </div>`;
+  }
+
+  pg.innerHTML=`
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <div class="map-panel" style="flex:1;text-align:center;min-width:80px;">
+        <div style="font-size:20px;font-weight:900;color:#3d1f00;">${completedRegions}/${MAP_REGIONS.length}</div>
+        <div style="font-size:8px;color:#8b6914;font-weight:700;">BÖLGE</div>
+      </div>
+      <div class="map-panel" style="flex:1;text-align:center;min-width:80px;">
+        <div style="font-size:20px;font-weight:900;color:#3d1f00;">${totalTasks}</div>
+        <div style="font-size:8px;color:#8b6914;font-weight:700;">GÖREV</div>
+      </div>
+      <div class="map-panel" style="flex:1;text-align:center;min-width:80px;">
+        <div style="font-size:20px;font-weight:900;color:#3d1f00;">${MAP_REGIONS.reduce((a,r)=>a+getRegionProgress(r).zonesUnlocked,0)}</div>
+        <div style="font-size:8px;color:#8b6914;font-weight:700;">BÖLGE AÇIK</div>
+      </div>
+    </div>
+
+    <!-- Hazine haritası -->
+    <div class="map-wrap" style="height:300px;margin-bottom:10px;">
+      <!-- Dekoratif öğeler -->
+      <div style="position:absolute;top:6px;right:10px;font-size:10px;color:#5d3000;opacity:0.6;font-weight:900;">⚓ N</div>
+      <div style="position:absolute;top:6px;left:10px;font-size:11px;color:#5d3000;opacity:0.5;font-weight:900;font-style:italic;">🗺 YKS HARİTASI</div>
+      <div style="position:absolute;bottom:6px;left:10px;font-size:18px;opacity:0.15;">☠️</div>
+      <div style="position:absolute;bottom:8px;right:12px;font-size:14px;opacity:0.12;">⚓</div>
+
+      <!-- Bölgeler arası noktalı yol SVG -->
+      <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+        ${MAP_POS.slice(0,-1).map((p,i)=>{
+          const n=MAP_POS[i+1];
+          return `<line x1="${p.x}%" y1="${p.y}%" x2="${n.x}%" y2="${n.y}%"
+            stroke="#8b6914" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.4"/>`;
+        }).join('')}
+      </svg>
+
+      <!-- Bölge pinleri -->
+      ${pins}
+    </div>
+
+    <div style="font-size:9px;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:6px;">
+      🗺️ Bir bölgeye tıkla · Her 5 görev bir alt bölge açar
+    </div>
+
+    ${detailPanel}`;
+}
+
+window.showMapRegion=function(id){
+  window._mapSelRegion=id;
+  renderAdventureMap();
+};
+
+// ═══════════════════════════════════════════════
+// 🏰 KALE SAVUNMASI
+// ═══════════════════════════════════════════════
+function getCastleState(){
+  // Kale HP = geçen haftanın XP'si / 10 (min 100, max 1000)
+  const lastWeekXp=(S.weekHistory&&S.weekHistory.length>0)?S.weekHistory[S.weekHistory.length-1].wx||0:0;
+  const castleMaxHp=Math.max(100,Math.min(1000,Math.round(lastWeekXp/10)));
+  // Bu haftanın XP'si kaleyi savunuyor
+  const thisWeekXp=S.weeklyXp?S.weeklyXp.reduce((a,b)=>a+(b||0),0):0;
+  const castleHp=Math.min(castleMaxHp,thisWeekXp);
+  const castlePct=Math.round((castleHp/castleMaxHp)*100);
+  // Saldırgan: geçen haftaya göre ne kadar geride kaldık
+  const attackerDmg=Math.max(0,lastWeekXp-thisWeekXp);
+  const attackerPct=Math.min(100,Math.round((attackerDmg/Math.max(1,lastWeekXp))*100));
+  return{castleMaxHp,castleHp,castlePct,thisWeekXp,lastWeekXp,attackerDmg,attackerPct};
+}
+
+function renderCastleDefense(){
+  const pg=document.getElementById('page');
+  const{castleMaxHp,castleHp,castlePct,thisWeekXp,lastWeekXp,attackerDmg,attackerPct}=getCastleState();
+
+  const castleStatus=castlePct>=100?{icon:'🏰',txt:'Kale Tam Güçte!',col:'#43a047'}
+    :castlePct>=60?{icon:'🛡️',txt:'Kale Savunuluyor',col:'#f5a623'}
+    :castlePct>=30?{icon:'⚔️',txt:'Kale Tehlikede!',col:'#ff7043'}
+    :{icon:'💀',txt:'Kale Düşüyor!',col:'#e53935'};
+
+  // Haftalık ilerleme çubuğu
+  const dayNames=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  const dayBars=(S.weeklyXp||[0,0,0,0,0,0,0]).map((xp,i)=>{
+    const maxBar=Math.max(...(S.weeklyXp||[1]));
+    const pct=maxBar>0?Math.round((xp/maxBar)*100):0;
+    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+      <div style="font-size:8px;font-weight:800;color:var(--t3);">${xp||0}</div>
+      <div style="width:100%;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;height:50px;display:flex;align-items:flex-end;">
+        <div style="width:100%;height:${pct}%;background:linear-gradient(180deg,#7c4dff,#e040fb);border-radius:4px;transition:height .5s;min-height:${xp?3:0}px;"></div>
+      </div>
+      <div style="font-size:7px;color:var(--t3);">${dayNames[i]}</div>
+    </div>`;
+  }).join('');
+
+  pg.innerHTML=`
+    <div style="background:linear-gradient(135deg,#080820,#1a0a30);border:2px solid ${castleStatus.col};
+      border-radius:18px;padding:18px;margin-bottom:14px;text-align:center;
+      box-shadow:0 0 40px ${castleStatus.col}33;">
+      <div style="font-size:54px;margin-bottom:8px;">${castleStatus.icon}</div>
+      <div style="font-size:9px;font-weight:900;color:${castleStatus.col};letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">KALE SAVUNMASI</div>
+      <div style="font-size:16px;font-weight:900;color:#fff;margin-bottom:14px;">${castleStatus.txt}</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-bottom:4px;">
+        <span>Kale HP</span><span>${castleHp}/${castleMaxHp}</span>
+      </div>
+      <div style="height:14px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;margin-bottom:14px;">
+        <div style="width:${castlePct}%;height:100%;background:linear-gradient(90deg,${castleStatus.col},${castleStatus.col}99);
+          border-radius:100px;transition:width .5s;box-shadow:0 0 10px ${castleStatus.col}66;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div style="background:rgba(67,160,71,0.1);border:1px solid rgba(67,160,71,0.2);border-radius:10px;padding:10px;">
+          <div style="font-size:18px;font-weight:900;color:#81c784;">${thisWeekXp}</div>
+          <div style="font-size:8px;color:var(--t3);">Bu Hafta XP (Savunma)</div>
+        </div>
+        <div style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);border-radius:10px;padding:10px;">
+          <div style="font-size:18px;font-weight:900;color:#ef9a9a;">${lastWeekXp}</div>
+          <div style="font-size:8px;color:var(--t3);">Geçen Hafta (Hedef)</div>
+        </div>
+      </div>
+      ${attackerDmg>0?`
+      <div style="background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.25);border-radius:10px;padding:10px;margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:900;color:#ef9a9a;">⚔️ Saldırı Altındasın!</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:3px;">Geçen haftaya göre ${attackerDmg} XP geride — kaleyi kurtarmak için daha fazla çalış!</div>
+      </div>`:`
+      <div style="background:rgba(67,160,71,0.08);border:1px solid rgba(67,160,71,0.25);border-radius:10px;padding:10px;margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:900;color:#81c784;">🛡️ Kale Güvende!</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:3px;">Geçen haftanın hedefini karşılıyorsun. Devam et!</div>
+      </div>`}
+    </div>
+    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📊 HAFTALIK XP DAĞILIMI</div>
+    <div style="background:var(--c1);border:1px solid var(--br);border-radius:14px;padding:14px;">
+      <div style="display:flex;gap:4px;height:80px;align-items:flex-end;">${dayBars}</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// 🐾 EVCİL HAYVAN SİSTEMİ
+// ═══════════════════════════════════════════════
+const PET_STAGES=[
+  {name:'Yumurta',      minXp:0,     desc:'Bir şeyler kıpırdıyor...', rarity:'common',   col:'#90a4ae'},
+  {name:'Larva',        minXp:200,   desc:'Işığa doğru sürünüyor!',   rarity:'common',   col:'#a5d6a7'},
+  {name:'Yavru Ejder',  minXp:800,   desc:'Kanatları çıkıyor!',       rarity:'uncommon', col:'#80cbc4'},
+  {name:'Küçük Tilki',  minXp:2000,  desc:'Sana bağlanıyor 🦊',       rarity:'uncommon', col:'#ffb74d'},
+  {name:'Genç Kurt',    minXp:4000,  desc:'Yavaş yavaş güçleniyor',   rarity:'rare',     col:'#90caf9'},
+  {name:'Savaş Kartalı',minXp:8000,  desc:'Gökyüzüne hükmediyor!',   rarity:'rare',     col:'#ffd54f'},
+  {name:'Aslan',        minXp:14000, desc:'Ormana hükmediyorsun!',    rarity:'epic',     col:'#ce93d8'},
+  {name:'Kristal Geyik',minXp:22000, desc:'Büyü senin içinde...',     rarity:'epic',     col:'#80deea'},
+  {name:'Föniks',       minXp:35000, desc:'Ateşten yeniden doğdun!',  rarity:'legendary',col:'#ff8a65'},
+  {name:'Kozmik Ejder', minXp:60000, desc:'Evrenin efendisi!',        rarity:'legendary',col:'#b39ddb'},
+];
+
+// Pixel art sprite'ları SVG olarak — 8x8 pixel grid
+const PET_PIXELS={
+  'Yumurta':{
+    pixels:'00111100,01111110,01111110,01111110,01111110,01111110,01111110,00111100',
+    fg:'#f5f5dc',bg:'#c8a96e',accent:'#a07840'
+  },
+  'Larva':{
+    pixels:'00000000,00111000,01111100,01111100,11111110,01111100,00111000,00000000',
+    fg:'#a5d6a7',bg:'#2e7d32',accent:'#ffcc02'
+  },
+  'Yavru Ejder':{
+    pixels:'01000010,11100111,11111111,01111110,00111100,01011010,11000011,01000010',
+    fg:'#80cbc4',bg:'#00695c',accent:'#ff5722'
+  },
+  'Küçük Tilki':{
+    pixels:'11000011,11100111,01111110,01111110,00111100,01011010,11000011,11000011',
+    fg:'#ffb74d',bg:'#e65100',accent:'#fff9c4'
+  },
+  'Genç Kurt':{
+    pixels:'10100101,11111111,01111110,01111110,11111111,01111110,10100101,11000011',
+    fg:'#90caf9',bg:'#1565c0',accent:'#ffffff'
+  },
+  'Savaş Kartalı':{
+    pixels:'10000001,11000011,11111111,01111110,11111111,11000011,10100101,10000001',
+    fg:'#ffd54f',bg:'#e65100',accent:'#ffffff'
+  },
+  'Aslan':{
+    pixels:'01100110,11111111,11111111,01111110,11111111,11111111,01100110,00111100',
+    fg:'#ce93d8',bg:'#6a1b9a',accent:'#fff176'
+  },
+  'Kristal Geyik':{
+    pixels:'00100100,01111110,11111111,11111111,11111111,01111110,00100100,00011000',
+    fg:'#80deea',bg:'#006064',accent:'#e0f7fa'
+  },
+  'Föniks':{
+    pixels:'00011000,00111100,01111110,11111111,11111111,01111110,11000011,10000001',
+    fg:'#ff8a65',bg:'#bf360c',accent:'#fff59d'
+  },
+  'Kozmik Ejder':{
+    pixels:'10011001,01100110,11111111,11111111,11111111,11111111,01100110,10011001',
+    fg:'#b39ddb',bg:'#1a0050',accent:'#e8d5ff'
+  },
+};
+
+function drawPetPixel(stageName, size=80){
+  const p=PET_PIXELS[stageName]||PET_PIXELS['Yumurta'];
+  const rows=p.pixels.split(',');
+  const cols=8;
+  const cellSize=size/8;
+  let rects='';
+  rows.forEach((row,y)=>{
+    row.split('').forEach((bit,x)=>{
+      if(bit==='1'){
+        const isBorder=(y===0||y===7||x===0||x===7);
+        rects+=`<rect x="${x*cellSize}" y="${y*cellSize}" width="${cellSize}" height="${cellSize}" fill="${isBorder?p.bg:p.fg}" rx="0.5"/>`;
+      }
+    });
+  });
+  return `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;image-rendering:crisp-edges;">${rects}</svg>`;
+}
+
+function getPetStage(){ return PET_STAGES.reduce((best,s)=>s.minXp<=S.xp?s:best,PET_STAGES[0]); }
+
+function getPetMood(){
+  const today=toDS();
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  const recentXp=(S.dailyLog?.[today]?.xp||0)+(S.dailyLog?.[yesterday]?.xp||0);
+  if(recentXp>=400) return{mood:'Coşkulu',icon:'🤩',col:'#f5a623',msg:'SÜPER! Bugün çok çalıştın!',anim:'bounce'};
+  if(recentXp>=200) return{mood:'Mutlu',icon:'😄',col:'#43a047',msg:'Harika gidiyorsun, devam!',anim:'sway'};
+  if(recentXp>=80)  return{mood:'İyi',icon:'🙂',col:'#1e88e5',msg:'Fena değil, biraz daha?',anim:'idle'};
+  if(recentXp>=20)  return{mood:'Yorgun',icon:'😴',col:'#9e9e9e',msg:'Biraz daha çalışmalısın...',anim:'slow'};
+  if(recentXp>0)    return{mood:'Üzgün',icon:'😢',col:'#ff7043',msg:'Beni ihmal ettin...',anim:'droop'};
+  return{mood:'Hasta',icon:'🤒',col:'#e53935',msg:'Çok uzun zamandır görüşmedik!',anim:'shake'};
+}
+
+const RARITY_COLORS={common:'#90a4ae',uncommon:'#66bb6a',rare:'#42a5f5',epic:'#ab47bc',legendary:'#ffa726'};
+const RARITY_NAMES={common:'Sıradan',uncommon:'Nadir',rare:'Çok Nadir',epic:'Epik',legendary:'Efsane'};
+
+function renderPet(){
+  const pg=document.getElementById('page');
+  const stage=getPetStage();
+  const mood=getPetMood();
+  const nextStage=PET_STAGES.find(s=>s.minXp>S.xp);
+  const xpToNext=nextStage?nextStage.minXp-S.xp:0;
+  const stagePct=nextStage?Math.round(((S.xp-stage.minXp)/(nextStage.minXp-stage.minXp))*100):100;
+  const rarCol=RARITY_COLORS[stage.rarity]||'#90a4ae';
+
+  // Inject pet CSS once
+  if(!document.getElementById('_petStyle')){
+    const s=document.createElement('style');s.id='_petStyle';
+    s.textContent=`
+      @keyframes petBounce{0%,100%{transform:translateY(0) scale(1);}25%{transform:translateY(-12px) scale(1.05);}75%{transform:translateY(-6px) scale(1.02);}}
+      @keyframes petSway{0%,100%{transform:rotate(0deg);}25%{transform:rotate(8deg);}75%{transform:rotate(-8deg);}}
+      @keyframes petIdle{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+      @keyframes petSlow{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-2px) scale(0.98);}}
+      @keyframes petDroop{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(3px) rotate(-5deg);}}
+      @keyframes petShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
+      @keyframes petGlow{0%,100%{filter:drop-shadow(0 0 6px var(--pc,#7c4dff));}50%{filter:drop-shadow(0 0 18px var(--pc,#7c4dff));}}
+      .pet-sprite{animation:petIdle 2.5s ease-in-out infinite;image-rendering:pixelated;}
+      .pet-bounce{animation:petBounce 1s ease-in-out infinite!important;}
+      .pet-sway{animation:petSway 2s ease-in-out infinite!important;}
+      .pet-slow{animation:petSlow 4s ease-in-out infinite!important;}
+      .pet-droop{animation:petDroop 3s ease-in-out infinite!important;}
+      .pet-shake{animation:petShake 0.5s ease-in-out infinite!important;}
+      .pet-evo{transition:all .2s;cursor:pointer;padding:4px;border-radius:6px;}
+      .pet-evo:hover{background:rgba(255,255,255,0.06);}
+    `;
+    document.head.appendChild(s);
+  }
+
+  // Evrim yolu — tüm aşamalar pixel thumbnail
+  const evoPath=PET_STAGES.map((s,i)=>{
+    const unlocked=S.xp>=s.minXp;
+    const isCurrent=stage.name===s.name;
+    const rc=RARITY_COLORS[s.rarity]||'#90a4ae';
+    return `<div class="pet-evo" onclick="showPetEvoDetail(${i})" style="text-align:center;opacity:${unlocked?1:0.3};
+      ${isCurrent?`background:rgba(${rc.replace('#','').match(/.{2}/g).map(h=>parseInt(h,16)).join(',')},0.15);border:1px solid ${rc};border-radius:8px;`:''}">
+      <div style="image-rendering:pixelated;margin:0 auto;width:32px;height:32px;">${drawPetPixel(s.name,32)}</div>
+      <div style="font-size:6px;color:${isCurrent?rc:'var(--t3)'};font-weight:${isCurrent?900:600};margin-top:2px;line-height:1.2;">${s.name.split(' ')[0]}</div>
+      ${isCurrent?`<div style="width:4px;height:4px;border-radius:50%;background:${rc};margin:1px auto 0;"></div>`:''}
+    </div>`;
+  }).join('');
+
+  // Son 7 gün aktivite
+  const dayNames=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  const activityDots=Array.from({length:7},(_,i)=>{
+    const d=new Date(Date.now()-(6-i)*86400000);
+    const xp=S.dailyLog?.[d.toDateString()]?.xp||0;
+    const h=Math.min(100,Math.round((xp/500)*100));
+    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="font-size:7px;color:var(--t3);">${xp||''}</div>
+      <div style="width:100%;background:rgba(255,255,255,0.05);border-radius:3px;height:40px;display:flex;align-items:flex-end;overflow:hidden;">
+        <div style="width:100%;height:${h}%;background:${xp>=300?'#f5a623':xp>=100?'#43a047':xp>0?'#1e88e5':'transparent'};min-height:${xp?2:0}px;border-radius:3px;"></div>
+      </div>
+      <div style="font-size:7px;color:var(--t3);">${dayNames[d.getDay()===0?6:d.getDay()-1]}</div>
+    </div>`;
+  }).join('');
+
+  pg.innerHTML=`
+    <!-- Ana kart -->
+    <div style="background:linear-gradient(135deg,#080818,#130a30);border:2px solid ${rarCol};
+      border-radius:20px;padding:20px;margin-bottom:12px;text-align:center;
+      box-shadow:0 0 40px ${rarCol}33;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,${rarCol},transparent);"></div>
+
+      <!-- İsim -->
+      <div style="margin-bottom:10px;">
+        <input value="${S.petName||'Arkadaş'}" onchange="S.petName=this.value;save();"
+          style="background:transparent;border:none;border-bottom:1.5px solid ${rarCol}66;
+          color:#fff;font-size:18px;font-weight:900;text-align:center;width:140px;outline:none;
+          font-family:Nunito,sans-serif;padding:2px 4px;">
+      </div>
+
+      <!-- Rarity badge -->
+      <div style="display:inline-flex;align-items:center;gap:4px;background:${rarCol}22;border:1px solid ${rarCol}55;
+        border-radius:100px;padding:2px 10px;margin-bottom:12px;">
+        <span style="font-size:8px;font-weight:900;color:${rarCol};letter-spacing:1px;text-transform:uppercase;">${RARITY_NAMES[stage.rarity]||'Sıradan'}</span>
+      </div>
+
+      <!-- Pixel sprite -->
+      <div class="pet-sprite pet-${mood.anim}" style="--pc:${rarCol};width:96px;height:96px;margin:0 auto 10px;
+        image-rendering:pixelated;display:block;filter:drop-shadow(0 4px 12px ${rarCol}66);">
+        ${drawPetPixel(stage.name,96)}
+      </div>
+
+      <!-- Stage info -->
+      <div style="font-size:16px;font-weight:900;color:${rarCol};margin-bottom:2px;">${stage.name}</div>
+      <div style="font-size:10px;color:${mood.col};margin-bottom:2px;">${mood.icon} ${mood.mood} — "${mood.msg}"</div>
+      <div style="font-size:9px;color:var(--t3);margin-bottom:14px;">${stage.desc}</div>
+
+      <!-- XP bar to next -->
+      ${nextStage?`
+      <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--t3);margin-bottom:4px;">
+        <span>${stage.name}</span><span style="color:${rarCol};">${xpToNext.toLocaleString('tr-TR')} XP → ${nextStage.name}</span>
+      </div>
+      <div style="height:8px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;">
+        <div style="width:${stagePct}%;height:100%;background:linear-gradient(90deg,${rarCol},${rarCol}99);
+          border-radius:100px;transition:width .5s;box-shadow:0 0 6px ${rarCol}88;"></div>
+      </div>`
+      :`<div style="color:#ffd54f;font-size:13px;font-weight:900;">🏆 MAKSİMUM EVRİM!</div>`}
+    </div>
+
+    <!-- Evrim yolu -->
+    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">⚗️ EVRİM YOLU (${PET_STAGES.filter(s=>S.xp>=s.minXp).length}/${PET_STAGES.length})</div>
+    <div style="background:var(--c1);border:1px solid var(--br);border-radius:14px;padding:12px;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">${evoPath}</div>
+    </div>
+
+    <!-- 7 günlük aktivite -->
+    <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📅 SON 7 GÜN</div>
+    <div style="background:var(--c1);border:1px solid var(--br);border-radius:14px;padding:12px;">
+      <div style="display:flex;gap:4px;height:60px;align-items:flex-end;">${activityDots}</div>
+    </div>
+
+    <div id="_petEvoDetail"></div>`;
+}
+
+window.showPetEvoDetail=function(idx){
+  const s=PET_STAGES[idx];
+  const unlocked=S.xp>=s.minXp;
+  const rc=RARITY_COLORS[s.rarity]||'#90a4ae';
+  const el=document.getElementById('_petEvoDetail');
+  if(!el)return;
+  el.innerHTML=`<div style="background:var(--c1);border:1.5px solid ${rc};border-radius:14px;padding:14px;margin-top:10px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="image-rendering:pixelated;flex-shrink:0;">${drawPetPixel(s.name,48)}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:900;color:${rc};">${s.name}</div>
+        <div style="font-size:9px;color:var(--t3);">${RARITY_NAMES[s.rarity]} · ${s.minXp.toLocaleString('tr-TR')} XP gerekli</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:4px;">${s.desc}</div>
+      </div>
+      <div style="font-size:11px;font-weight:900;color:${unlocked?rc:'var(--t3)'};">${unlocked?'✅ AÇIK':'🔒 KİLİTLİ'}</div>
+    </div>
+  </div>`;
+};
+
+// Tabs ve dispatcher'a ekle
 function buildNav(){
   const header=`<div class="nav-header" onclick="toggleSidebar()" title="Menüyü Kapat">
     <span class="nav-header-ico">⚔️</span>
