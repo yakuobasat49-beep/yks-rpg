@@ -11522,15 +11522,10 @@ function manualRestoreQ(){
   let dlTotal=0;
   Object.values(S.dailyLog||{}).forEach(function(d){dlTotal+=(d&&d.questions)||0;});
   const best=Math.max(cur,logTotal,dlTotal);
-  const msg=`🔍 Otomatik hesaplama:\n• Mevcut: ${cur.toLocaleString('tr')}\n• Log'dan: ${logTotal.toLocaleString('tr')}\n• Günlük kayıttan: ${dlTotal.toLocaleString('tr')}\n\nÖnerilen: ${best.toLocaleString('tr')}\n\nFarklı bir sayı girmek istersen yaz, yoksa boş bırak:`;
-  const input=prompt(msg,'');
-  const val=(input===null)?null:(input.trim()===''?best:parseInt(input.replace(/\D/g,'')));
-  if(val===null)return;
-  if(isNaN(val)||val<0){toast('Geçersiz sayı!');return;}
-  if(val===cur){toast('Değer zaten doğru!');return;}
-  S.questions=val;
+  if(best===cur){toast('✅ Soru sayısı zaten doğru görünüyor ('+cur.toLocaleString('tr')+')');return;}
+  S.questions=best;
   save();renderHome();renderSettings();
-  toast(`✅ Soru sayısı ${val.toLocaleString('tr')} olarak düzeltildi!`);
+  toast('✅ Soru sayısı '+cur.toLocaleString('tr')+' → '+best.toLocaleString('tr')+' düzeltildi!');
 }
 
 function fixSubjectDataFromLog(){
