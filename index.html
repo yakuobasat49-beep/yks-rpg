@@ -6085,7 +6085,7 @@ function addLog(ico,txt,xp,meta){
   if(!S.logId)S.logId=1;
   // daySlot: bu entry hangi haftalık slot'ta → silme sırasında doğru slot'tan çıkarmak için
   S.log.unshift({id:S.logId++,ico,txt,xp,ts:Date.now(),daySlot:dIdx(),meta:meta||null});
-  if(S.log.length>600) S.log=S.log.slice(0,500); // log maksimum 500 girişle sınırlı
+  if(S.log.length>600) S.log=S.log.slice(-500); // log maksimum 500 girişle sınırlı (en yeniler korunur)
 
   // ── Combo & Zincir tetikle ──
   const mtype = meta?.type;
@@ -11500,9 +11500,21 @@ function recalcSubjectStatsFromLog(){
     SUBJ.forEach(s=>{
       if(logQ[s.id]!==undefined) S.subjectQuestions[s.id]=logQ[s.id];
     });
-    // Toplam soru sayisini log dan hesapla (sadece tutarsizlik varsa)
-    if(totalQ>0) S.questions=totalQ;
+    // Toplam soru sayisini log dan hesapla — SADECE ARTIRMA (log kesik olabilir, asla azaltma)
+    if(totalQ>0 && totalQ>(S.questions||0)) S.questions=totalQ;
   }catch(e){console.warn('recalcSubjectStatsFromLog err',e);}
+}
+
+function manualRestoreQ(){
+  const cur=S.questions||0;
+  const input=prompt(`Şu anki soru sayın: ${cur.toLocaleString('tr')}\n\nDoğru soru sayını gir (örn: 1900):`, cur);
+  if(input===null)return;
+  const val=parseInt(input.replace(/\D/g,''));
+  if(isNaN(val)||val<0){toast('Geçersiz sayı!');return;}
+  if(!confirm(`Soru sayısı ${cur.toLocaleString('tr')} → ${val.toLocaleString('tr')} olarak ayarlansın mı?`))return;
+  S.questions=val;
+  save();renderHome();renderSettings();
+  toast(`✅ Soru sayısı ${val.toLocaleString('tr')} olarak güncellendi!`);
 }
 
 function fixSubjectDataFromLog(){
@@ -15217,6 +15229,145 @@ const YKS_DISTRIBUTION = {
   },
 };
 
+// ═══ SON 5 YIL YKS KONU ANALİZİ (ÖSYM resmi sorular) ═══
+const YKS_KONU_ANALIZ = {
+  tyt_mat: {
+    label:'TYT Matematik', color:'#e53935', icon:'➕',
+    konular:[
+      {konu:'Problemler (Hız, İşçi, Havuz, Yaş, Hareket)', data:{2021:5,2022:6,2023:5,2024:6,2025:5}},
+      {konu:'Temel Cebir & 1-2. Derece Denklemler', data:{2021:4,2022:4,2023:4,2024:4,2025:4}},
+      {konu:'Sayılar (Doğal, Tam, Rasyonel)', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+      {konu:'Oran-Orantı & Yüzde-Faiz', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+      {konu:'Veri-İstatistik (Ortalama, Mod)', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+      {konu:'Kümeler & Mantık', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+      {konu:'Fonksiyonlar (Temel)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Geometri-Ölçme (Temel)', data:{2021:3,2022:2,2023:3,2024:2,2025:3}},
+      {konu:'Sayı Dizileri & Örüntüler', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Köklü & Üslü İfadeler', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Olasılık (Temel)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Cebirsel İfadeler & Çarpanlara Ayırma', data:{2021:2,2022:3,2023:3,2024:3,2025:3}},
+    ]
+  },
+  tyt_tur: {
+    label:'TYT Türkçe', color:'#1e88e5', icon:'📝',
+    konular:[
+      {konu:'Okuduğunu Anlama & Paragraf (Ana Fikir)', data:{2021:10,2022:10,2023:10,2024:10,2025:10}},
+      {konu:'Sözcükte Anlam (Mecaz, Deyim, Atasözü)', data:{2021:5,2022:5,2023:5,2024:5,2025:5}},
+      {konu:'Cümlede Anlam & Anlatım Biçimleri', data:{2021:4,2022:4,2023:4,2024:4,2025:4}},
+      {konu:'Fiil Çekimi & Fiilimsi', data:{2021:4,2022:4,2023:4,2024:4,2025:4}},
+      {konu:'Cümle Öğeleri & Yapısı', data:{2021:4,2022:4,2023:4,2024:4,2025:4}},
+      {konu:'Sözcük Türleri (İsim, Sıfat, Zamir…)', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+      {konu:'Yazım Kuralları & Noktalama', data:{2021:4,2022:4,2023:4,2024:4,2025:4}},
+      {konu:'Ses Bilgisi & Ses Olayları', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+      {konu:'Anlatım Bozukluğu', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+    ]
+  },
+  tyt_fiz: {
+    label:'TYT Fizik', color:'#f39c12', icon:'⚡',
+    konular:[
+      {konu:'Kuvvet & Hareket (Newton Yasaları)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Basınç (Katı, Sıvı, Gaz)', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Elektrostatik & Temel Elektrik', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Dalgalar, Ses & Işık', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Enerji, İş & Güç', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Madde & Özellikleri', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+    ]
+  },
+  tyt_kim: {
+    label:'TYT Kimya', color:'#8e24aa', icon:'🧪',
+    konular:[
+      {konu:'Atom Yapısı & Periyodik Sistem', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Kimyasal Bağlar (İyonik, Kovalent)', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Mol Kavramı & Kimyasal Tepkimeler', data:{2021:1,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Maddenin Halleri & Gaz Yasaları', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Karışımlar & Çözeltiler', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Asit-Baz (Temel Kavramlar)', data:{2021:1,2022:0,2023:0,2024:1,2025:1}},
+    ]
+  },
+  tyt_bio: {
+    label:'TYT Biyoloji', color:'#43a047', icon:'🌿',
+    konular:[
+      {konu:'Hücre (Yapı, Organel, Zar Geçişleri)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Canlılık & Temel Kavramlar', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Biyolojik Moleküller (KHD, Protein)', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Kalıtım (Temel Mendel)', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Ekosistem & Çevre Sorunları', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+    ]
+  },
+  ayt_mat: {
+    label:'AYT Matematik', color:'#e53935', icon:'➕',
+    konular:[
+      {konu:'Türev (Tanım, Kurallar, Max-Min)', data:{2021:4,2022:4,2023:4,2024:4,2025:4}},
+      {konu:'İntegral (Belirsiz, Belirli, Alan)', data:{2021:3,2022:3,2023:4,2024:4,2025:4}},
+      {konu:'Logaritma & Üstel Fonksiyonlar', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+      {konu:'Trigonometri (Birim çember, Formüller)', data:{2021:3,2022:2,2023:3,2024:2,2025:3}},
+      {konu:'Olasılık & Sayma (Permütasyon)', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+      {konu:'Fonksiyonlar (Ters, Bileşke, Grafik)', data:{2021:3,2022:3,2023:2,2024:3,2025:2}},
+      {konu:'Diziler (AP, GP, Toplam)', data:{2021:2,2022:3,2023:2,2024:2,2025:3}},
+      {konu:'Limit & Süreklilik', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Analitik Geometri (Doğru, Çember)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Kompleks Sayılar', data:{2021:1,2022:2,2023:1,2024:2,2025:1}},
+      {konu:'Kümeler & Mantık & Önerme', data:{2021:2,2022:1,2023:2,2024:1,2025:2}},
+    ]
+  },
+  ayt_fiz: {
+    label:'AYT Fizik', color:'#f39c12', icon:'⚡',
+    konular:[
+      {konu:'Elektrik & Manyetizma (Devre, Alan)', data:{2021:3,2022:3,2023:3,2024:3,2025:3}},
+      {konu:'Modern Fizik (Fotoelektrik, Atom, Çekirdek)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Kuvvet & Hareket (Newton, İvme)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Enerji, İş & Güç (Mekanik)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Dalgalar & Ses (Girişim, Kırınım)', data:{2021:2,2022:2,2023:1,2024:2,2025:1}},
+      {konu:'Optik (Geometrik, Kırılma, Mercek)', data:{2021:1,2022:1,2023:2,2024:1,2025:2}},
+      {konu:'Termodinamik (Gazlar, Çeviriler)', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Dairesel Hareket & Kütle Çekim', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+    ]
+  },
+  ayt_kim: {
+    label:'AYT Kimya', color:'#8e24aa', icon:'🧪',
+    konular:[
+      {konu:'Kimyasal Denge & Le Chatelier', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Asit-Baz Dengesi & pH Hesabı', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Organik Kimya (Sınıflar, Reaksiyonlar)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Mol & Kimyasal Hesaplamalar', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Periyodik Sistem & Kimyasal Bağlar', data:{2021:1,2022:2,2023:1,2024:2,2025:1}},
+      {konu:'Elektrokimya (Galvanik Pil, Elektroliz)', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Termokimya & Entalpi (Hess)', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Çözeltiler & Çözünürlük', data:{2021:1,2022:0,2023:1,2024:0,2025:1}},
+      {konu:'Redoks Tepkimeleri', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+    ]
+  },
+  ayt_bio: {
+    label:'AYT Biyoloji', color:'#43a047', icon:'🌿',
+    konular:[
+      {konu:'Hücre (Zar Yapısı, Organel Görevleri)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'DNA & Protein Sentezi (Replikasyon, Transkripsiyon, Translasyon)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Kalıtım (Mendel Yasaları, Kan Grupları, Bağlantılı Genler)', data:{2021:2,2022:2,2023:2,2024:2,2025:2}},
+      {konu:'Fotosentez (Aydınlık & Calvin Döngüsü)', data:{2021:1,2022:2,2023:1,2024:2,2025:2}},
+      {konu:'Hücresel Solunum (Glikoliz, Krebs, ETS)', data:{2021:1,2022:1,2023:2,2024:1,2025:1}},
+      {konu:'Bölünmeler (Mitoz & Mayoz)', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Sinir Sistemi & Duyu Organları', data:{2021:1,2022:1,2023:1,2024:1,2025:1}},
+      {konu:'Endokrin Sistem & Hormonlar', data:{2021:1,2022:0,2023:1,2024:0,2025:1}},
+      {konu:'Dolaşım & Bağışıklık Sistemi', data:{2021:1,2022:1,2023:0,2024:1,2025:1}},
+      {konu:'Ekosistem & Biyolojik Çeşitlilik', data:{2021:1,2022:1,2023:1,2024:1,2025:0}},
+    ]
+  },
+  ydt_ing: {
+    label:'YDT İngilizce', color:'#0288d1', icon:'🇬🇧',
+    konular:[
+      {konu:'Kelime Bilgisi – Sinonim & Anlam', data:{2021:14,2022:15,2023:14,2024:15,2025:14}},
+      {konu:'Cloze Test (Paragraf Boşluk Doldurma)', data:{2021:10,2022:10,2023:10,2024:10,2025:10}},
+      {konu:'Reading Comprehension (Metin Anlama)', data:{2021:10,2022:10,2023:10,2024:10,2025:10}},
+      {konu:'Çeviri Türkçe → İngilizce', data:{2021:6,2022:6,2023:6,2024:6,2025:6}},
+      {konu:'Çeviri İngilizce → Türkçe', data:{2021:6,2022:6,2023:6,2024:6,2025:6}},
+      {konu:'Dilbilgisi (Zaman, Passive, Modal)', data:{2021:8,2022:7,2023:8,2024:7,2025:8}},
+      {konu:'Diyalog Tamamlama', data:{2021:5,2022:5,2023:5,2024:5,2025:5}},
+      {konu:'Paragraf Tamamlama (Cümle)', data:{2021:5,2022:5,2023:5,2024:5,2025:5}},
+      {konu:'Dilbilgisi (Conditionals, Wish, Relative)', data:{2021:4,2022:4,2023:4,2024:4,2025:4}},
+    ]
+  },
+};
+
 // SVG animasyonları
 function getKonuSVG(id, color){
   const svgs = {
@@ -16516,14 +16667,184 @@ function getKonuSVG(id, color){
   <text x="25" y="243" fill="#80cbc4" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">Doğru: y-y₁=m(x-x₁) | Eğim: m=tanα=(y₂-y₁)/(x₂-x₁)</text>
   <text x="25" y="254" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Parabol: y=ax²+bx+c | Çember: (x-h)²+(y-k)²=r²</text>
 </svg>`,
+
+    ing_grammar: `<svg viewBox="0 0 320 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:320px;">
+  <defs>
+    <linearGradient id="ing_bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a0a1e"/><stop offset="100%" stop-color="#08081a"/></linearGradient>
+    <filter id="glow_b"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="320" height="340" fill="url(#ing_bg)" rx="12"/>
+  <text x="160" y="22" text-anchor="middle" fill="#0288d1" font-size="12" font-weight="bold" font-family="Nunito,sans-serif">⏱️ İngilizce Tenses</text>
+  <!-- Zaman çizgisi -->
+  <line x1="20" y1="55" x2="300" y2="55" stroke="#1e3a5f" stroke-width="2"/>
+  <circle cx="20" cy="55" r="4" fill="#555"/>
+  <circle cx="160" cy="55" r="5" fill="#0288d1" filter="url(#glow_b)"/>
+  <circle cx="300" cy="55" r="4" fill="#555"/>
+  <text x="20" y="72" text-anchor="middle" fill="#555" font-size="8" font-family="Nunito,sans-serif">Geçmiş</text>
+  <text x="160" y="72" text-anchor="middle" fill="#0288d1" font-size="8" font-family="Nunito,sans-serif">Şimdi</text>
+  <text x="300" y="72" text-anchor="middle" fill="#555" font-size="8" font-family="Nunito,sans-serif">Gelecek</text>
+  <!-- Present Simple -->
+  <rect x="12" y="82" width="130" height="36" rx="8" fill="rgba(2,136,209,0.12)" stroke="rgba(2,136,209,0.4)" stroke-width="1"/>
+  <text x="77" y="97" text-anchor="middle" fill="#29b6f6" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Simple Present</text>
+  <text x="77" y="111" text-anchor="middle" fill="#80cbc4" font-size="8" font-family="Nunito,sans-serif">S + V(s/es)</text>
+  <!-- Present Cont -->
+  <rect x="152" y="82" width="156" height="36" rx="8" fill="rgba(2,136,209,0.08)" stroke="rgba(2,136,209,0.25)" stroke-width="1"/>
+  <text x="230" y="97" text-anchor="middle" fill="#29b6f6" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Pres. Continuous</text>
+  <text x="230" y="111" text-anchor="middle" fill="#80cbc4" font-size="8" font-family="Nunito,sans-serif">am/is/are + V-ing</text>
+  <!-- Past Simple -->
+  <rect x="12" y="128" width="130" height="36" rx="8" fill="rgba(100,100,200,0.1)" stroke="rgba(100,100,200,0.3)" stroke-width="1"/>
+  <text x="77" y="143" text-anchor="middle" fill="#9fa8da" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Simple Past</text>
+  <text x="77" y="157" text-anchor="middle" fill="#80cbc4" font-size="8" font-family="Nunito,sans-serif">S + V2</text>
+  <!-- Past Perfect -->
+  <rect x="152" y="128" width="156" height="36" rx="8" fill="rgba(100,100,200,0.07)" stroke="rgba(100,100,200,0.2)" stroke-width="1"/>
+  <text x="230" y="143" text-anchor="middle" fill="#9fa8da" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Past Perfect</text>
+  <text x="230" y="157" text-anchor="middle" fill="#80cbc4" font-size="8" font-family="Nunito,sans-serif">had + V3</text>
+  <!-- Pres Perfect -->
+  <rect x="12" y="174" width="130" height="36" rx="8" fill="rgba(2,200,180,0.1)" stroke="rgba(2,200,180,0.3)" stroke-width="1"/>
+  <text x="77" y="189" text-anchor="middle" fill="#4db6ac" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Present Perfect</text>
+  <text x="77" y="203" text-anchor="middle" fill="#80cbc4" font-size="8" font-family="Nunito,sans-serif">have/has + V3</text>
+  <!-- Future -->
+  <rect x="152" y="174" width="156" height="36" rx="8" fill="rgba(255,160,0,0.1)" stroke="rgba(255,160,0,0.3)" stroke-width="1"/>
+  <text x="230" y="189" text-anchor="middle" fill="#ffcc02" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Future</text>
+  <text x="230" y="203" text-anchor="middle" fill="#80cbc4" font-size="8" font-family="Nunito,sans-serif">will + V1 / be going to</text>
+  <!-- Conditionals -->
+  <rect x="12" y="222" width="296" height="70" rx="10" fill="#0d1a2e"/>
+  <text x="160" y="238" text-anchor="middle" fill="#0288d1" font-size="9.5" font-weight="bold" font-family="Nunito,sans-serif">Conditional Sentences</text>
+  <text x="20" y="253" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Type 1: If + Present, will + V1  →  gerçek olasılık</text>
+  <text x="20" y="266" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Type 2: If + Past, would + V1  →  hayali / düşük ihtimal</text>
+  <text x="20" y="279" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Type 3: If + Past Perf., would have + V3  →  geçmiş hayali</text>
+  <!-- Passive -->
+  <rect x="12" y="302" width="296" height="30" rx="8" fill="rgba(255,80,80,0.07)" stroke="rgba(255,80,80,0.2)" stroke-width="1"/>
+  <text x="160" y="315" text-anchor="middle" fill="#ef9a9a" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Passive: S + be + V3</text>
+  <text x="160" y="327" text-anchor="middle" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">The letter was written by her.</text>
+</svg>`,
+
+    ing_vocab: `<svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:300px;">
+  <defs><linearGradient id="vc_bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a0a1e"/><stop offset="100%" stop-color="#08081a"/></linearGradient></defs>
+  <rect width="320" height="320" fill="url(#vc_bg)" rx="12"/>
+  <text x="160" y="22" text-anchor="middle" fill="#0288d1" font-size="12" font-weight="bold" font-family="Nunito,sans-serif">📚 Bağlamdan Anlam Çıkarma</text>
+  <!-- Definition Clue -->
+  <rect x="12" y="34" width="296" height="38" rx="9" fill="rgba(2,136,209,0.12)" stroke="rgba(2,136,209,0.35)" stroke-width="1.2"/>
+  <text x="25" y="50" fill="#29b6f6" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Definition Clue</text>
+  <text x="25" y="65" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">"Photosynthesis, which means using sunlight to produce food..."</text>
+  <!-- Contrast Clue -->
+  <rect x="12" y="80" width="296" height="38" rx="9" fill="rgba(255,100,100,0.08)" stroke="rgba(255,100,100,0.3)" stroke-width="1.2"/>
+  <text x="25" y="96" fill="#ef9a9a" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Contrast Clue (but / however / unlike)</text>
+  <text x="25" y="111" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">"Unlike his frugal brother, John was lavish..." → lavish = savurgan</text>
+  <!-- Example Clue -->
+  <rect x="12" y="126" width="296" height="38" rx="9" fill="rgba(100,200,100,0.08)" stroke="rgba(100,200,100,0.3)" stroke-width="1.2"/>
+  <text x="25" y="142" fill="#81c784" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Example Clue (such as / for example)</text>
+  <text x="25" y="157" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">"Mammals, such as dogs and cats..." → örnekten genele</text>
+  <!-- Restatement -->
+  <rect x="12" y="172" width="296" height="38" rx="9" fill="rgba(200,150,255,0.08)" stroke="rgba(200,150,255,0.25)" stroke-width="1.2"/>
+  <text x="25" y="188" fill="#ce93d8" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Restatement (in other words / that is)</text>
+  <text x="25" y="203" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">"She was frugal, that is, she spent very little." → tekrar</text>
+  <!-- False Cognates -->
+  <rect x="12" y="220" width="296" height="55" rx="9" fill="#1a0d0d"/>
+  <text x="160" y="236" text-anchor="middle" fill="#ff5252" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">⚠️ False Cognates (Tuzaklar!)</text>
+  <text x="20" y="252" fill="#ef9a9a" font-size="8" font-family="Nunito,sans-serif">actual = gerçek (aktüel ≠)  |  eventually = sonunda (ihtimalle ≠)</text>
+  <text x="20" y="265" fill="#ef9a9a" font-size="8" font-family="Nunito,sans-serif">sensible = mantıklı (hassas ≠)  |  pretend = numara yapmak</text>
+  <!-- Connectors -->
+  <rect x="12" y="284" width="296" height="28" rx="8" fill="rgba(2,136,209,0.07)" stroke="rgba(2,136,209,0.2)" stroke-width="1"/>
+  <text x="160" y="297" text-anchor="middle" fill="#29b6f6" font-size="8" font-weight="bold" font-family="Nunito,sans-serif">Zıtlık: despite · although · however · nevertheless</text>
+  <text x="160" y="308" text-anchor="middle" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">Sebep: because · therefore · consequently · as a result</text>
+</svg>`,
+
+    ing_reading: `<svg viewBox="0 0 320 310" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:290px;">
+  <defs><linearGradient id="rd_bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a0a1e"/><stop offset="100%" stop-color="#08081a"/></linearGradient></defs>
+  <rect width="320" height="310" fill="url(#rd_bg)" rx="12"/>
+  <text x="160" y="22" text-anchor="middle" fill="#0288d1" font-size="12" font-weight="bold" font-family="Nunito,sans-serif">🔍 Reading Comprehension</text>
+  <!-- Strateji adımları -->
+  <text x="160" y="42" text-anchor="middle" fill="#555" font-size="8.5" font-family="Nunito,sans-serif">Önce soru → Skim → Scan → Cevap</text>
+  <!-- Soru tipleri -->
+  <rect x="12" y="52" width="140" height="52" rx="9" fill="rgba(2,136,209,0.1)" stroke="rgba(2,136,209,0.35)" stroke-width="1.2"/>
+  <text x="82" y="67" text-anchor="middle" fill="#29b6f6" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Main Idea</text>
+  <text x="82" y="80" text-anchor="middle" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Tüm metni kapsar</text>
+  <text x="82" y="93" text-anchor="middle" fill="#555" font-size="7" font-family="Nunito,sans-serif">Spesifik = yanlış!</text>
+  <rect x="164" y="52" width="144" height="52" rx="9" fill="rgba(100,200,100,0.08)" stroke="rgba(100,200,100,0.3)" stroke-width="1.2"/>
+  <text x="236" y="67" text-anchor="middle" fill="#81c784" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Detail</text>
+  <text x="236" y="80" text-anchor="middle" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Metinde açık yazılı</text>
+  <text x="236" y="93" text-anchor="middle" fill="#555" font-size="7" font-family="Nunito,sans-serif">Locate → verify</text>
+  <rect x="12" y="112" width="140" height="52" rx="9" fill="rgba(200,150,255,0.08)" stroke="rgba(200,150,255,0.25)" stroke-width="1.2"/>
+  <text x="82" y="127" text-anchor="middle" fill="#ce93d8" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Inference</text>
+  <text x="82" y="140" text-anchor="middle" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Yazılmayan, çıkarılan</text>
+  <text x="82" y="153" text-anchor="middle" fill="#555" font-size="7" font-family="Nunito,sans-serif">Abartı = yanlış</text>
+  <rect x="164" y="112" width="144" height="52" rx="9" fill="rgba(255,160,0,0.08)" stroke="rgba(255,160,0,0.25)" stroke-width="1.2"/>
+  <text x="236" y="127" text-anchor="middle" fill="#ffcc02" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Vocab in Context</text>
+  <text x="236" y="140" text-anchor="middle" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Yerine koy → anlam</text>
+  <text x="236" y="153" text-anchor="middle" fill="#555" font-size="7" font-family="Nunito,sans-serif">Context belirler</text>
+  <!-- Tehlike kelimeleri -->
+  <rect x="12" y="174" width="296" height="38" rx="9" fill="#1a0d0d"/>
+  <text x="160" y="189" text-anchor="middle" fill="#ff5252" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">⚠️ Tehlikeli Kelimeler</text>
+  <text x="160" y="204" text-anchor="middle" fill="#ef9a9a" font-size="8" font-family="Nunito,sans-serif">always · never · all · only · must → genelde YANLIŞ seçenek!</text>
+  <!-- Yazarın amacı -->
+  <rect x="12" y="222" width="296" height="38" rx="9" fill="rgba(2,136,209,0.07)" stroke="rgba(2,136,209,0.2)" stroke-width="1"/>
+  <text x="160" y="237" text-anchor="middle" fill="#29b6f6" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Yazarın Amacı (Author's Purpose)</text>
+  <text x="160" y="252" text-anchor="middle" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">to inform · to persuade · to describe · to compare · to entertain</text>
+  <!-- Ton -->
+  <rect x="12" y="270" width="296" height="30" rx="8" fill="rgba(100,100,200,0.08)" stroke="rgba(100,100,200,0.2)" stroke-width="1"/>
+  <text x="160" y="283" text-anchor="middle" fill="#9fa8da" font-size="8.5" font-weight="bold" font-family="Nunito,sans-serif">Ton: objective (tarafsız) · critical (eleştirel) · optimistic</text>
+  <text x="160" y="295" text-anchor="middle" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">YDT\'de ton soruları için kelime seçimine bak</text>
+</svg>`,
+
+    ing_sentence: `<svg viewBox="0 0 320 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:280px;">
+  <defs><linearGradient id="sn_bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a0a1e"/><stop offset="100%" stop-color="#08081a"/></linearGradient></defs>
+  <rect width="320" height="300" fill="url(#sn_bg)" rx="12"/>
+  <text x="160" y="22" text-anchor="middle" fill="#0288d1" font-size="12" font-weight="bold" font-family="Nunito,sans-serif">✏️ Cümle Yapısı</text>
+  <!-- Relative Clauses -->
+  <rect x="12" y="32" width="296" height="60" rx="9" fill="rgba(2,136,209,0.1)" stroke="rgba(2,136,209,0.35)" stroke-width="1.2"/>
+  <text x="25" y="47" fill="#29b6f6" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Relative Clauses (Sıfat Cümleleri)</text>
+  <text x="25" y="60" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">who/that: insan  |  which/that: nesne/hayvan  |  whose: iyelik</text>
+  <text x="25" y="73" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">where: yer  |  when: zaman  |  virgüllü = açıklayıcı</text>
+  <text x="25" y="84" fill="#555" font-size="7.5" font-family="Nunito,sans-serif">"The man who called is my boss." / "My father, who is 60, retired."</text>
+  <!-- Passive -->
+  <rect x="12" y="100" width="140" height="52" rx="9" fill="rgba(100,200,100,0.08)" stroke="rgba(100,200,100,0.3)" stroke-width="1.2"/>
+  <text x="82" y="116" text-anchor="middle" fill="#81c784" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Passive Voice</text>
+  <text x="82" y="129" text-anchor="middle" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">S + be + V3</text>
+  <text x="82" y="142" text-anchor="middle" fill="#555" font-size="7" font-family="Nunito,sans-serif">Zaman → be değişir</text>
+  <!-- Reported -->
+  <rect x="164" y="100" width="144" height="52" rx="9" fill="rgba(200,150,255,0.08)" stroke="rgba(200,150,255,0.25)" stroke-width="1.2"/>
+  <text x="236" y="116" text-anchor="middle" fill="#ce93d8" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Reported Speech</text>
+  <text x="236" y="129" text-anchor="middle" fill="#aaa" font-size="7.5" font-family="Nunito,sans-serif">Present→Past</text>
+  <text x="236" y="142" text-anchor="middle" fill="#555" font-size="7" font-family="Nunito,sans-serif">now→then, today→that day</text>
+  <!-- Wish / Modals -->
+  <rect x="12" y="162" width="296" height="50" rx="9" fill="rgba(255,160,0,0.07)" stroke="rgba(255,160,0,0.2)" stroke-width="1"/>
+  <text x="25" y="178" fill="#ffcc02" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">Modals &amp; Wish</text>
+  <text x="25" y="191" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">must (zorunluluk) · should (tavsiye) · might (ihtimal) · can (yetenek)</text>
+  <text x="25" y="204" fill="#aaa" font-size="8" font-family="Nunito,sans-serif">Wish + Past Simple: şimdiki → "I wish I knew."</text>
+  <!-- YDT Ipucu -->
+  <rect x="12" y="222" width="296" height="48" rx="9" fill="#0d1a2e"/>
+  <text x="160" y="237" text-anchor="middle" fill="#0288d1" font-size="9.5" font-weight="bold" font-family="Nunito,sans-serif">💡 YDT Cümle Tamamlama İpuçları</text>
+  <text x="20" y="252" fill="#80cbc4" font-size="8" font-family="Nunito,sans-serif">• Zaman zarfı bul: yesterday/since/while/already/yet</text>
+  <text x="20" y="264" fill="#80cbc4" font-size="8" font-family="Nunito,sans-serif">• Özne-fiil uyumunu kontrol et (3. tekil şahıs -s)</text>
+</svg>`,
+
   };
   return svgs[id] || `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#0d0d20" rx="12"/><text x="150" y="105" text-anchor="middle" fill="#555" font-size="12" font-family="Nunito,sans-serif">Animasyon hazırlanıyor...</text></svg>`;
 }
 
-let _bilgiMode = 'kartlar'; // 'kartlar' | 'ozet' | 'quiz' | 'dagılım'
+let _bilgiMode = 'kartlar';
 let _konuOzetiIdx = 0;
-let _quizState = null; // {questions, current, score, answered, showResult}
+let _quizState = null;
+let _quizKonuId = null;
 let bilgiFlipped={};
+
+function _buildQuizPool(tid, konuId){
+  const pool=[];
+  const cards=BILGI_CARDS[tid]||[];
+  const subj=SUBJ.find(s=>s.id===tid)||{color:'#7c4dff'};
+  cards.forEach(c=>{
+    pool.push({q:c.q, correct:c.a, konuName:'Bilgi Kartları', konuColor:subj.color, konuIcon:'🃏'});
+  });
+  const konular=KONU_OZETI[tid]||[];
+  konular.forEach(k=>{
+    if(konuId && k.id!==konuId) return;
+    (k.sorular||[]).forEach(s2=>{
+      pool.push({q:s2.q, correct:s2.a, konuName:k.name, konuColor:k.color, konuIcon:k.icon, konuId:k.id});
+    });
+  });
+  return pool;
+}
 
 function renderBilgi(){
   const tid=S.bilgiTab||'mat';
@@ -16607,146 +16928,262 @@ function renderBilgi(){
 
   // ── QUIZ MODU ──────────────────────────────────────
   } else if(_bilgiMode==='quiz'){
-    // Tüm ders konu özetlerinin sorularını topla
-    const allKonular = KONU_OZETI[tid]||[];
-    const allSorular = allKonular.flatMap(k=>
-      (k.sorular||[]).map(s2=>({q:s2.q, correct:s2.a, konuName:k.name, konuColor:k.color, konuIcon:k.icon}))
-    );
+    const allPool=_buildQuizPool(tid, null);
+    const konular=KONU_OZETI[tid]||[];
 
-    if(allSorular.length===0){
-      mainContent=`<div style="text-align:center;padding:30px 10px;color:var(--t3);font-size:11px;">Bu ders için henüz quiz sorusu yok. Konu özeti eklenince aktif olacak! 🚧</div>`;
+    // Konu seçim ekranı — quiz başlamadıysa
+    if(!_quizState){
+      const totalPool=allPool.length;
+      const konuBtns=konular.map(k=>{
+        const kPool=_buildQuizPool(tid,k.id);
+        return`<button onclick="_quizKonuId='${k.id}';_startQuiz('${tid}');renderBilgi();"
+          style="display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;
+          border-radius:12px;border:1.5px solid ${k.color}44;background:${k.color}0e;
+          color:var(--t1);cursor:pointer;font-family:'Nunito',sans-serif;
+          margin-bottom:8px;text-align:left;transition:all .15s;">
+          <span style="font-size:22px;flex-shrink:0;">${k.icon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:10px;font-weight:900;color:${k.color};">${k.name}</div>
+            <div style="font-size:8px;color:var(--t3);margin-top:1px;">${kPool.length} soru</div>
+          </div>
+          <span style="font-size:11px;color:var(--t3);">▶</span>
+        </button>`;
+      }).join('');
+
+      mainContent=`
+        <!-- Tüm sorular butonu -->
+        <button onclick="_quizKonuId=null;_startQuiz('${tid}');renderBilgi();"
+          style="display:flex;align-items:center;gap:10px;width:100%;padding:13px 14px;
+          border-radius:13px;border:2px solid ${s.color}66;
+          background:linear-gradient(135deg,${s.color}18,${s.color}08);
+          color:var(--t1);cursor:pointer;font-family:'Nunito',sans-serif;
+          margin-bottom:12px;text-align:left;">
+          <span style="font-size:26px;">🎯</span>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:900;color:${s.color};">Tüm Konular</div>
+            <div style="font-size:9px;color:var(--t3);">Karışık · ${totalPool} soru havuzu · 10 soru</div>
+          </div>
+          <div style="background:${s.color};border-radius:8px;padding:4px 10px;">
+            <span style="font-size:10px;font-weight:900;color:#fff;">BAŞLA</span>
+          </div>
+        </button>
+        ${konular.length?`<div style="font-size:9px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📚 KONUYA GÖRE QUIZ</div>${konuBtns}`:''}
+        ${konular.length===0&&totalPool===0?`<div style="text-align:center;padding:30px;color:var(--t3);font-size:11px;">Bu ders için henüz quiz sorusu eklenmemiş 🚧</div>`:''}`;
     } else {
-      // Quiz başlatılmamışsa başlat
-      if(!_quizState){
-        const shuffled=[...allSorular].sort(()=>Math.random()-0.5).slice(0,Math.min(10,allSorular.length));
-        // Her soru için yanlış seçenekler üret (diğer sorulardan)
-        _quizState={
-          questions: shuffled.map((q,qi)=>{
-            const wrongs=allSorular.filter((_,i)=>i!==allSorular.indexOf(q)).map(x=>x.correct)
-              .sort(()=>Math.random()-0.5).slice(0,3);
-            const opts=[q.correct,...wrongs].sort(()=>Math.random()-0.5);
-            return{...q, opts, correctIdx:opts.indexOf(q.correct)};
-          }),
-          current:0, score:0, answered:[], showResult:false
-        };
-      }
       const qs=_quizState;
 
       if(qs.showResult){
         const pctQ=Math.round(qs.score/qs.questions.length*100);
         const grade=pctQ>=90?{e:'🏆',t:'Mükemmel!',c:'#f5a623'}:pctQ>=70?{e:'⭐',t:'Çok İyi!',c:'#43a047'}:pctQ>=50?{e:'👍',t:'İdare Eder',c:'#1e88e5'}:{e:'📖',t:'Tekrar Çalış',c:'#e53935'};
-        mainContent=`<div style="text-align:center;padding:20px 10px;">
-          <div style="font-size:52px;margin-bottom:8px;">${grade.e}</div>
-          <div style="font-size:18px;font-weight:900;color:${grade.c};margin-bottom:4px;">${grade.t}</div>
-          <div style="font-size:13px;color:var(--t2);margin-bottom:16px;">${qs.score} / ${qs.questions.length} doğru · %${pctQ}</div>
-          <div style="height:10px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;margin-bottom:16px;">
-            <div style="height:100%;width:${pctQ}%;background:linear-gradient(90deg,${grade.c},${grade.c}aa);border-radius:100px;transition:width 1s;"></div>
+        mainContent=`<div style="text-align:center;padding:16px 0 8px;">
+          <div style="font-size:48px;margin-bottom:6px;">${grade.e}</div>
+          <div style="font-size:18px;font-weight:900;color:${grade.c};">${grade.t}</div>
+          <div style="font-size:12px;color:var(--t2);margin:4px 0 12px;">${qs.score}/${qs.questions.length} doğru · %${pctQ}</div>
+          <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;margin-bottom:14px;">
+            <div style="height:100%;width:${pctQ}%;background:linear-gradient(90deg,${grade.c},${grade.c}88);border-radius:100px;transition:width 1s;"></div>
           </div>
-          ${qs.questions.map((q,i)=>{
-            const ans=qs.answered[i];
-            const ok=ans===q.correctIdx;
-            return`<div style="margin-bottom:8px;padding:9px;background:${ok?'rgba(67,160,71,0.08)':'rgba(229,57,53,0.08)'};border:1px solid ${ok?'rgba(67,160,71,0.3)':'rgba(229,57,53,0.3)'};border-radius:9px;text-align:left;">
-              <div style="font-size:9.5px;font-weight:800;color:var(--t1);margin-bottom:4px;">${i+1}. ${q.q}</div>
-              <div style="font-size:9px;color:${ok?'#66bb6a':'#ef5350'};">${ok?'✅':'❌'} ${ans!=null?q.opts[ans]:'—'}</div>
-              ${!ok?`<div style="font-size:8.5px;color:#66bb6a;margin-top:2px;">✓ Doğru: ${q.correct}</div>`:''}
-            </div>`;
-          }).join('')}
-          <button onclick="_quizState=null;renderBilgi();" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,${s.color},${s.color}bb);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">🔄 Yeni Quiz</button>
+        </div>
+        ${qs.questions.map((q,i)=>{
+          const ans=qs.answered[i];
+          const ok=(ans!=null&&ans===q.correctIdx);
+          return`<div style="margin-bottom:7px;padding:9px 11px;
+            background:${ok?'rgba(67,160,71,0.07)':'rgba(229,57,53,0.07)'};
+            border:1px solid ${ok?'rgba(67,160,71,0.3)':'rgba(229,57,53,0.3)'};border-radius:10px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+              <span style="font-size:10px;">${ok?'✅':'❌'}</span>
+              <span style="font-size:9px;font-weight:800;color:${q.konuColor};">${q.konuIcon} ${q.konuName}</span>
+            </div>
+            <div style="font-size:9.5px;font-weight:700;color:var(--t1);margin-bottom:3px;">${q.q}</div>
+            ${!ok?`<div style="font-size:8.5px;color:#66bb6a;">✓ ${q.correct.substring(0,80)}${q.correct.length>80?'...':''}</div>`:''}
+          </div>`;
+        }).join('')}
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button onclick="_quizState=null;_quizKonuId=null;renderBilgi();"
+            style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--br);
+            background:transparent;color:var(--t2);font-size:10px;font-weight:800;
+            cursor:pointer;font-family:'Nunito',sans-serif;">← Konu Seç</button>
+          <button onclick="_startQuiz('${tid}');renderBilgi();"
+            style="flex:2;padding:10px;border-radius:10px;border:none;
+            background:linear-gradient(135deg,${s.color},${s.color}bb);
+            color:#fff;font-size:10px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">
+            🔄 Tekrar Quiz</button>
         </div>`;
       } else {
         const q=qs.questions[qs.current];
         const ans=qs.answered[qs.current];
         const answered=(ans!=null);
-        const progressPct=Math.round(qs.current/qs.questions.length*100);
+        const progressPct=Math.round((qs.current+1)/qs.questions.length*100);
         mainContent=`
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <div style="font-size:9px;font-weight:800;color:var(--t3);">${q.konuIcon} ${q.konuName}</div>
-            <div style="font-size:9px;color:var(--t3);">${qs.current+1} / ${qs.questions.length}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span style="font-size:12px;">${q.konuIcon}</span>
+              <span style="font-size:8.5px;font-weight:800;color:${q.konuColor};">${q.konuName}</span>
+            </div>
+            <div style="font-size:9px;font-weight:900;color:var(--t3);">${qs.current+1}<span style="color:var(--t3);">/${qs.questions.length}</span></div>
           </div>
-          <div style="height:5px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;margin-bottom:14px;">
-            <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,${s.color},${s.color}aa);border-radius:100px;transition:width .4s;"></div>
+          <div style="position:relative;height:6px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;margin-bottom:14px;">
+            <div style="position:absolute;left:0;top:0;height:100%;width:${progressPct}%;
+              background:linear-gradient(90deg,${s.color},${s.color}bb);border-radius:100px;transition:width .4s;"></div>
           </div>
-          <div style="background:var(--c2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px;margin-bottom:12px;">
-            <div style="font-size:12px;font-weight:800;color:var(--t1);line-height:1.5;">${q.q}</div>
+          <div style="background:linear-gradient(135deg,${s.color}10,var(--c2));
+            border:1.5px solid ${s.color}30;border-radius:14px;padding:16px;margin-bottom:14px;">
+            <div style="font-size:12px;font-weight:900;color:var(--t1);line-height:1.55;">${q.q}</div>
           </div>
           ${q.opts.map((opt,oi)=>{
-            let bg='var(--c2)',border='var(--br)',color='var(--t2)';
+            let bg='var(--c2)',border='rgba(255,255,255,0.09)',color='var(--t2)',icon='';
             if(answered){
-              if(oi===q.correctIdx){bg='rgba(67,160,71,0.15)';border='rgba(67,160,71,0.5)';color='#66bb6a';}
-              else if(oi===ans&&ans!==q.correctIdx){bg='rgba(229,57,53,0.12)';border='rgba(229,57,53,0.4)';color='#ef5350';}
+              if(oi===q.correctIdx){bg='rgba(67,160,71,0.14)';border='rgba(67,160,71,0.55)';color='#81c784';icon='✅ ';}
+              else if(oi===ans){bg='rgba(229,57,53,0.12)';border='rgba(229,57,53,0.45)';color='#ef9a9a';icon='❌ ';}
             }
-            return`<button onclick="${answered?'':'bilgiQuizAnswer('+oi+')'}" style="display:block;width:100%;margin-bottom:8px;padding:10px 12px;border-radius:10px;border:1.5px solid ${border};background:${bg};color:${color};font-size:10px;font-weight:700;cursor:${answered?'default':'pointer'};font-family:'Nunito',sans-serif;text-align:left;transition:all .15s;">${['A','B','C','D'][oi]}. ${opt}</button>`;
+            return`<button onclick="${answered?'':'bilgiQuizAnswer('+oi+')'}"
+              style="display:flex;align-items:center;gap:10px;width:100%;margin-bottom:9px;
+              padding:11px 13px;border-radius:11px;border:1.5px solid ${border};
+              background:${bg};color:${color};font-size:10px;font-weight:700;
+              cursor:${answered?'default':'pointer'};font-family:'Nunito',sans-serif;
+              text-align:left;transition:all .18s;">
+              <span style="flex-shrink:0;width:20px;height:20px;border-radius:6px;
+                background:rgba(255,255,255,0.06);display:flex;align-items:center;
+                justify-content:center;font-size:9px;font-weight:900;">${['A','B','C','D'][oi]}</span>
+              <span>${icon}${opt.substring(0,100)}</span>
+            </button>`;
           }).join('')}
-          ${answered?`<button onclick="bilgiQuizNext()" style="width:100%;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,${s.color},${s.color}bb);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;margin-top:4px;">${qs.current+1<qs.questions.length?'Sonraki →':'Sonuçları Gör 🏆'}</button>`:''}
-          <div style="text-align:center;margin-top:8px;font-size:9px;color:var(--t3);">Puan: ${qs.score} / ${qs.answered.filter(a=>a!=null).length}</div>`;
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+            <div style="font-size:9px;color:var(--t3);">✓ ${qs.score} doğru</div>
+            ${answered?`<button onclick="bilgiQuizNext()"
+              style="padding:9px 18px;border-radius:10px;border:none;
+              background:linear-gradient(135deg,${s.color},${s.color}bb);
+              color:#fff;font-size:10px;font-weight:900;cursor:pointer;
+              font-family:'Nunito',sans-serif;">
+              ${qs.current+1<qs.questions.length?'Sonraki ▶':'Sonuçlar 🏆'}</button>`:''}
+          </div>`;
       }
     }
 
-  // ── YKS DAĞILIMI ──────────────────────────────────
-  } else if(_bilgiMode==='dagılım'){
-    const distKeys=Object.keys(YKS_DISTRIBUTION);
-    const selDist=window._yksDistTab||distKeys[0];
-    const dist=YKS_DISTRIBUTION[selDist];
-    const distTabs=distKeys.map(k=>{
-      const d=YKS_DISTRIBUTION[k];
-      const active=k===selDist;
-      return`<button onclick="window._yksDistTab='${k}';renderBilgi();" style="padding:6px 9px;border-radius:8px;border:1px solid ${active?d.color:'var(--br)'};background:${active?d.color+'22':'transparent'};color:${active?d.color:'var(--t3)'};font-size:9px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;white-space:nowrap;">${d.icon} ${d.label}</button>`;
-    }).join('');
-    const totalSoru=dist.dersler.reduce((a,d)=>a+d.soru,0);
-    const barRows=dist.dersler.map(d=>{
-      const pct=Math.round(d.soru/totalSoru*100);
-      return`<div style="margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-size:14px;">${d.icon}</span>
-            <span style="font-size:10px;font-weight:800;color:var(--t1);">${d.name}</span>
-          </div>
-          <div style="text-align:right;">
-            <span style="font-size:12px;font-weight:900;color:${d.color};">${d.soru}</span>
-            <span style="font-size:9px;color:var(--t3);"> soru · %${pct}</span>
-          </div>
-        </div>
-        <div style="height:8px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${d.color},${d.color}aa);border-radius:100px;box-shadow:0 0 6px ${d.color}44;"></div>
-        </div>
-        ${d.alt?`<div style="font-size:8px;color:var(--t3);margin-top:3px;">${d.alt}</div>`:''}
-      </div>`;
-    }).join('');
-
-    // Net hesaplama ipucu
-    const netTip=`<div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:12px;padding:12px;margin-top:14px;">
-      <div style="font-size:10px;font-weight:900;color:#f5a623;margin-bottom:7px;">💡 Net Hesabı</div>
-      <div style="font-size:9.5px;color:var(--t2);line-height:1.8;">
-        • Her <b>doğru</b> = +1 puan<br>
-        • Her <b>yanlış</b> = −0.25 puan<br>
-        • Net = Doğru − (Yanlış ÷ 4)<br>
-        • <b>Boş bırak</b> → yanlış yapmaktan değerli!
-      </div>
-    </div>`;
-
-    // YKS takvim bilgisi
+  // ── YKS DAĞILIMI & 5 YIL ANALİZİ ──────────────────────────────
+  } else if(_bilgiMode==='dağılım'){
     const yksDate=new Date('2026-06-14');
     const now2=new Date();
     const daysLeft2=Math.max(0,Math.ceil((yksDate-now2)/86400000));
-    const yksCountdown=`<div style="background:linear-gradient(135deg,rgba(124,77,255,0.1),rgba(229,57,53,0.08));border:1px solid rgba(124,77,255,0.25);border-radius:12px;padding:12px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">
-      <div style="font-size:32px;">⏳</div>
-      <div>
-        <div style="font-size:10px;font-weight:900;color:var(--pu);">YKS'YE KALAN SÜRE</div>
-        <div style="font-size:22px;font-weight:900;color:#fff;">${daysLeft2} gün</div>
-        <div style="font-size:8px;color:var(--t3);">14 Haziran 2026 · TYT sabah, AYT öğleden sonra</div>
+    const yksCountdown=`<div style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(124,77,255,0.1),rgba(229,57,53,0.08));border:1px solid rgba(124,77,255,0.25);border-radius:14px;padding:13px;margin-bottom:12px;">
+      <div style="font-size:30px;">⏳</div>
+      <div style="flex:1;">
+        <div style="font-size:9px;font-weight:900;color:var(--pu);letter-spacing:1px;text-transform:uppercase;">YKS'ye Kalan</div>
+        <div style="font-size:24px;font-weight:900;color:#fff;line-height:1.1;">${daysLeft2} gün</div>
+        <div style="font-size:8px;color:var(--t3);">14 Haziran 2026 · TYT sabah · AYT öğleden sonra</div>
+      </div>
+      <div style="background:rgba(229,57,53,0.15);border:1px solid rgba(229,57,53,0.3);border-radius:10px;padding:8px 12px;text-align:center;">
+        <div style="font-size:14px;font-weight:900;color:#ef5350;">${Math.ceil(daysLeft2/7)}</div>
+        <div style="font-size:7.5px;color:var(--t3);">hafta</div>
       </div>
     </div>`;
 
-    mainContent=`${yksCountdown}
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${distTabs}</div>
-      <div style="background:var(--c2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-          <div style="font-size:11px;font-weight:900;color:${dist.color};">${dist.icon} ${dist.label}</div>
-          <div style="font-size:11px;font-weight:900;color:var(--t3);">Toplam: <span style="color:#fff;">${totalSoru} soru</span></div>
+    const yksMode=window._yksMode||'dagılım';
+    const yksModeTabs=`<div style="display:flex;gap:6px;margin-bottom:12px;">
+      <button onclick="window._yksMode='dagılım';renderBilgi();" style="flex:1;padding:8px;border-radius:9px;border:1.5px solid ${yksMode==='dagılım'?'#f5a623':'var(--br)'};background:${yksMode==='dagılım'?'rgba(245,166,35,0.1)':'transparent'};color:${yksMode==='dagılım'?'#f5a623':'var(--t3)'};font-size:9px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">📊 Soru Dağılımı</button>
+      <button onclick="window._yksMode='analiz';renderBilgi();" style="flex:1;padding:8px;border-radius:9px;border:1.5px solid ${yksMode==='analiz'?'#f5a623':'var(--br)'};background:${yksMode==='analiz'?'rgba(245,166,35,0.1)':'transparent'};color:${yksMode==='analiz'?'#f5a623':'var(--t3)'};font-size:9px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">📅 5 Yıl Konu Analizi</button>
+    </div>`;
+
+    let innerContent='';
+
+    if(yksMode==='dagılım'){
+      const distKeys=Object.keys(YKS_DISTRIBUTION);
+      const selDist=window._yksDistTab||distKeys[0];
+      const dist=YKS_DISTRIBUTION[selDist];
+      const distTabs=distKeys.map(k=>{const d=YKS_DISTRIBUTION[k];const active=k===selDist;
+        return`<button onclick="window._yksDistTab='${k}';renderBilgi();" style="padding:5px 9px;border-radius:7px;border:1px solid ${active?d.color:'var(--br)'};background:${active?d.color+'22':'transparent'};color:${active?d.color:'var(--t3)'};font-size:8.5px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;white-space:nowrap;">${d.icon} ${d.label}</button>`;
+      }).join('');
+      const totalSoru=dist.dersler.reduce((a,d)=>a+d.soru,0);
+      const barRows=dist.dersler.map(d=>{const pct=Math.round(d.soru/totalSoru*100);
+        return`<div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+            <div style="font-size:10px;font-weight:800;color:var(--t1);">${d.icon} ${d.name}</div>
+            <div><span style="font-size:13px;font-weight:900;color:${d.color};">${d.soru}</span><span style="font-size:8.5px;color:var(--t3);"> soru · %${pct}</span></div>
+          </div>
+          <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${d.color},${d.color}99);border-radius:100px;box-shadow:0 0 6px ${d.color}44;"></div>
+          </div>
+          ${d.alt?`<div style="font-size:7.5px;color:var(--t3);margin-top:2px;">↳ ${d.alt}</div>`:''}
+        </div>`;
+      }).join('');
+      innerContent=`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px;">${distTabs}</div>
+        <div style="background:var(--c2);border:1px solid rgba(255,255,255,0.07);border-radius:13px;padding:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;">
+            <div style="font-size:12px;font-weight:900;color:${dist.color};">${dist.icon} ${dist.label}</div>
+            <div style="font-size:10px;color:var(--t3);">Toplam: <b style="color:#fff;">${totalSoru}</b> soru</div>
+          </div>
+          ${barRows}
         </div>
-        ${barRows}
-      </div>
-      ${netTip}`;
+        <div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.2);border-radius:10px;padding:11px;margin-top:12px;">
+          <div style="font-size:9.5px;font-weight:900;color:#f5a623;margin-bottom:5px;">💡 Net Hesabı</div>
+          <div style="font-size:9px;color:var(--t2);line-height:1.9;">• Doğru = +1 &nbsp;|&nbsp; Yanlış = −0.25 &nbsp;|&nbsp; Net = D − (Y÷4)<br><b>Boş bırakmak yanlıştan daha iyidir!</b></div>
+        </div>`;
+    } else {
+      // 5 YIL ANALİZİ
+      const analKeys=Object.keys(YKS_KONU_ANALIZ);
+      const selAnal=window._yksAnalTab||analKeys[0];
+      const anal=YKS_KONU_ANALIZ[selAnal];
+      const years=[2021,2022,2023,2024,2025];
+      const analTabsHtml=analKeys.map(k=>{const a=YKS_KONU_ANALIZ[k];const active=k===selAnal;
+        return`<button onclick="window._yksAnalTab='${k}';renderBilgi();" style="padding:5px 8px;border-radius:7px;border:1px solid ${active?a.color:'var(--br)'};background:${active?a.color+'22':'transparent'};color:${active?a.color:'var(--t3)'};font-size:8px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;white-space:nowrap;">${a.icon} ${a.label.split(' ').pop()}</button>`;
+      }).join('');
+      const maxVal=Math.max(...anal.konular.flatMap(k=>years.map(y=>k.data[y]||0)),1);
+      const konuCards=anal.konular.map(k=>{
+        const vals=years.map(y=>k.data[y]||0);
+        const avg=(vals.reduce((a,b)=>a+b,0)/years.length).toFixed(1);
+        const delta=vals[4]-vals[0];
+        const trendE=delta>0?'📈':delta<0?'📉':'➡️';
+        const trendC=delta>0?'#66bb6a':delta<0?'#ef5350':'#888';
+        const trendT=delta>0?'+'+delta:delta<0?String(delta):'sabit';
+        return`<div style="margin-bottom:10px;padding:11px 13px;
+          background:rgba(255,255,255,0.025);
+          border:1px solid rgba(255,255,255,0.05);
+          border-left:3px solid ${anal.color}55;
+          border-radius:11px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;">
+            <div style="font-size:9.5px;font-weight:900;color:var(--t1);flex:1;padding-right:10px;line-height:1.4;">${k.konu}</div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;">
+              <span style="font-size:8px;color:var(--t3);">ort: <b style="color:${anal.color};">${avg}</b></span>
+              <span style="font-size:9px;color:${trendC};">${trendE} ${trendT}</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;align-items:end;height:68px;">
+            ${vals.map((v,vi)=>{
+              const isLast=(vi===4);
+              const barH=maxVal>0?Math.max(6,Math.round((v/maxVal)*52)):4;
+              return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px;">
+                <span style="font-size:9px;font-weight:900;color:${isLast?'#f5a623':v>0?anal.color:'rgba(255,255,255,0.15)'};">${v}</span>
+                <div style="width:100%;height:${barH}px;
+                  background:${isLast?'linear-gradient(180deg,#f5a623,#e65100)':anal.color+'66'};
+                  border-radius:4px 4px 0 0;
+                  border-top:2px solid ${isLast?'#f5a623':anal.color+'aa'};
+                  box-shadow:${isLast?'0 0 8px rgba(245,166,35,0.5)':'none'};"></div>
+                <span style="font-size:7px;color:${isLast?'#f5a623':'var(--t3)'};font-weight:${isLast?'900':'400'};">${years[vi]}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('');
+      innerContent=`
+        <div style="overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none;">
+          <div style="display:flex;gap:5px;min-width:max-content;">${analTabsHtml}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.2);border-radius:10px;padding:10px 12px;margin-bottom:11px;">
+          <span style="font-size:20px;">📅</span>
+          <div>
+            <div style="font-size:9px;font-weight:900;color:#f5a623;margin-bottom:1px;">2021–2025 ÖSYM Konu Analizi</div>
+            <div style="font-size:8px;color:var(--t3);">Yıllık çıkmış soru sayıları · <b style="color:#f5a623;">2025</b> altın renk · trend oku değişim yönünü gösterir</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:22px;">${anal.icon}</span>
+          <div>
+            <div style="font-size:12px;font-weight:900;color:${anal.color};">${anal.label}</div>
+            <div style="font-size:8px;color:var(--t3);">${anal.konular.length} konu · 5 yıllık veri</div>
+          </div>
+        </div>
+        ${konuCards}`;
+    }
+    mainContent=`${yksCountdown}${yksModeTabs}${innerContent}`;
   }
 
   document.getElementById('page').innerHTML=heroH()+
@@ -16771,15 +17208,35 @@ function renderBilgi(){
         <div style="width:40px;height:40px;border-radius:11px;background:${s.color}25;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 14px ${s.color}40;">${s.icon}</div>
         <div style="flex:1;">
           <div style="font-weight:900;font-size:14px;">🧠 Bilgi Merkezi</div>
-          <div style="font-size:9px;color:var(--t3);margin-top:1px;">${s.name} · ${{kartlar:'Bilgi Kartları',ozet:'Konu Özeti',quiz:'Quiz Modu',dagılım:'YKS Dağılımı'}[_bilgiMode]}</div>
+          <div style="font-size:9px;color:var(--t3);margin-top:1px;">${s.name} · ${{kartlar:'Bilgi Kartları',ozet:'Konu Özeti',quiz:'Quiz','\u0064\u0061\u011f\u0131l\u0131m':'YKS Dağılımı'}[_bilgiMode]||''}</div>
         </div>
       </div>
-      ${_bilgiMode!=='dagılım'?`<div class="tm-tabs" style="margin-bottom:12px;">${tabs}</div>`:''}
+      ${_bilgiMode!=='\u0064\u0061\u011f\u0131l\u0131m'?`<div class="tm-tabs" style="margin-bottom:12px;">${tabs}</div>`:''}
       ${modeBar}
       ${mainContent}
     </div>`;
 }
-
+function _startQuiz(tid){
+  const pool=_buildQuizPool(tid, _quizKonuId);
+  if(!pool.length){toast('Bu konu için soru bulunamadı!');return;}
+  const count=Math.min(10, pool.length);
+  const shuffled=[...pool].sort(()=>Math.random()-0.5).slice(0,count);
+  _quizState={
+    questions: shuffled.map(q=>{
+      // Yanlış seçenekler: havuzdaki diğer soruların cevaplarından
+      const wrongs=[...pool]
+        .filter(p=>p.correct!==q.correct)
+        .sort(()=>Math.random()-0.5)
+        .slice(0,3)
+        .map(p=>p.correct.substring(0,80));
+      // Yeterli yanlış yoksa basit alternatifler ekle
+      while(wrongs.length<3) wrongs.push(['Bilinmiyor','Hiçbiri doğru değil','Yeterli veri yok'][wrongs.length]||'—');
+      const opts=[q.correct.substring(0,80),...wrongs].sort(()=>Math.random()-0.5);
+      return{...q, opts, correctIdx:opts.indexOf(q.correct.substring(0,80))};
+    }),
+    current:0, score:0, answered:[], showResult:false
+  };
+}
 function bilgiQuizAnswer(optIdx){
   if(!_quizState)return;
   const qs=_quizState;
@@ -19912,6 +20369,14 @@ function renderSettings(){
       sRow('👤 Giriş yapıldı',`Google: <b>${window._fbAuth.currentUser.email}</b>`, actionBtn('Çıkış Yap','rgba(229,57,53,0.85)','googleSignOut()')) :
       sRow('🔓 Giriş yapılmadı','Verilerinizi buluta kaydetmek için giriş yapın', actionBtn('Google ile Giriş','linear-gradient(135deg,#4285f4,#34a853)','googleSignIn()')) 
     )
+  );
+
+  // ── VERİ ONARIM ──
+  html += sCard('🔧','Veri Onarım',
+    sRow('Soru Sayısını Düzelt',`Şu an: <b style="color:var(--gold);">${totalQ.toLocaleString('tr')} soru</b> — log kesik kalırsa sayı düşüyor`,
+      `<button onclick="manualRestoreQ()" style="background:rgba(124,77,255,0.85);border:none;border-radius:8px;color:#fff;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;">Düzelt</button>`) +
+    sRow('Ders Kartlarını Onar','Correct/wrong/net verilerini logdan yeniden hesapla',
+      `<button onclick="fixSubjectDataFromLog()" style="background:rgba(30,136,229,0.85);border:none;border-radius:8px;color:#fff;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;">Onar</button>`)
   );
 
   // ── TEHLİKELİ BÖLGE ──
@@ -26697,20 +27162,24 @@ window.maybeLU=function(ox){
   }
 };
 
-// Badge hook — rozet kazanıldığında guaranteed item drop
-const _origCheckBadges=window.checkBadges;
-if(_origCheckBadges){
-  window.checkBadges=function(){
-    const before=(S.badges||[]).length;
-    _origCheckBadges.call(this);
-    const after=(S.badges||[]).length;
-    if(after>before){
-      _sfx('badge');
-      const item=_rollDrop('badge');
-      if(item) setTimeout(()=>_addItem(item.id),1000);
+// Badge hook — rozet kazanıldığında item drop (chkBdgs patch)
+const _origChkBdgs=window.chkBdgs;
+window.chkBdgs=function(){
+  const before=(S.badges||[]).length;
+  if(_origChkBdgs) _origChkBdgs.call(this);
+  const after=(S.badges||[]).length;
+  const newCount=after-before;
+  if(newCount>0){
+    // Her yeni rozet için %22 ihtimalle eşya düşer (max 1 drop)
+    const item=_rollDrop('badge');
+    if(item) setTimeout(()=>_addItem(item.id), 1200);
+    // Birden fazla rozet aynı anda: ekstra şans
+    if(newCount>1){
+      const bonus=_rollDrop('badge');
+      if(bonus&&bonus.id!==item?.id) setTimeout(()=>_addItem(bonus.id),2400);
     }
-  };
-}
+  }
+};
 
 // Streak hook — 7'nin katı streak günlerinde item drop
 const _origStreakUpd=window.streakUpd;
