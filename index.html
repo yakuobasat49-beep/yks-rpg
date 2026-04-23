@@ -5279,8 +5279,7 @@ function load(){
     }
     // Mevcut verideki tutarsızlıkları onar
     repairWeekData();
-    // Ders istatistiklerini log+dailyLog'dan yeniden hesapla — her açılışta çalışsın
-    recalcSubjectStatsFromLog._lastRun=0;
+    // Ders istatistiklerini log'dan yeniden hesapla (her zaman doğru değer göster)
     recalcSubjectStatsFromLog();
     // bossesBeaten'ı her zaman bossHp'den yeniden hesapla (sadece genel bosslar id 0-11)
     S.bossesBeaten=BOSSES.filter(b=>typeof b.id==='number'&&b.id<=11&&(S.bossHp[b.id]!=null)&&S.bossHp[b.id]<=0).length;
@@ -6086,7 +6085,7 @@ function addLog(ico,txt,xp,meta){
   if(!S.logId)S.logId=1;
   // daySlot: bu entry hangi haftalık slot'ta → silme sırasında doğru slot'tan çıkarmak için
   S.log.unshift({id:S.logId++,ico,txt,xp,ts:Date.now(),daySlot:dIdx(),meta:meta||null});
-  if(S.log.length>600) S.log=S.log.slice(-500); // log maksimum 500 girişle sınırlı (en yeniler korunur)
+  if(S.log.length>600) S.log=S.log.slice(0,500); // log maksimum 500 girişle sınırlı
 
   // ── Combo & Zincir tetikle ──
   const mtype = meta?.type;
@@ -11443,56 +11442,74 @@ function resetYesterdayQuestions(){
 
 // ═══ OTOMATİK DERS İSTATİSTİĞİ — her yüklemede/renderda log'dan hesapla ═══
 function recalcSubjectStatsFromLog(){
-  // 3 saniye içinde zaten çalıştıysa atla
+  // 3 saniye içinde zaten çalıştıysa atla (her renderHome'da O(n) tarama önlenir)
   const now=Date.now();
   if(recalcSubjectStatsFromLog._lastRun && now-recalcSubjectStatsFromLog._lastRun<3000) return;
   recalcSubjectStatsFromLog._lastRun=now;
   try{
-    const logQ={},logC={},logW={};
-    let logTotal=0;
+    const logQ={}, logC={}, logW={};
+    let totalQ=0;
+    // Icon -> subjId esleme tablosu (fallback icin)
     const iconToSid={};
     SUBJ.forEach(s=>{iconToSid[s.icon]=s.id;});
-    (S.log||[]).forEach(function(e){
+    (S.log||[]).forEach(e=>{
+      // subjId'yi meta'dan al; yoksa log text'inden icon ile tahmin et
       let sid=e.meta&&e.meta.subjId;
-      if(!sid&&e.ico)sid=iconToSid[e.ico];
-      if(!sid&&e.txt){const f=SUBJ.find(s=>e.txt.indexOf(s.name)!==-1||e.txt.indexOf(s.icon)!==-1);if(f)sid=f.id;}
+      if(!sid&&e.ico){sid=iconToSid[e.ico];}
+      if(!sid&&e.txt){
+        // Text icinde ders adini ara (ornek: 'Kimya: D:22 Y:8')
+        const found=SUBJ.find(s=>e.txt.indexOf(s.name)!==-1||e.txt.indexOf(s.icon)!==-1);
+        if(found)sid=found.id;
+      }
+      // Soru girisi tespiti
       const hasMeta=e.meta&&((e.meta.type==='question')||(e.meta.questions>0)||((e.meta.correct||0)+(e.meta.wrong||0)>0));
+      // Text tabanli tespit: 'D:X Y:X Net:' veya 'Net:' pattern'i varsa soru giriside
       const textIsQ=e.txt&&/D:\d+\s*Y:\d+/.test(e.txt);
-      if(!hasMeta&&!textIsQ)return;
-      let c=0,w=0,q=0;
-      if(e.meta){c=e.meta.correct||0;w=e.meta.wrong||0;q=e.meta.questions||(c+w)||0;}
-      if(q===0&&e.txt){const dm=e.txt.match(/D:(\d+)/),wm=e.txt.match(/Y:(\d+)/);if(dm)c=parseInt(dm[1])||0;if(wm)w=parseInt(wm[1])||0;q=c+w;}
-      if(q<=0)return;
-      logTotal+=q;
-      if(sid){logQ[sid]=(logQ[sid]||0)+q;logC[sid]=(logC[sid]||0)+c;logW[sid]=(logW[sid]||0)+w;}
+      if(hasMeta||textIsQ){
+        let c=0,w=0,q=0;
+        if(e.meta){c=e.meta.correct||0;w=e.meta.wrong||0;q=e.meta.questions||(c+w)||0;}
+        // Text'ten D ve Y degerlerini cek (meta yoksa veya 0'sa)
+        if(q===0&&e.txt){
+          const dm=e.txt.match(/D:(\d+)/);const wm=e.txt.match(/Y:(\d+)/);
+          if(dm)c=parseInt(dm[1])||0;if(wm)w=parseInt(wm[1])||0;
+          q=c+w;
+        }
+        if(q>0){
+          totalQ+=q;
+          if(sid){
+            if(!logQ[sid])logQ[sid]=0;
+            if(!logC[sid])logC[sid]=0;
+            if(!logW[sid])logW[sid]=0;
+            logQ[sid]+=q;logC[sid]+=c;logW[sid]+=w;
+          }
+        }
+      }
     });
-    // dailyLog'dan ders bazlı toplamlar
-    const dlQ={};let dlTotal=0;
-    Object.values(S.dailyLog||{}).forEach(function(d){
-      if(!d)return;
-      dlTotal+=(d.questions||0);
-      if(d.subjQ)Object.keys(d.subjQ).forEach(function(sid){dlQ[sid]=(dlQ[sid]||0)+(d.subjQ[sid]||0);});
-    });
-    // Her ders: asla azaltma, en yüksek kaynağı kullan
-    if(!S.subjectQuestions)S.subjectQuestions={};
-    SUBJ.forEach(function(s){
+    // Sadece soru/correct/wrong guncelle - XP ve toplam S.xp ye DOKUNMA
+    SUBJ.forEach(s=>{
       const sid=s.id;
       if(!S.subjects[sid])return;
-      const best=Math.max(logQ[sid]||0,dlQ[sid]||0,S.subjects[sid].questions||0);
-      if(best>0)S.subjects[sid].questions=best;
-      if((logC[sid]||0)>(S.subjects[sid].correct||0))S.subjects[sid].correct=logC[sid];
-      if((logW[sid]||0)>(S.subjects[sid].wrong||0))S.subjects[sid].wrong=logW[sid];
-      const bestSQ=Math.max(logQ[sid]||0,dlQ[sid]||0,S.subjectQuestions[sid]||0);
-      if(bestSQ>0)S.subjectQuestions[sid]=bestSQ;
+      if(logQ[sid]!==undefined){
+        S.subjects[sid].questions=logQ[sid];
+        S.subjects[sid].correct=logC[sid]||0;
+        S.subjects[sid].wrong=logW[sid]||0;
+      }
     });
-    // Toplam: asla azaltma
-    const bestTotal=Math.max(logTotal,dlTotal,S.questions||0);
-    if(bestTotal>0)S.questions=bestTotal;
+    // subjectQuestions sozlugunu guncelle
+    if(!S.subjectQuestions)S.subjectQuestions={};
+    SUBJ.forEach(s=>{
+      if(logQ[s.id]!==undefined) S.subjectQuestions[s.id]=logQ[s.id];
+    });
+    // Toplam soru sayisini log dan hesapla (sadece tutarsizlik varsa)
+    if(totalQ>0) S.questions=totalQ;
   }catch(e){console.warn('recalcSubjectStatsFromLog err',e);}
 }
 
-
-
+function fixSubjectDataFromLog(){
+  recalcSubjectStatsFromLog();
+  save();renderHome();renderStats();
+  toast('✅ Ders kartları onarıldı!');
+}
 
 function restoreTotals(targetXP, targetQ){
   const xp=parseInt(targetXP);
