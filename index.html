@@ -11485,24 +11485,33 @@ function recalcSubjectStatsFromLog(){
         }
       }
     });
-    // Sadece soru/correct/wrong guncelle - XP ve toplam S.xp ye DOKUNMA
+    // dailyLog'dan ders bazlı soru toplamlarını hesapla (log'dan daha kapsamlı)
+    const dlQ={};
+    try{
+      Object.values(S.dailyLog||{}).forEach(function(d){
+        if(!d)return;
+        if(d.subjQ){Object.keys(d.subjQ).forEach(function(sid){dlQ[sid]=(dlQ[sid]||0)+(d.subjQ[sid]||0);});}
+      });
+    }catch(e2){}
+    // Ders kartlarını güncelle: log ve dailyLog'dan en yüksek değeri kullan, asla azaltma
     SUBJ.forEach(s=>{
       const sid=s.id;
       if(!S.subjects[sid])return;
-      if(logQ[sid]!==undefined){
-        S.subjects[sid].questions=logQ[sid];
-        S.subjects[sid].correct=logC[sid]||0;
-        S.subjects[sid].wrong=logW[sid]||0;
-      }
+      const fromLog=logQ[sid]||0;
+      const fromDL=dlQ[sid]||0;
+      const best=Math.max(fromLog, fromDL, S.subjects[sid].questions||0);
+      if(best>0) S.subjects[sid].questions=best;
+      if((logC[sid]||0)>(S.subjects[sid].correct||0)) S.subjects[sid].correct=logC[sid];
+      if((logW[sid]||0)>(S.subjects[sid].wrong||0)) S.subjects[sid].wrong=logW[sid];
     });
     // subjectQuestions sozlugunu guncelle
     if(!S.subjectQuestions)S.subjectQuestions={};
     SUBJ.forEach(s=>{
-      if(logQ[s.id]!==undefined) S.subjectQuestions[s.id]=logQ[s.id];
+      const best=Math.max(logQ[s.id]||0, dlQ[s.id]||0, S.subjectQuestions[s.id]||0);
+      if(best>0) S.subjectQuestions[s.id]=best;
     });
-    // Toplam soru sayisini log dan hesapla — SADECE ARTIRMA (log kesik olabilir, asla azaltma)
-    if(totalQ>0 && totalQ>(S.questions||0)) S.questions=totalQ;
-    // dailyLog toplamı da kontrol et (log'dan daha kapsamlı olabilir)
+    // Toplam soru sayisini — SADECE ARTIRMA (asla azaltma)
+    if(totalQ>(S.questions||0)) S.questions=totalQ;
     try{
       let dlTotal=0;
       Object.values(S.dailyLog||{}).forEach(function(d){dlTotal+=(d&&d.questions)||0;});
