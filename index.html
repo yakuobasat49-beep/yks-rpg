@@ -5279,7 +5279,8 @@ function load(){
     }
     // Mevcut verideki tutarsızlıkları onar
     repairWeekData();
-    // Ders istatistiklerini log'dan yeniden hesapla (her zaman doğru değer göster)
+    // Ders istatistiklerini log+dailyLog'dan yeniden hesapla — her açılışta çalışsın
+    recalcSubjectStatsFromLog._lastRun=0;
     recalcSubjectStatsFromLog();
     // bossesBeaten'ı her zaman bossHp'den yeniden hesapla (sadece genel bosslar id 0-11)
     S.bossesBeaten=BOSSES.filter(b=>typeof b.id==='number'&&b.id<=11&&(S.bossHp[b.id]!=null)&&S.bossHp[b.id]<=0).length;
@@ -11442,106 +11443,56 @@ function resetYesterdayQuestions(){
 
 // ═══ OTOMATİK DERS İSTATİSTİĞİ — her yüklemede/renderda log'dan hesapla ═══
 function recalcSubjectStatsFromLog(){
-  // 3 saniye içinde zaten çalıştıysa atla (her renderHome'da O(n) tarama önlenir)
+  // 3 saniye içinde zaten çalıştıysa atla
   const now=Date.now();
   if(recalcSubjectStatsFromLog._lastRun && now-recalcSubjectStatsFromLog._lastRun<3000) return;
   recalcSubjectStatsFromLog._lastRun=now;
   try{
-    const logQ={}, logC={}, logW={};
-    let totalQ=0;
-    // Icon -> subjId esleme tablosu (fallback icin)
+    const logQ={},logC={},logW={};
+    let logTotal=0;
     const iconToSid={};
     SUBJ.forEach(s=>{iconToSid[s.icon]=s.id;});
-    (S.log||[]).forEach(e=>{
-      // subjId'yi meta'dan al; yoksa log text'inden icon ile tahmin et
+    (S.log||[]).forEach(function(e){
       let sid=e.meta&&e.meta.subjId;
-      if(!sid&&e.ico){sid=iconToSid[e.ico];}
-      if(!sid&&e.txt){
-        // Text icinde ders adini ara (ornek: 'Kimya: D:22 Y:8')
-        const found=SUBJ.find(s=>e.txt.indexOf(s.name)!==-1||e.txt.indexOf(s.icon)!==-1);
-        if(found)sid=found.id;
-      }
-      // Soru girisi tespiti
+      if(!sid&&e.ico)sid=iconToSid[e.ico];
+      if(!sid&&e.txt){const f=SUBJ.find(s=>e.txt.indexOf(s.name)!==-1||e.txt.indexOf(s.icon)!==-1);if(f)sid=f.id;}
       const hasMeta=e.meta&&((e.meta.type==='question')||(e.meta.questions>0)||((e.meta.correct||0)+(e.meta.wrong||0)>0));
-      // Text tabanli tespit: 'D:X Y:X Net:' veya 'Net:' pattern'i varsa soru giriside
       const textIsQ=e.txt&&/D:\d+\s*Y:\d+/.test(e.txt);
-      if(hasMeta||textIsQ){
-        let c=0,w=0,q=0;
-        if(e.meta){c=e.meta.correct||0;w=e.meta.wrong||0;q=e.meta.questions||(c+w)||0;}
-        // Text'ten D ve Y degerlerini cek (meta yoksa veya 0'sa)
-        if(q===0&&e.txt){
-          const dm=e.txt.match(/D:(\d+)/);const wm=e.txt.match(/Y:(\d+)/);
-          if(dm)c=parseInt(dm[1])||0;if(wm)w=parseInt(wm[1])||0;
-          q=c+w;
-        }
-        if(q>0){
-          totalQ+=q;
-          if(sid){
-            if(!logQ[sid])logQ[sid]=0;
-            if(!logC[sid])logC[sid]=0;
-            if(!logW[sid])logW[sid]=0;
-            logQ[sid]+=q;logC[sid]+=c;logW[sid]+=w;
-          }
-        }
-      }
+      if(!hasMeta&&!textIsQ)return;
+      let c=0,w=0,q=0;
+      if(e.meta){c=e.meta.correct||0;w=e.meta.wrong||0;q=e.meta.questions||(c+w)||0;}
+      if(q===0&&e.txt){const dm=e.txt.match(/D:(\d+)/),wm=e.txt.match(/Y:(\d+)/);if(dm)c=parseInt(dm[1])||0;if(wm)w=parseInt(wm[1])||0;q=c+w;}
+      if(q<=0)return;
+      logTotal+=q;
+      if(sid){logQ[sid]=(logQ[sid]||0)+q;logC[sid]=(logC[sid]||0)+c;logW[sid]=(logW[sid]||0)+w;}
     });
-    // dailyLog'dan ders bazlı soru toplamlarını hesapla (log'dan daha kapsamlı)
-    const dlQ={};
-    try{
-      Object.values(S.dailyLog||{}).forEach(function(d){
-        if(!d)return;
-        if(d.subjQ){Object.keys(d.subjQ).forEach(function(sid){dlQ[sid]=(dlQ[sid]||0)+(d.subjQ[sid]||0);});}
-      });
-    }catch(e2){}
-    // Ders kartlarını güncelle: log ve dailyLog'dan en yüksek değeri kullan, asla azaltma
-    SUBJ.forEach(s=>{
+    // dailyLog'dan ders bazlı toplamlar
+    const dlQ={};let dlTotal=0;
+    Object.values(S.dailyLog||{}).forEach(function(d){
+      if(!d)return;
+      dlTotal+=(d.questions||0);
+      if(d.subjQ)Object.keys(d.subjQ).forEach(function(sid){dlQ[sid]=(dlQ[sid]||0)+(d.subjQ[sid]||0);});
+    });
+    // Her ders: asla azaltma, en yüksek kaynağı kullan
+    if(!S.subjectQuestions)S.subjectQuestions={};
+    SUBJ.forEach(function(s){
       const sid=s.id;
       if(!S.subjects[sid])return;
-      const fromLog=logQ[sid]||0;
-      const fromDL=dlQ[sid]||0;
-      const best=Math.max(fromLog, fromDL, S.subjects[sid].questions||0);
-      if(best>0) S.subjects[sid].questions=best;
-      if((logC[sid]||0)>(S.subjects[sid].correct||0)) S.subjects[sid].correct=logC[sid];
-      if((logW[sid]||0)>(S.subjects[sid].wrong||0)) S.subjects[sid].wrong=logW[sid];
+      const best=Math.max(logQ[sid]||0,dlQ[sid]||0,S.subjects[sid].questions||0);
+      if(best>0)S.subjects[sid].questions=best;
+      if((logC[sid]||0)>(S.subjects[sid].correct||0))S.subjects[sid].correct=logC[sid];
+      if((logW[sid]||0)>(S.subjects[sid].wrong||0))S.subjects[sid].wrong=logW[sid];
+      const bestSQ=Math.max(logQ[sid]||0,dlQ[sid]||0,S.subjectQuestions[sid]||0);
+      if(bestSQ>0)S.subjectQuestions[sid]=bestSQ;
     });
-    // subjectQuestions sozlugunu guncelle
-    if(!S.subjectQuestions)S.subjectQuestions={};
-    SUBJ.forEach(s=>{
-      const best=Math.max(logQ[s.id]||0, dlQ[s.id]||0, S.subjectQuestions[s.id]||0);
-      if(best>0) S.subjectQuestions[s.id]=best;
-    });
-    // Toplam soru sayisini — SADECE ARTIRMA (asla azaltma)
-    if(totalQ>(S.questions||0)) S.questions=totalQ;
-    try{
-      let dlTotal=0;
-      Object.values(S.dailyLog||{}).forEach(function(d){dlTotal+=(d&&d.questions)||0;});
-      if(dlTotal>(S.questions||0)) S.questions=dlTotal;
-    }catch(e){}
+    // Toplam: asla azaltma
+    const bestTotal=Math.max(logTotal,dlTotal,S.questions||0);
+    if(bestTotal>0)S.questions=bestTotal;
   }catch(e){console.warn('recalcSubjectStatsFromLog err',e);}
 }
 
-function manualRestoreQ(){
-  const cur=S.questions||0;
-  // Tüm kaynaklardan en yüksek tahmini bul
-  let logTotal=0;
-  (S.log||[]).forEach(function(e){
-    const hasMeta=e.meta&&((e.meta.type==='question')||(e.meta.questions>0)||((e.meta.correct||0)+(e.meta.wrong||0)>0));
-    if(hasMeta){logTotal+=e.meta.questions||((e.meta.correct||0)+(e.meta.wrong||0))||0;}
-  });
-  let dlTotal=0;
-  Object.values(S.dailyLog||{}).forEach(function(d){dlTotal+=(d&&d.questions)||0;});
-  const best=Math.max(cur,logTotal,dlTotal);
-  if(best===cur){toast('✅ Soru sayısı zaten doğru görünüyor ('+cur.toLocaleString('tr')+')');return;}
-  S.questions=best;
-  save();renderHome();renderSettings();
-  toast('✅ Soru sayısı '+cur.toLocaleString('tr')+' → '+best.toLocaleString('tr')+' düzeltildi!');
-}
 
-function fixSubjectDataFromLog(){
-  recalcSubjectStatsFromLog();
-  save();renderHome();renderStats();
-  toast('✅ Ders kartları onarıldı!');
-}
+
 
 function restoreTotals(targetXP, targetQ){
   const xp=parseInt(targetXP);
@@ -20389,14 +20340,6 @@ function renderSettings(){
       sRow('👤 Giriş yapıldı',`Google: <b>${window._fbAuth.currentUser.email}</b>`, actionBtn('Çıkış Yap','rgba(229,57,53,0.85)','googleSignOut()')) :
       sRow('🔓 Giriş yapılmadı','Verilerinizi buluta kaydetmek için giriş yapın', actionBtn('Google ile Giriş','linear-gradient(135deg,#4285f4,#34a853)','googleSignIn()')) 
     )
-  );
-
-  // ── VERİ ONARIM ──
-  html += sCard('🔧','Veri Onarım',
-    sRow('Soru Sayısını Düzelt',`Şu an: <b style="color:var(--gold);">${totalQ.toLocaleString('tr')} soru</b> — log kesik kalırsa sayı düşüyor`,
-      `<button onclick="manualRestoreQ()" style="background:rgba(124,77,255,0.85);border:none;border-radius:8px;color:#fff;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;">Düzelt</button>`) +
-    sRow('Ders Kartlarını Onar','Correct/wrong/net verilerini logdan yeniden hesapla',
-      `<button onclick="fixSubjectDataFromLog()" style="background:rgba(30,136,229,0.85);border:none;border-radius:8px;color:#fff;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;white-space:nowrap;flex-shrink:0;">Onar</button>`)
   );
 
   // ── TEHLİKELİ BÖLGE ──
