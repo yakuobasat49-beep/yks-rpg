@@ -11502,19 +11502,35 @@ function recalcSubjectStatsFromLog(){
     });
     // Toplam soru sayisini log dan hesapla — SADECE ARTIRMA (log kesik olabilir, asla azaltma)
     if(totalQ>0 && totalQ>(S.questions||0)) S.questions=totalQ;
+    // dailyLog toplamı da kontrol et (log'dan daha kapsamlı olabilir)
+    try{
+      let dlTotal=0;
+      Object.values(S.dailyLog||{}).forEach(function(d){dlTotal+=(d&&d.questions)||0;});
+      if(dlTotal>(S.questions||0)) S.questions=dlTotal;
+    }catch(e){}
   }catch(e){console.warn('recalcSubjectStatsFromLog err',e);}
 }
 
 function manualRestoreQ(){
   const cur=S.questions||0;
-  const input=prompt(`Şu anki soru sayın: ${cur.toLocaleString('tr')}\n\nDoğru soru sayını gir (örn: 1900):`, cur);
-  if(input===null)return;
-  const val=parseInt(input.replace(/\D/g,''));
+  // Tüm kaynaklardan en yüksek tahmini bul
+  let logTotal=0;
+  (S.log||[]).forEach(function(e){
+    const hasMeta=e.meta&&((e.meta.type==='question')||(e.meta.questions>0)||((e.meta.correct||0)+(e.meta.wrong||0)>0));
+    if(hasMeta){logTotal+=e.meta.questions||((e.meta.correct||0)+(e.meta.wrong||0))||0;}
+  });
+  let dlTotal=0;
+  Object.values(S.dailyLog||{}).forEach(function(d){dlTotal+=(d&&d.questions)||0;});
+  const best=Math.max(cur,logTotal,dlTotal);
+  const msg=`🔍 Otomatik hesaplama:\n• Mevcut: ${cur.toLocaleString('tr')}\n• Log'dan: ${logTotal.toLocaleString('tr')}\n• Günlük kayıttan: ${dlTotal.toLocaleString('tr')}\n\nÖnerilen: ${best.toLocaleString('tr')}\n\nFarklı bir sayı girmek istersen yaz, yoksa boş bırak:`;
+  const input=prompt(msg,'');
+  const val=(input===null)?null:(input.trim()===''?best:parseInt(input.replace(/\D/g,'')));
+  if(val===null)return;
   if(isNaN(val)||val<0){toast('Geçersiz sayı!');return;}
-  if(!confirm(`Soru sayısı ${cur.toLocaleString('tr')} → ${val.toLocaleString('tr')} olarak ayarlansın mı?`))return;
+  if(val===cur){toast('Değer zaten doğru!');return;}
   S.questions=val;
   save();renderHome();renderSettings();
-  toast(`✅ Soru sayısı ${val.toLocaleString('tr')} olarak güncellendi!`);
+  toast(`✅ Soru sayısı ${val.toLocaleString('tr')} olarak düzeltildi!`);
 }
 
 function fixSubjectDataFromLog(){
