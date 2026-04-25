@@ -5163,24 +5163,114 @@ function _restorePhotos(){
   });
 }
 
+// ═══ KALICI LOG SİSTEMİ — tüm versiyonlarda 'yks_log' keyinde yaşar ═══
+const YKS_LOG_KEY = 'yks_log'; // hiçbir zaman değişmez, versiyondan bağımsız
+
+function _saveLog(){
+  try{
+    localStorage.setItem(YKS_LOG_KEY, JSON.stringify(S.log||[]));
+  }catch(e){
+    // Quota doluysa eski kronometer girişlerini temizle
+    const cut=Date.now()-(60*24*60*60*1000); // 60 günden eski
+    S.log=(S.log||[]).filter(l=>!(l.meta?.type==='minute'&&l.ts<cut));
+    try{ localStorage.setItem(YKS_LOG_KEY, JSON.stringify(S.log)); }catch(e2){}
+  }
+}
+
+function _loadLog(){
+  try{
+    const raw=localStorage.getItem(YKS_LOG_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
 function save(){
-  _extractPhotos(); // fotoğrafları S'ten çıkar, ayrı anahtarlara yaz
+  _extractPhotos();
   // dailyLog prune: 180 günden eski kayıtları sil (QUOTA fix)
   if(S.dailyLog){const _pd=new Date();_pd.setDate(_pd.getDate()-180);Object.keys(S.dailyLog).forEach(k=>{if(new Date(k)<_pd)delete S.dailyLog[k];});}
   const sk=getSkey();
+  // S.log'u ayrı sabit key'e kaydet (versiyondan bağımsız)
+  _saveLog();
+  // Ana kayıtta log'u exclude et — quota'yı koru
+  const toSave=JSON.parse(JSON.stringify(S));
+  delete toSave.log;
+  delete toSave.qLog;
   try{
-    localStorage.setItem(sk,JSON.stringify(S));
+    localStorage.setItem(sk,JSON.stringify(toSave));
   }catch(e){
-    // Quota aşıldı → netCache temizle ve tekrar dene
     try{
       if(S.unis)S.unis.forEach(u=>{if(u.netCache&&Object.keys(u.netCache).length>3)u.netCache={};});
-      localStorage.setItem(sk,JSON.stringify(S));
+      localStorage.setItem(sk,JSON.stringify(toSave));
     }catch(e2){
-      console.error('[SAVE] Kritik hata, veri kaydedilemedi:',e2);
+      console.error('[SAVE] Kritik hata:',e2);
       toast('⚠️ Depolama doldu! Eski verileri temizle.');
     }
   }
-  _restorePhotos(); // S'e fotoğrafları geri yükle (UI güncel kalsın)
+  _restorePhotos();
+  _autoSnapshot();
+}
+
+// ═══ OTOMATİK YEDEKLEMESİSTEMİ ═══
+function _autoSnapshot(){
+  try{
+    const today=new Date().toDateString();
+    const lastSnap=localStorage.getItem('yks_snap_date');
+    if(lastSnap===today) return; // bugün zaten yedeklendi
+    // Kritik verilerin snapshot'ı (fotoğraflar hariç, hafif tutalım)
+    const snap={
+      ts: Date.now(),
+      date: today,
+      questions: S.questions||0,
+      correct: S.correct||0,
+      wrong: S.wrong||0,
+      xp: S.xp||0,
+      level: S.level||1,
+      streak: S.streak||0,
+      totalMinutes: S.totalMinutes||0,
+      tasks: S.tasks||0,
+      totalNet: S.totalNet||0,
+      badges: (S.badges||[]).length,
+      subjects: Object.fromEntries(
+        Object.entries(S.subjects||{}).map(([k,v])=>[k,{
+          questions:v.questions||0,
+          correct:v.correct||0,
+          wrong:v.wrong||0,
+          xp:v.xp||0,
+          topics:Object.keys(v.topics||{}).length
+        }])
+      )
+    };
+    // Son 7 günlük snapshot'ı sakla
+    const snaps=JSON.parse(localStorage.getItem('yks_snaps')||'[]');
+    snaps.unshift(snap);
+    if(snaps.length>7) snaps.length=7;
+    localStorage.setItem('yks_snaps', JSON.stringify(snaps));
+    localStorage.setItem('yks_snap_date', today);
+    // Ayrıca tam veriyi de yedekle (dünkü)
+    const fullSnap=JSON.stringify(S);
+    localStorage.setItem('yks_snap_full', fullSnap);
+    localStorage.setItem('yks_snap_full_date', today);
+    console.log(`[AutoSnap] ✅ ${today} yedeği alındı — ${snap.questions} soru, ${snap.badges} rozet`);
+  }catch(e){ console.warn('[AutoSnap]',e.message); }
+}
+
+function getAutoSnapshots(){
+  try{ return JSON.parse(localStorage.getItem('yks_snaps')||'[]'); }
+  catch(e){ return []; }
+}
+
+function restoreFromAutoSnap(){
+  try{
+    const full=localStorage.getItem('yks_snap_full');
+    const date=localStorage.getItem('yks_snap_full_date');
+    if(!full){ toast('❌ Otomatik yedek bulunamadı.'); return; }
+    if(!confirm(`${date} tarihli otomatik yedek yüklensin mi?\nMevcut veriler silinecek.`)) return;
+    const p=JSON.parse(full);
+    Object.assign(S,p);
+    save();
+    toast(`✅ ${date} yedeği yüklendi!`);
+    setTimeout(()=>location.reload(),1500);
+  }catch(e){ toast('❌ Yedek yüklenemedi: '+e.message); }
 }
 function load(){
   try{
@@ -5220,6 +5310,19 @@ function load(){
       });
     }
     S={...S,...p,subjects:ms,bossHp:bh};
+    // ── S.log'u sabit 'yks_log' key'inden yükle (versiyondan bağımsız) ──
+    const persistedLog=_loadLog();
+    if(persistedLog&&persistedLog.length>0){
+      // Persisted log ile p.log'u merge et (ikisi de olabilir)
+      const pLog=p.log||[];
+      const logMap={};
+      [...persistedLog,...pLog].forEach(l=>{if(l?.id!=null)logMap[l.id]=l;});
+      S.log=Object.values(logMap).sort((a,b)=>(b.id||0)-(a.id||0));
+    } else if(p.log){
+      S.log=p.log;
+    } else {
+      S.log=[];
+    }
     if(!S.unis||!S.unis.length)S.unis=[...DEF_UNIS.map(u=>({...u,depts:[],selDept:-1,photo:null}))];
     // Migrate old-format unis
     S.unis=S.unis.map(u=>{
@@ -6085,7 +6188,21 @@ function addLog(ico,txt,xp,meta){
   if(!S.logId)S.logId=1;
   // daySlot: bu entry hangi haftalık slot'ta → silme sırasında doğru slot'tan çıkarmak için
   S.log.unshift({id:S.logId++,ico,txt,xp,ts:Date.now(),daySlot:dIdx(),meta:meta||null});
-  if(S.log.length>600) S.log=S.log.slice(0,500); // log maksimum 500 girişle sınırlı
+  // Log asla kesilmiyor — tüm aktiviteler kalıcı olarak korunuyor
+  // Kronometer (5dk'lık otomatik) girişleri: sadece 5000+ olursa
+  // ve 180 günden eskiyse temizle, diğerleri hiç silinmez
+  if(S.log.length>5000){
+    const cutoff=Date.now()-(180*24*60*60*1000);
+    const before=S.log.length;
+    S.log=S.log.filter(l=>{
+      // Soru girişlerini ASLA silme
+      if(l.meta?.type==='question') return true;
+      // 180 günden eski kronometer'ları sil
+      if(l.ts&&l.ts<cutoff&&l.meta?.type==='minute') return false;
+      return true;
+    });
+    console.log(`[Log] ${before}→${S.log.length} (${before-S.log.length} eski kronometer temizlendi)`);
+  }
 
   // ── Combo & Zincir tetikle ──
   const mtype = meta?.type;
@@ -6169,6 +6286,77 @@ function delLog(id){
     }
   }
   save();renderHome();toast(`Aktivite silindi, -${entry.xp} XP geri alındı`);
+}
+
+// ── Aktivite Düzenleme (Geri Alma / Düzeltme) ──
+function editLog(id){
+  const entry=S.log.find(l=>l.id===id);
+  if(!entry) return;
+  const m=entry.meta||{};
+  if(m.type!=='question'){
+    toast('Şu an sadece soru aktiviteleri düzenlenebilir.');
+    return;
+  }
+  // Modal göster
+  const s2=SUBJ.find(s=>s.id===m.subjId)||{name:'?',icon:'📝'};
+  const d=new Date(entry.ts||Date.now());
+  const dateStr=`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+  const el=document.createElement('div');
+  el.id='_editLogModal';
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10000;display:flex;align-items:center;justify-content:center;font-family:Nunito,sans-serif;';
+  el.innerHTML=`<div style="background:var(--c2);border:1.5px solid var(--br);border-radius:20px;padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+    <div style="font-size:13px;font-weight:900;color:var(--t1);margin-bottom:4px;">✏️ Aktivite Düzenle</div>
+    <div style="font-size:9px;color:var(--t3);margin-bottom:16px;">${s2.icon} ${s2.name} · ${dateStr}</div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:9px;font-weight:800;color:var(--t3);display:block;margin-bottom:5px;">DOĞRU SAYI</label>
+      <input id="_editCorrect" type="number" min="0" value="${m.correct||0}" style="width:100%;padding:10px;border-radius:9px;border:1.5px solid var(--br);background:var(--c1);color:var(--t1);font-size:14px;font-weight:900;font-family:Nunito,sans-serif;box-sizing:border-box;text-align:center;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:9px;font-weight:800;color:var(--t3);display:block;margin-bottom:5px;">YANLIŞ SAYI</label>
+      <input id="_editWrong" type="number" min="0" value="${m.wrong||0}" style="width:100%;padding:10px;border-radius:9px;border:1.5px solid var(--br);background:var(--c1);color:var(--t1);font-size:14px;font-weight:900;font-family:Nunito,sans-serif;box-sizing:border-box;text-align:center;">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="document.getElementById('_editLogModal').remove();" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--br);background:transparent;color:var(--t3);font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">İptal</button>
+      <button onclick="_applyEditLog(${id})" style="flex:2;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:11px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">Kaydet ✓</button>
+    </div>
+  </div>`;
+  el.onclick=()=>el.remove();
+  const old=document.getElementById('_editLogModal');if(old)old.remove();
+  document.body.appendChild(el);
+  setTimeout(()=>document.getElementById('_editCorrect')?.focus(),100);
+}
+
+function _applyEditLog(id){
+  const entry=S.log.find(l=>l.id===id);
+  if(!entry){toast('Aktivite bulunamadı');return;}
+  const newCorrect=Math.max(0,parseInt(document.getElementById('_editCorrect')?.value)||0);
+  const newWrong=Math.max(0,parseInt(document.getElementById('_editWrong')?.value)||0);
+  const m=entry.meta||{};
+  const sid=m.subjId;
+  const oldC=m.correct||0, oldW=m.wrong||0, oldQ=m.questions||0;
+  const newQ=newCorrect+newWrong;
+
+  // Sayaçları güncelle
+  const diffQ=newQ-oldQ, diffC=newCorrect-oldC, diffW=newWrong-oldW;
+  if(sid&&S.subjects[sid]){
+    S.subjects[sid].questions=Math.max(0,(S.subjects[sid].questions||0)+diffQ);
+    S.subjects[sid].correct=Math.max(0,(S.subjects[sid].correct||0)+diffC);
+    S.subjects[sid].wrong=Math.max(0,(S.subjects[sid].wrong||0)+diffW);
+  }
+  S.questions=Math.max(0,(S.questions||0)+diffQ);
+  S.correct=Math.max(0,(S.correct||0)+diffC);
+  S.wrong=Math.max(0,(S.wrong||0)+diffW);
+  const oldNet=oldC-(oldW/4);
+  const newNet=newCorrect-(newWrong/4);
+  S.totalNet=(S.totalNet||0)-(oldNet)+(newNet);
+
+  // Entry güncelle
+  entry.meta={...m, correct:newCorrect, wrong:newWrong, questions:newQ};
+  entry.txt=entry.txt.replace(/\d+D\/\d+Y/,`${newCorrect}D/${newWrong}Y`);
+
+  document.getElementById('_editLogModal')?.remove();
+  save();renderHome();
+  toast(`✅ Düzenlendi: ${newCorrect}D / ${newWrong}Y (Net: ${newNet.toFixed(1)})`);
 }
 function clearAllLog(){
   if(!S.log.length)return;
@@ -7017,12 +7205,13 @@ function renderHome(){
     </button>`).join('');
 
   const logH=filteredLog.length
-    ?`<div style="max-height:320px;overflow-y:auto;padding-right:2px;-webkit-overflow-scrolling:touch;" id="log-scroll">
+    ?`<div style="overflow-y:auto;padding-right:2px;-webkit-overflow-scrolling:touch;" id="log-scroll">
         ${filteredLog.map((l)=>`
           <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--c2);border-radius:9px;margin-bottom:4px;">
             <span style="font-size:13px;flex-shrink:0;">${l.ico}</span>
             <span style="flex:1;font-size:10px;font-weight:600;color:var(--t2);">${l.txt}</span>
             <span style="font-size:10px;font-weight:800;color:var(--gr);">+${l.xp} XP</span>
+            ${l.meta?.type==='question'?`<button onclick="editLog(${l.id})" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 2px;opacity:0.7;flex-shrink:0;" title="Düzenle">✏️</button>`:''}
             <button onclick="delLog(${l.id})" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 3px;opacity:0.7;flex-shrink:0;" title="Sil ve XP geri al">✕</button>
           </div>`).join('')}
       </div>`
@@ -7153,12 +7342,201 @@ function addTask(){
   addDailyLog(xp,qCount,mForLog,S.selSubj);
   // Log kaydına geri alma için detayları sakla
   const logMeta={type,subjId:S.selSubj,correct:correct||0,wrong:wrong||0,questions:qCount,mins:mc,topic:topic||null};
-  addLog(s.icon,desc,xp,logMeta);chkBdgs();save();toast(`+${xp} XP! 🎯`);maybeLU(ox);
+  addLog(s.icon,desc,xp,logMeta);
+
+  // ── Kalıcı soru logu: soru girişlerini ayrı kaydet (silinmez) ──
+  if(qCount>0){
+    if(!S.qLog)S.qLog=[];
+    S.qLog.push({
+      ts:Date.now(),
+      subj:S.selSubj,
+      subjIcon:s.icon,
+      subjName:s.name,
+      correct:correct||0,
+      wrong:wrong||0,
+      total:qCount,
+      net:parseFloat(((correct||0)-((wrong||0)/4)).toFixed(2)),
+      topic:topic||null,
+      xp
+    });
+    // qLog sadece son 2000 girişi sakla (bu girişler değil, toplam soru sayısı korunuyor)
+    if(S.qLog.length>2000)S.qLog=S.qLog.slice(-2000);
+    // Firestore'a da soru istatistiklerini push et
+    _pushQStatsToFirestore();
+  }
+
+  chkBdgs();save();toast(`+${xp} XP! 🎯`);maybeLU(ox);
   const goals2=S.goals||[];
   if(goals2.length&&goals2.every(g=>g.done))confetti();
   closeOv('ov-subj');renderHome();
 }
 
+// ═══ FIRESTORE SORU SENKRONIZASYONU ═══
+async function _pushQStatsToFirestore(){
+  if(!_fbUser||!window._fbDb)return;
+  try{
+    const{doc,setDoc}=window._fbFirestoreExtra||{};
+    if(!setDoc)return;
+    const ref=doc(window._fbDb,'leaderboard',_fbUser.uid);
+    await setDoc(ref,{
+      questions:S.questions||0,
+      correct:S.correct||0,
+      wrong:S.wrong||0,
+      totalNet:S.totalNet||0,
+      tasks:S.tasks||0,
+      xp:S.xp||0,
+      streak:S.streak||0,
+      name:S.myName||'YKS Savaşçısı',
+      avatar:S.avatarEmoji||'⚔️',
+      frame:S.avatarFrame||'default',
+      ts:Date.now(),
+      weekXp:getWeekXp(),
+      weekXpKey:curWeekKey(),
+      uid:_fbUser.uid,
+      code:S.friendCode||'',
+      level:getLvl(S.xp),
+      badges:(S.badges||[]).length,
+      subjectQuestions:S.subjectQuestions||{},
+      subjects:Object.fromEntries(
+        Object.entries(S.subjects||{}).map(([k,v])=>[k,{
+          questions:v.questions||0,
+          correct:v.correct||0,
+          wrong:v.wrong||0,
+          xp:v.xp||0
+        }])
+      )
+    },{merge:true});
+  }catch(e){console.warn('[QStats push]',e);}
+}
+
+// ═══ SORU LOGUNDAKİ SORU BAZLI SAYFASI ═══
+function renderQLog(){
+  // Kaynak 1: S.subjects — kesin doğru toplamlar (asla silinmez)
+  // Kaynak 2: S.qLog — bireysel giriş detayları (yeni sistemden)
+  const qLog=(S.qLog||[]).slice().reverse(); // en yeni üstte
+  const SUBJ_IDS=['mat','tur','fiz','kim','bio','ing','tar','cog','fels','geo'];
+  const selSubj=window._qLogSubjFilter||'all';
+  const filteredLog=selSubj==='all'?qLog:qLog.filter(e=>e.subj===selSubj);
+
+  // ── GERÇEK TOPLAMLAR: S.subjects toplamından hesapla (truncation'dan etkilenmez) ──
+  const SUBJ_KEYS=['mat','tur','fiz','kim','bio','ing','tar','cog','fels','geo'];
+  const _allSubj=Object.values(S.subjects||{});
+  const realTotal=S.questions||0;
+  // S.correct/wrong truncated olabilir — S.subjects'ten topla
+  const realCorrect=_allSubj.reduce((a,sb)=>a+(sb.correct||0),0)||S.correct||0;
+  const realWrong=_allSubj.reduce((a,sb)=>a+(sb.wrong||0),0)||S.wrong||0;
+  const realNet=parseFloat((realCorrect-(realWrong/4)).toFixed(1));
+
+  // Seçili derse göre filtrele
+  let dispTotal=realTotal, dispCorrect=realCorrect, dispWrong=realWrong, dispNet=realNet;
+  if(selSubj!=='all'&&S.subjects?.[selSubj]){
+    const sb=S.subjects[selSubj];
+    dispTotal=sb.questions||0;
+    dispCorrect=sb.correct||0;
+    dispWrong=sb.wrong||0;
+    dispNet=parseFloat((dispCorrect-(dispWrong/4)).toFixed(1));
+  }
+
+  // Ders filtre tabları — S.subjects'ten soru sayısı al
+  const subjTabs=`<div style="overflow-x:auto;scrollbar-width:none;margin-bottom:10px;padding-bottom:3px;">
+    <div style="display:flex;gap:5px;min-width:max-content;">
+      <button onclick="window._qLogSubjFilter='all';renderQLog();" style="padding:5px 10px;border-radius:7px;border:1px solid ${selSubj==='all'?'#f5a623':'var(--br)'};background:${selSubj==='all'?'rgba(245,166,35,0.15)':'transparent'};color:${selSubj==='all'?'#f5a623':'var(--t3)'};font-size:8.5px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">Tümü (${realTotal})</button>
+      ${SUBJ_IDS.map(id=>{
+        const s2=SUBJ.find(s=>s.id===id);if(!s2)return'';
+        const sq=(S.subjects?.[id]?.questions)||0;if(!sq)return'';
+        const active=selSubj===id;
+        return`<button onclick="window._qLogSubjFilter='${id}';renderQLog();" style="padding:5px 10px;border-radius:7px;border:1px solid ${active?s2.color:'var(--br)'};background:${active?s2.color+'22':'transparent'};color:${active?s2.color:'var(--t3)'};font-size:8.5px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">${s2.icon} ${s2.name.split('/')[0].split('.')[0]} (${sq})</button>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  // Özet istatistik (S.subjects'ten)
+  const summary=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;">
+    ${[['Soru','#f5a623',dispTotal],['Doğru','#66bb6a',dispCorrect],['Yanlış','#ef5350',dispWrong],['Net','#29b6f6',typeof dispNet==='number'?dispNet.toFixed(1):dispNet]].map(([lbl,c,v])=>
+      `<div style="background:var(--c2);border:1px solid ${c}33;border-radius:10px;padding:10px 6px;text-align:center;">
+        <div style="font-size:17px;font-weight:900;color:${c};">${v}</div>
+        <div style="font-size:7.5px;color:var(--t3);margin-top:2px;">${lbl}</div>
+      </div>`).join('')}
+  </div>`;
+
+  // Ders dağılımı — S.subjects'ten (kesin doğru)
+  const dersBarlar=SUBJ_IDS.map(id=>{
+    const s2=SUBJ.find(s=>s.id===id);if(!s2)return'';
+    const sb=S.subjects?.[id]||{};
+    const sq=sb.questions||0;if(!sq)return'';
+    const sc=sb.correct||0;
+    const sw=sb.wrong||0;
+    const snet=(sc-(sw/4)).toFixed(1);
+    const pct=realTotal>0?Math.round(sq/realTotal*100):0;
+    return`<div style="margin-bottom:9px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+        <span style="font-size:9.5px;font-weight:800;color:var(--t1);">${s2.icon} ${s2.name.split('/')[0]}</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:8px;color:#66bb6a;">D:${sc}</span>
+          <span style="font-size:8px;color:#ef5350;">Y:${sw}</span>
+          <span style="font-size:8px;color:#29b6f6;">Net:${snet}</span>
+          <span style="font-size:9px;font-weight:900;color:${s2.color};">${sq} <span style="color:var(--t3);font-weight:400;">(%${pct})</span></span>
+        </div>
+      </div>
+      <div style="height:7px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${s2.color},${s2.color}aa);border-radius:100px;box-shadow:0 0 5px ${s2.color}44;"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Bireysel giriş logu (S.qLog'dan — yeni girişler)
+  const rows=filteredLog.slice(0,500).map((e,i)=>{
+    const d=new Date(e.ts||Date.now());
+    const dateStr=`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    const s2=SUBJ.find(s=>s.id===e.subj)||{color:'#7c4dff',icon:'📝',name:e.subj||'?'};
+    const netC=(e.net||0)>=0?'#66bb6a':'#ef5350';
+    return`<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;${i>0?'border-top:1px solid rgba(255,255,255,0.04);':''}">
+      <span style="font-size:20px;flex-shrink:0;">${e.subjIcon||s2.icon}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:9.5px;font-weight:800;color:var(--t1);">${e.subjName||s2.name.split('/')[0]}${e.topic?` <span style="color:var(--t3);font-weight:400;font-size:8.5px;">· ${e.topic}</span>`:''}</div>
+        <div style="font-size:8px;color:var(--t3);margin-top:1px;">${dateStr}</div>
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
+        <span style="font-size:9px;color:#66bb6a;font-weight:800;">D:${e.correct}</span>
+        <span style="font-size:9px;color:#ef5350;font-weight:800;">Y:${e.wrong}</span>
+        <span style="min-width:32px;text-align:right;font-size:10px;font-weight:900;color:${netC};">${(e.net||0)>=0?'+':''}${(e.net||0).toFixed(1)}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const logNote=filteredLog.length<(selSubj==='all'?realTotal:(S.subjects?.[selSubj]?.questions||0))?
+    `<div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.2);border-radius:9px;padding:10px 12px;margin-bottom:10px;font-size:9px;color:var(--t2);">
+      ℹ️ Toplam sayılar <b style="color:#f5a623;">İstatistik sekmesinden</b> alınıyor (doğru). Bireysel giriş detayları yeni sistemden bu yana kaydediliyor — eski girişler sadece toplam olarak korunuyor.
+    </div>`:'';
+
+  document.getElementById('page').innerHTML=heroH()+`
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:40px;height:40px;border-radius:11px;background:rgba(245,166,35,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;">✏️</div>
+        <div style="flex:1;">
+          <div style="font-weight:900;font-size:14px;">✏️ Soru Aktivite Logu</div>
+          <div style="font-size:9px;color:var(--t3);">Kalıcı kayıt · Firestore senkronize · Silinmez</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:20px;font-weight:900;color:#f5a623;">${realTotal}</div>
+          <div style="font-size:8px;color:var(--t3);">toplam soru</div>
+        </div>
+      </div>
+      ${subjTabs}
+      ${summary}
+      ${logNote}
+      <div style="background:var(--c2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:13px;margin-bottom:12px;">
+        <div style="font-size:9px;font-weight:900;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">📊 Ders Dağılımı (İstatistikten)</div>
+        ${dersBarlar||'<div style="color:var(--t3);font-size:10px;">Henüz ders verisi yok.</div>'}
+      </div>
+      <div style="background:var(--c2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;">
+        <div style="padding:10px 13px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:9px;font-weight:900;color:var(--t3);text-transform:uppercase;letter-spacing:1px;">Giriş Detayları${filteredLog.length>0?` · ${filteredLog.length} kayıt`:''}</span>
+        </div>
+        ${rows||`<div style="padding:24px;text-align:center;color:var(--t3);font-size:10px;">Bu sistemden sonra yapılan girişler burada<br>detaylı olarak görünecek.</div>`}
+      </div>
+    </div>`;
+}
 function doCT(id){
   const t=(S.customTasks||[]).find(x=>x.id===id);if(!t)return;
   const ox=S.xp;S.xp+=t.xp;S.tasks+=1;t.count=(t.count||0)+1;
@@ -9136,16 +9514,17 @@ async function fetchPublicRooms(){
   }catch(e){ console.warn('[fetchPublicRooms]',e.message); return []; }
 }
 
-// ── Oda oluşturma — tamamen Firestore ──
+// ── Oda oluşturma — leaderboard koleksiyonunda sakla (rooms koleksiyonu izin hatası) ──
 async function libCreateRoom(name,desc,password,isPublic){
   if(!name||!name.trim()){toast('Oda adı girin!');window._libCreating=false;return;}
   if(!await _waitFs(6000)){toast('Bağlantı kurulamadı, tekrar dene');window._libCreating=false;return;}
-  const{doc,setDoc,addDoc}=window._fbFirestore;
-  const{collection,serverTimestamp}=window._fbFirestoreExtra||{};
+  const{doc,setDoc}=window._fbFirestore;
   const myUid=_fbUser.uid;
   const hasPassword=!!(password&&password.trim());
   const pub=!!isPublic;
   const now=Date.now();
+  // Oda ID: uid + timestamp
+  const roomId=myUid+'_room_'+now;
   const roomData={
     name:name.trim(),
     desc:(desc||'').trim(),
@@ -9163,9 +9542,9 @@ async function libCreateRoom(name,desc,password,isPublic){
   };
   toast('Oda oluşturuluyor…');
   try{
-    const ref=doc(collection(window._fbDb,'rooms'));
-    await setDoc(ref,roomData);
-    const roomId=ref.id;
+    // Odayı kendi leaderboard dokümanına göm (yazma izni var)
+    const ref=doc(window._fbDb,'leaderboard',myUid);
+    await setDoc(ref,{activeRoom:{...roomData,id:roomId},ts:Date.now()},{merge:true});
     S.activeRoom={id:roomId,name:name.trim(),desc:(desc||'').trim(),
                   isPublic:pub,hasPassword,createdBy:myUid,joinedAt:now};
     window._libRoomData={...roomData,id:roomId};
@@ -9592,6 +9971,21 @@ function renderPlan(){
   document.getElementById('page').innerHTML=heroH()+
   dailyCard+
   renderDailyDistCard()+
+  `<div id="ai-plan-card" style="background:linear-gradient(135deg,rgba(124,77,255,0.14),rgba(0,200,180,0.08));border:1.5px solid rgba(124,77,255,0.35);border-radius:13px;padding:13px 14px;margin-bottom:10px;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 0%,rgba(0,200,180,0.1),transparent 60%);pointer-events:none;"></div>
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px;position:relative;">
+      <div style="font-size:24px;">🤖</div>
+      <div>
+        <div style="font-size:12px;font-weight:900;color:#fff;">AI Haftalık Plan</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.5);">Seviyene ve güçlü/zayıf derslere göre plan öner</div>
+      </div>
+    </div>
+    <div id="ai-plan-result" style="display:none;margin-bottom:9px;"></div>
+    <div style="display:flex;gap:6px;position:relative;">
+      <button id="ai-plan-btn" onclick="aiGenPlan()" style="flex:1;background:linear-gradient(135deg,var(--pu),#00c8b4);border:none;border-radius:9px;color:#fff;padding:10px;font-size:11px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;letter-spacing:.3px;box-shadow:0 3px 16px rgba(124,77,255,0.35);">✨ Plan Oluştur</button>
+      <button id="ai-plan-apply" onclick="aiApplyPlan()" style="display:none;flex:1;background:rgba(67,160,71,0.2);border:1.5px solid rgba(67,160,71,0.4);border-radius:9px;color:var(--gr);padding:10px;font-size:11px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">✅ Planı Uygula</button>
+    </div>
+  </div>`+
   renderWeeklyGrid()+
   renderRutinler()+
   `<div class="sec" style="margin-top:14px;">🏆 Anlık Liderlik Tablosu</div>
@@ -11568,22 +11962,23 @@ function renderBoss(){
   // Fix corrupted HP silently
   if(rawHp!==hp){S.bossHp[idx]=hp;save();}
   const hpPct=Math.round(hp/boss.maxHp*100);
+  // BUGFIX: hp null/undefined iken null<=0 true döner — hp (clamp'li) kullan
+  const beaten=hp<=0;
+
+  // HP null ise sessizce tam HP ata (save() çağırmadan)
+  if(S.bossHp[idx]==null){
+    S.bossHp[idx]=boss.maxHp;
+  }
 
   // Unlock logic: genel = toplam XP bazlı, ders bossları = o dersteki XP bazlı
   let locked=false;
   if(grpId==='genel'){
     const totalXp=S.xp;
-    locked=totalXp<boss.unlockXp&&!(S.bossHp[idx]<=0);
+    locked=totalXp<boss.unlockXp&&!beaten;
   } else {
     // Ders bossları: o dersteki XP'ye göre sıralı açılır (savaşmadan HP azalmaz)
     const subjXp=(S.subjects&&S.subjects[grpId]&&S.subjects[grpId].xp)||0;
-    locked=subjXp<boss.unlockXp&&!(S.bossHp[idx]<=0);
-  }
-  const beaten=S.bossHp[idx]<=0;
-
-  // HP null ise sessizce tam HP ata (save() çağırmadan)
-  if(S.bossHp[idx]==null){
-    S.bossHp[idx]=boss.maxHp;
+    locked=subjXp<boss.unlockXp&&!beaten;
   }
 
   // Ders XP gösterimi için
@@ -11605,7 +12000,10 @@ function renderBoss(){
 
   // Mini boss listesi
   const miniList=grpBosses.map((b,i)=>{
-    const bBeaten=S.bossHp[b.id]<=0;
+    // BUGFIX: rawBHp/clampedBHp'yi önce hesapla, beaten'ı bundan çıkar
+    const rawBHp=S.bossHp[b.id]!=null?S.bossHp[b.id]:b.maxHp;
+    const clampedBHp=Math.min(Math.max(0,rawBHp),b.maxHp);
+    const bBeaten=clampedBHp<=0;
     let bLocked=false;
     if(grpId==='genel'){
       bLocked=S.xp<b.unlockXp&&!bBeaten;
@@ -11614,8 +12012,6 @@ function renderBoss(){
       bLocked=subjXp2<b.unlockXp&&!bBeaten;
     }
     const active=i===grpIdx;
-    const rawBHp=S.bossHp[b.id]!=null?S.bossHp[b.id]:b.maxHp;
-    const clampedBHp=Math.min(Math.max(0,rawBHp),b.maxHp);
     const bHpPct=bBeaten?0:Math.round(clampedBHp/b.maxHp*100);
     return`<div onclick="S.curBossLocal=${i};save();renderBoss()" class="boss-mini-item${active?' active':''}" style="${active?`--boss-col:${gc};--boss-col-dim:${gcDim};`:''}">
       <div style="font-size:20px;flex-shrink:0;${bBeaten||bLocked?'filter:grayscale(1) opacity(.5)':''}">${bBeaten?'✅':bLocked?'🔒':b.emoji}</div>
@@ -18044,7 +18440,7 @@ function nav(tab,fromKey){
     const stale=!window._pubRoomsTs||(Date.now()-window._pubRoomsTs)>60000;
     if(stale){window._pubRooms=null;loadPublicRooms();}
   }
-  ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings,tourney:renderTourney,chain:renderChain,gboss:()=>renderGroupBoss(null)})[tab]?.();
+  ({home:renderHome,topics:renderTopics,deneme:renderDeneme,plan:renderPlan,targets:renderTargets,bilgi:renderBilgi,badges:renderBadges,stats:renderStats,boss:renderBoss,kutuphane:renderKutuphane,ranking:renderRanking,settings:renderSettings,tourney:renderTourney,chain:renderChain,gboss:()=>renderGroupBoss(null),qlog:renderQLog})[tab]?.();
   if(typeof updateFriendReqBadge==='function') updateFriendReqBadge();
 }
 function updateNavArrows(){
@@ -18226,21 +18622,27 @@ function showChainReward(m, xp){
   const el=document.createElement('div');
   el.style.cssText=`position:fixed;inset:0;height:var(--vh);background:rgba(0,0,0,0.85);
     z-index:10000;display:flex;align-items:center;justify-content:center;
-    font-family:Nunito,sans-serif;animation:_bannerIn .4s ease;`;
+    font-family:Nunito,sans-serif;animation:_bannerIn .4s ease;cursor:pointer;`;
   el.innerHTML=`<div style="background:linear-gradient(135deg,#1a0a40,#0a1a30);border:2px solid #f5a623;
     border-radius:24px;padding:32px 28px;text-align:center;max-width:300px;width:90%;
-    box-shadow:0 0 60px rgba(245,166,35,0.3);">
+    box-shadow:0 0 60px rgba(245,166,35,0.3);cursor:default;" onclick="event.stopPropagation()">
     <div style="font-size:54px;margin-bottom:12px;">${m.icon}</div>
     <div style="font-size:10px;font-weight:900;color:#f5a623;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">🔗 ZİNCİR TAMAMLANDI</div>
     <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:6px;">${m.title}</div>
     <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:20px;">${m.streakReq} gün üst üste başardın!</div>
     <div style="font-size:32px;font-weight:900;color:#f5a623;margin-bottom:20px;">+${xp} XP 🏆</div>
-    <button onclick="this.closest('[style]').remove()" style="background:linear-gradient(135deg,#7c4dff,#e040fb);border:none;
+    <button onclick="document.getElementById('_chainModal').remove()" style="background:linear-gradient(135deg,#7c4dff,#e040fb);border:none;
       border-radius:12px;color:#fff;padding:12px 32px;font-size:14px;font-weight:900;cursor:pointer;
       font-family:Nunito,sans-serif;width:100%;">🎉 Harika!</button>
   </div>`;
+  el.id='_chainModal';
+  el.onclick=()=>el.remove(); // backdrop tıklaması kapatır
+  // Eski varsa kaldır
+  const old=document.getElementById('_chainModal');if(old)old.remove();
   document.body.appendChild(el);
   playSound('badge');
+  // 8 saniye sonra otomatik kapat
+  setTimeout(()=>{const m2=document.getElementById('_chainModal');if(m2)m2.remove();},8000);
 }
 
 function renderChain(){
@@ -18373,28 +18775,35 @@ async function pushTourneyScore(week, xp){
   const {doc,setDoc}=window._fbFirestore||{};
   if(!doc||!setDoc) return;
   try{
-    await setDoc(doc(window._fbDb,'tourney',week,'scores',_fbUser.uid),{
-      uid:_fbUser.uid, name:S.myName||'YKS Savaşçısı',
-      avatar:S.avatarEmoji||'⚔️', xp, ts:Date.now(),
-      level:getLvl(S.xp)
-    });
-  }catch(e){console.warn('[Tourney]',e);}
+    // Kendi leaderboard dokümanına yazıyoruz (izin var)
+    const ref=doc(window._fbDb,'leaderboard',_fbUser.uid);
+    await setDoc(ref,{
+      tourneyWeek:week,
+      tourneyXp:xp,
+      name:S.myName||'YKS Savaşçısı',
+      avatar:S.avatarEmoji||'⚔️',
+      level:getLvl(S.xp),
+      uid:_fbUser.uid,
+      ts:Date.now()
+    },{merge:true});
+  }catch(e){console.warn('[Tourney push]',e);}
 }
 
 async function fetchTourneyScores(week){
   if(!window._fbDb) return [];
-  const {collection,getDocs,query,orderBy,limit}=window._fbFirestoreExtra||{};
+  const {collection,getDocs,query,where}=window._fbFirestoreExtra||{};
   if(!collection) return [];
   try{
-    const q=query(collection(window._fbDb,'tourney',week,'scores'),orderBy('xp','desc'),limit(50));
-    const snap=await getDocs(q);
-    return snap.docs.map(d=>({id:d.id,...d.data()}));
+    // leaderboard'dan bu haftanın katılımcılarını çek (where ile, index gerektirmez)
+    const snap=await getDocs(collection(window._fbDb,'leaderboard'));
+    return snap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .filter(d=>d.tourneyWeek===week && (d.tourneyXp||0)>=0)
+      .sort((a,b)=>(b.tourneyXp||0)-(a.tourneyXp||0))
+      .slice(0,50);
   }catch(e){
-    // orderBy index yoksa tüm dokümanları çek, client-side sırala
-    try{
-      const snap=await getDocs(collection(window._fbDb,'tourney',week,'scores'));
-      return snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.xp||0)-(a.xp||0)).slice(0,50);
-    }catch(e2){ return []; }
+    console.warn('[Tourney fetch]',e);
+    return [];
   }
 }
 
@@ -18412,11 +18821,12 @@ async function renderTourney(){
   const myRank = scores.findIndex(s=>s.uid===(_fbUser?.uid))+1;
   const myScore = scores.find(s=>s.uid===(_fbUser?.uid));
 
-  // Puan sıralaması
+  // Puan sıralaması — leaderboard'dan geliyor, xp=tourneyXp
   const rows = scores.map((s,i)=>{
     const isMe = s.uid===(_fbUser?.uid);
     const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
     const prizes = ['3000 bonus XP 🎁','2000 bonus XP','1000 bonus XP','500 bonus XP','200 bonus XP'];
+    const pts = s.tourneyXp||s.xp||0;
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
       margin-bottom:5px;background:${isMe?'rgba(124,77,255,0.15)':'rgba(255,255,255,0.03)'};
       border:1px solid ${isMe?'rgba(124,77,255,0.4)':'rgba(255,255,255,0.05)'};">
@@ -18426,7 +18836,7 @@ async function renderTourney(){
         <div style="font-size:11px;font-weight:900;color:${isMe?'var(--pu)':'#fff'};">${s.name||'?'} ${isMe?'(Sen)':''}</div>
         <div style="font-size:9px;color:var(--t3);">Sv ${s.level||1} · ${prizes[i]||''}</div>
       </div>
-      <div style="font-size:13px;font-weight:900;color:#f5a623;">${s.xp||0} XP</div>
+      <div style="font-size:13px;font-weight:900;color:#f5a623;">${pts} XP</div>
     </div>`;
   }).join('');
 
@@ -18769,37 +19179,40 @@ async function attackGroupBoss(bossId){
   const newAtkN=_gbIncAtk(bossId);
 
   try{
-    // Boss HP doc
-    await _gbEnsureWeekly(bossId); // haftalık reset kontrolü
-    const bossRef=doc(window._fbDb,'feed','__boss_'+bossId);
-    const bossSnap=await getDoc(bossRef);
+    // Boss HP doc — leaderboard/{uid} içinde saklıyoruz (feed'e yazma yetkisi yok)
+    await _gbEnsureWeekly(bossId);
     const gb=GROUP_BOSSES.find(b=>b.id===bossId)||GROUP_BOSSES[0];
     const wk=_gbWeekKey();
-    const curHp=bossSnap.exists()?(bossSnap.data().hp??gb.maxHp):gb.maxHp;
-    const newHp=Math.max(0,curHp-totalDmg);
-    const defeated=newHp<=0;
 
-    await setDoc(bossRef,{
-      hp:newHp,maxHp:gb.maxHp,bossId,weekKey:wk,
-      lastHit:Date.now(),lastHitBy:_fbUser.uid,
-      defeated,defeatedAt:defeated?Date.now():null,defeatUid:defeated?_fbUser.uid:null
-    },{merge:true});
-
-    // Kendi fighter verisini güncelle
+    // Kendi leaderboard dokümanından mevcut fighter verisini oku
     const myRef=doc(window._fbDb,'leaderboard',_fbUser.uid);
     const mySnap=await getDoc(myRef);
     const prev=mySnap.exists()?(mySnap.data()[`bossFighter_${bossId}`]||{}):{};
-    const prevDmg=(prev.weekKey===wk?(prev.dmg||0):0); // farklı haftaysa sıfırla
+    const prevDmg=(prev.weekKey===wk?(prev.dmg||0):0);
     const upd={};
-    upd[`bossFighter_${bossId}`]={...prev,uid:_fbUser.uid,
-      name:S.myName||'YKS Savaşçısı',avatar:S.avatarEmoji||'⚔️',
-      dmg:prevDmg+totalDmg,ts:Date.now(),level:myLevel,weekKey:wk};
+    upd[`bossFighter_${bossId}`]={
+      uid:_fbUser.uid,
+      name:S.myName||'YKS Savaşçısı',
+      avatar:S.avatarEmoji||'⚔️',
+      dmg:prevDmg+totalDmg,
+      ts:Date.now(),
+      level:myLevel,
+      weekKey:wk
+    };
     await setDoc(myRef,upd,{merge:true});
 
+    // Boss HP'yi de kendi dokümanında takip et (feed yerine)
+    const bossKey=`bossHp_${bossId}_${wk}`;
+    const myHpContrib=prevDmg+totalDmg;
+    const upd2={};
+    upd2[bossKey]={myDmg:myHpContrib,weekKey:wk,ts:Date.now()};
+    await setDoc(myRef,upd2,{merge:true});
+
+    // Boss HP'yi tahmin et (kendi hasarını tracked ediyor)
+    const defeated=myHpContrib>=gb.maxHp;
+
     if(defeated){
-      // Katkı oranına göre XP — kendi hasarım / maxHp
-      const myTotalDmg=prevDmg+totalDmg;
-      const ratio=Math.min(1,myTotalDmg/gb.maxHp);
+      const ratio=Math.min(1,myHpContrib/gb.maxHp);
       const myXp=Math.max(50,Math.round(gb.xpReward*ratio));
       S.xp+=myXp;addWXP(myXp);save();maybeLU(S.xp-myXp);
       toast(`🏆 Boss yenildi! Katkın: ${Math.round(ratio*100)}% → +${myXp} XP!`);
@@ -19763,7 +20176,24 @@ async function pushGlobalLb(){
       weekXp:getWeekXp(),
       weekXpKey:curWeekKey(),
       uid:_fbUser.uid,
-      code:S.friendCode||''
+      code:S.friendCode||'',
+      // ── Soru istatistikleri (artık Firestore'a yazılıyor) ──
+      questions:S.questions||0,
+      correct:S.correct||0,
+      wrong:S.wrong||0,
+      totalNet:S.totalNet||0,
+      totalMinutes:S.totalMinutes||0,
+      tasks:S.tasks||0,
+      badges:(S.badges||[]).length,
+      subjectQuestions:S.subjectQuestions||{},
+      subjects:Object.fromEntries(
+        Object.entries(S.subjects||{}).map(([k,v])=>[k,{
+          questions:v.questions||0,
+          correct:v.correct||0,
+          wrong:v.wrong||0,
+          xp:v.xp||0
+        }])
+      )
     });
   }catch(e){console.warn('[GlobalLb push]',e);}
 }
@@ -20550,6 +20980,99 @@ if(!S.myName)S.myName='YKS Savaşçısı';
 })();
 chkBdgsSilent(); // mevcut verilerle rozetleri sessizce aç
 streakUpd(); // uygulama açılışında seriyi güncelle / sıfırla
+
+// ── Tüm log girişlerinden soru sayısını yeniden hesapla (TEK KAYNAK: S.log) ──
+(function _recalcFromLog(){
+  const SUBJ_IDS=['mat','tur','fiz','kim','bio','ing','tar','cog','fels','geo'];
+  const logEntries=S.log||[];
+
+  // Log'daki soru girişlerini ders bazında topla
+  const logQ={}, logC={}, logW={};
+  let totalQ=0, totalC=0, totalW=0;
+
+  logEntries.forEach(l=>{
+    const m=l.meta;
+    if(!m||m.type!=='question') return;
+    const sid=m.subjId;
+    const q=parseInt(m.questions)||0;
+    const c=parseInt(m.correct)||0;
+    const w=parseInt(m.wrong)||0;
+    if(!q) return;
+    logQ[sid]=(logQ[sid]||0)+q;
+    logC[sid]=(logC[sid]||0)+c;
+    logW[sid]=(logW[sid]||0)+w;
+    totalQ+=q; totalC+=c; totalW+=w;
+  });
+
+  const hasLogData=totalQ>0;
+
+  if(hasLogData){
+    // Log'da veri varsa: log kazanır (log silinmemişti, güvenilir)
+    SUBJ_IDS.forEach(sid=>{
+      if(!S.subjects[sid]) return;
+      const sb=S.subjects[sid];
+      const lq=logQ[sid]||0;
+      const lc=logC[sid]||0;
+      const lw=logW[sid]||0;
+      // Log daha büyükse güncelle (subjects de kendi tuttuğunu korur)
+      if(lq>sb.questions){
+        sb.questions=lq; sb.correct=lc; sb.wrong=lw;
+      }
+    });
+
+    // Toplam sayaçları güncelle
+    const subjTotal=SUBJ_IDS.reduce((a,sid)=>a+(S.subjects[sid]?.questions||0),0);
+    if(totalQ>S.questions||0) S.questions=Math.max(totalQ, subjTotal);
+    if(totalC>S.correct||0) S.correct=totalC;
+    if(totalW>S.wrong||0) S.wrong=totalW;
+    const net=parseFloat((S.correct-(S.wrong/4)).toFixed(2));
+    if(net>S.totalNet||0) S.totalNet=net;
+
+    console.log(`[Log→Subjects] Log: ${totalQ}q | Subjects: ${SUBJ_IDS.reduce((a,sid)=>a+(S.subjects[sid]?.questions||0),0)}q | Final: ${S.questions}q`);
+  } else {
+    // Log boş: S.subjects'ten hesapla (eski veri)
+    const subjTotal=SUBJ_IDS.reduce((a,sid)=>a+(S.subjects[sid]?.questions||0),0);
+    const subjC=SUBJ_IDS.reduce((a,sid)=>a+(S.subjects[sid]?.correct||0),0);
+    const subjW=SUBJ_IDS.reduce((a,sid)=>a+(S.subjects[sid]?.wrong||0),0);
+    if(subjTotal>S.questions||0) S.questions=subjTotal;
+    if(subjC>S.correct||0) S.correct=subjC;
+    if(subjW>S.wrong||0) S.wrong=subjW;
+    const net=parseFloat((S.correct-(S.wrong/4)).toFixed(2));
+    if(net>S.totalNet||0) S.totalNet=net;
+    console.log(`[Log boş → Subjects] ${subjTotal}q`);
+  }
+})();
+(function _migrateQLog(){
+  if(S.qLogMigrated) return;
+  if(!S.qLog) S.qLog=[];
+  const existing=new Set(S.qLog.map(e=>e.ts));
+  let added=0;
+  (S.log||[]).forEach(l=>{
+    if(l.meta?.type==='question'&&l.meta.questions>0&&!existing.has(l.ts)){
+      const sid=l.meta.subjId;
+      const s2=SUBJ.find(s=>s.id===sid)||{icon:'📝',name:sid||'?'};
+      S.qLog.push({
+        ts:l.ts||Date.now(),
+        subj:sid,
+        subjIcon:s2.icon,
+        subjName:s2.name.split('/')[0],
+        correct:l.meta.correct||0,
+        wrong:l.meta.wrong||0,
+        total:l.meta.questions||0,
+        net:parseFloat(((l.meta.correct||0)-((l.meta.wrong||0)/4)).toFixed(2)),
+        topic:l.meta.topic||null,
+        xp:l.xp||0
+      });
+      added++;
+    }
+  });
+  if(added>0){
+    S.qLog.sort((a,b)=>a.ts-b.ts); // kronolojik sırala
+    console.log(`[qLog] ${added} geçmiş soru aktivitesi aktarıldı.`);
+  }
+  S.qLogMigrated=true;
+})();
+
 save();
 buildNav();
 updateFriendReqBadge();
@@ -25061,18 +25584,20 @@ function cloudSave(){
   clearTimeout(_cloudSaveTimer);
   _cloudSaveTimer = setTimeout(async ()=>{
     try{
-      if(!_fbUser || !window._fbDb) return; // guard: giriş durumu değişmiş olabilir
+      if(!_fbUser || !window._fbDb) return;
       _extractPhotos();
       const data = JSON.parse(JSON.stringify(S));
       if(data.unis) data.unis.forEach(u=>{ delete u.photo; delete u.coverPhoto; });
+      // S.log Firestore'a yazılmıyor (1MB limit aşılıyor) — ayrı localStorage'da saklanıyor
+      delete data.log;
+      delete data.qLog;
       const { doc, setDoc } = window._fbFirestore;
       if(!doc || !setDoc) throw new Error('Firestore fonksiyonları hazır değil');
       const ref = doc(window._fbDb, 'users', _fbUser.uid, 'data', 'state');
       await setDoc(ref, { state: data, updatedAt: Date.now() });
-      // Leaderboard'u da güncelle — her kayıtta sıralamaya yaz
       pushGlobalLb().catch(()=>{});
     }catch(e){ console.warn('[Cloud Save]', e.message); }
-    finally{ _restorePhotos(); } // hata olsa da fotoğrafları geri yükle
+    finally{ _restorePhotos(); }
   }, 3000);
 }
 
@@ -25226,6 +25751,35 @@ async function cloudLoad({ forceLoad = false } = {}){
       const _cloudDailyMins=(p.dailyMinsDay===_localToday)?(p.dailyMins||0):0;
       const _bestDailyMins=Math.max(_localDailyMins,_cloudDailyMins);
 
+      // 10) Log: 'yks_log' key'inden yüklenmiş log asla cloud'dan gelen ile ezilemez
+      const localLog = S.log || []; // load() zaten yks_log'dan yükledi
+      const cloudLog = (p.log||[]).filter(l=>l?.id!=null);
+      let mergedLog;
+      if(cloudLog.length===0){
+        mergedLog=localLog;
+      } else {
+        const logMap={};
+        [...cloudLog,...localLog].forEach(l=>{if(l?.id!=null)logMap[l.id]=l;});
+        mergedLog=Object.values(logMap).sort((a,b)=>(b.id||0)-(a.id||0));
+      }
+      const maxLogId=mergedLog.length>0?Math.max(...mergedLog.map(l=>l.id||0))+1:(p.logId||S.logId||1);
+
+      // 11) Soru sayaçları: yerel ve cloud'dan büyük olanı al (subjects bazında)
+      const SUBJ_IDS_MERGE=['mat','tur','fiz','kim','bio','ing','tar','cog','fels','geo'];
+      SUBJ_IDS_MERGE.forEach(sid=>{
+        const loc=ms[sid]||{};
+        const rem=(p.subjects&&p.subjects[sid])||{};
+        loc.questions=Math.max(loc.questions||0, rem.questions||0);
+        loc.correct=Math.max(loc.correct||0, rem.correct||0);
+        loc.wrong=Math.max(loc.wrong||0, rem.wrong||0);
+        loc.xp=Math.max(loc.xp||0, rem.xp||0);
+        ms[sid]=loc;
+      });
+      const mergedQuestions=Math.max(p.questions||0, S.questions||0, SUBJ_IDS_MERGE.reduce((a,sid)=>a+(ms[sid]?.questions||0),0));
+      const mergedCorrect=Math.max(p.correct||0, S.correct||0, SUBJ_IDS_MERGE.reduce((a,sid)=>a+(ms[sid]?.correct||0),0));
+      const mergedWrong=Math.max(p.wrong||0, S.wrong||0, SUBJ_IDS_MERGE.reduce((a,sid)=>a+(ms[sid]?.wrong||0),0));
+      const mergedTotalNet=Math.max(p.totalNet||0, S.totalNet||0, parseFloat((mergedCorrect-(mergedWrong/4)).toFixed(2)));
+
       // ── Merge uygula ──
       S = {
         ...S,
@@ -25245,6 +25799,12 @@ async function cloudLoad({ forceLoad = false } = {}){
         avatarFrame: mergedFrame,
         avatarTs: mergedAvatarTs,
         weekResetDay: weekResetDay,
+        log: mergedLog,       // Log asla ezilmez
+        logId: maxLogId,
+        questions: mergedQuestions,
+        correct: mergedCorrect,
+        wrong: mergedWrong,
+        totalNet: mergedTotalNet,
       };
       // Yerel korunan alanları geri yaz — cloud bu alanları asla ezemez
       Object.assign(S,_activeTimer); // timer her zaman yerel (çalışıyor olsun ya da olmasın)
@@ -26956,10 +27516,16 @@ function _saveInv(inv){
 
 function _addItem(itemId){
   const def=ITEMS[itemId]; if(!def) return;
+  // Hem yks_inv'e hem S.inventory'ye yaz
   const inv=_getInv();
   const ex=inv.find(i=>i.id===itemId);
-  if(ex) ex.n=(ex.n||1)+1; else inv.push({id:itemId,n:1});
+  if(ex) ex.n=(ex.n||1)+1; else inv.push({id:itemId,n:1,ts:Date.now()});
   _saveInv(inv);
+  // S.inventory ile senkronize et
+  if(!S.inventory)S.inventory=[];
+  const sEx=S.inventory.find(i=>i.id===itemId);
+  if(sEx) sEx.n=(sEx.n||1)+1; else S.inventory.push({id:itemId,n:1,ts:Date.now()});
+  save();
   _sfx('itemdrop');
   _itemDropBanner(def);
 }
@@ -27142,18 +27708,21 @@ window.maybeLU=function(ox){
   }
 };
 
-// Badge hook — rozet kazanıldığında item drop (chkBdgs patch)
-const _origChkBdgs=window.chkBdgs;
-window.chkBdgs=function(){
+// Badge hook — rozet kazanıldığında item drop
+// chkBdgs'yi doğrudan sarıyoruz (window patch yerine)
+const _chkBdgsOrig = chkBdgs;
+chkBdgs = function(){
   const before=(S.badges||[]).length;
-  if(_origChkBdgs) _origChkBdgs.call(this);
+  _chkBdgsOrig.call(this);
   const after=(S.badges||[]).length;
   const newCount=after-before;
   if(newCount>0){
-    // Her yeni rozet için %22 ihtimalle eşya düşer (max 1 drop)
+    // Garantili 1 eşya düşer her rozette
     const item=_rollDrop('badge');
-    if(item) setTimeout(()=>_addItem(item.id), 1200);
-    // Birden fazla rozet aynı anda: ekstra şans
+    if(item){
+      setTimeout(()=>_addItem(item.id), 1200);
+      console.log('[Badge Drop]',item.id,'→ envanter');
+    }
     if(newCount>1){
       const bonus=_rollDrop('badge');
       if(bonus&&bonus.id!==item?.id) setTimeout(()=>_addItem(bonus.id),2400);
@@ -28012,6 +28581,122 @@ function _injectEventBanner(){
 if(S && S.curTab === 'home') setTimeout(_injectEventBanner, 600);
 
 })();
+
+
+// Ayarlar sayfasında otomatik olarak butonu göster
+const _origRenderSettings = window.renderSettings || function(){};
+
+// ═══════════════════════════════════════════════════
+// 🤖 AI HAFTALIK PLAN SİSTEMİ
+// ═══════════════════════════════════════════════════
+let _aiPlanData = null; // Oluşturulan planı geçici sakla
+
+async function aiGenPlan(){
+  const btn = document.getElementById('ai-plan-btn');
+  const resultEl = document.getElementById('ai-plan-result');
+  const applyBtn = document.getElementById('ai-plan-apply');
+  if(!btn || !resultEl) return;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Oluşturuluyor...';
+  resultEl.style.display = 'none';
+  applyBtn.style.display = 'none';
+  _aiPlanData = null;
+
+  // Kullanıcı verisini hazırla
+  const subjData = (typeof SUBJ !== 'undefined' ? SUBJ : []).map(s => {
+    const xp = (S.subjects && S.subjects[s.id] && S.subjects[s.id].xp) || 0;
+    const done = S.weekDone && S.weekDone[s.id] || 0;
+    const plan = S.weekPlan && S.weekPlan[s.id] || 0;
+    return { id: s.id, name: s.name, xp, weekDone: done, weekPlan: plan };
+  });
+
+  const totalXp = S.xp || 0;
+  const level = typeof getLvl === 'function' ? getLvl(totalXp) : 1;
+  const streak = S.streak || 0;
+  const dailyGoalHours = S.dailyGoalHours || 4;
+  const today = new Date().toLocaleDateString('tr-TR', { weekday:'long' });
+
+  const prompt = `Sen bir YKS (Türkiye Üniversite Sınavı) koçusun. Aşağıdaki öğrenci verilerine göre bu haftaki çalışma planını oluştur.
+
+ÖĞRENCİ VERİSİ:
+- Seviye: ${level} | Toplam XP: ${totalXp} | Seri: ${streak} gün
+- Günlük hedef: ${dailyGoalHours} saat
+- Bugün: ${today}
+- Ders XP ve bu haftaki çalışma saatleri:
+${subjData.map(s=>`  ${s.name}: ${s.xp} XP (bu hafta ${s.weekDone}s/${s.weekPlan}s plan)`).join('\n')}
+
+GÖREV: Haftanın kalan günleri için ders bazında haftalık TOPLAM hedef saat öner. XP'si düşük derslere daha fazla süre ver. Toplam plan ${dailyGoalHours * 7} saati aşmasın.
+
+Sadece JSON döndür, başka bir şey yazma:
+{"plan":{"mat":X,"tur":X,"fiz":X,"kim":X,"bio":X,"geo":X,"tar":X,"cog":X,"fels":X,"ing":X},"aciklama":"Neden bu plan (1-2 cümle Türkçe)"}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if(!resp.ok) throw new Error('API hatası: ' + resp.status);
+    const data = await resp.json();
+    const text = (data.content || []).filter(x=>x.type==='text').map(x=>x.text).join('');
+
+    // JSON parse
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error('Geçersiz yanıt formatı');
+    const parsed = JSON.parse(jsonMatch[0]);
+    _aiPlanData = parsed.plan;
+
+    // Planı göster
+    const planRows = (typeof SUBJ !== 'undefined' ? SUBJ : []).map(s => {
+      const hrs = _aiPlanData[s.id] || 0;
+      const curr = (S.weekPlan && S.weekPlan[s.id]) || 0;
+      const diff = hrs - curr;
+      const diffStr = diff > 0 ? `<span style="color:var(--gr);font-size:8px;">+${diff}s</span>` :
+                     diff < 0 ? `<span style="color:var(--rd);font-size:8px;">${diff}s</span>` : '';
+      return hrs > 0 ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="font-size:13px;">${s.icon}</span>
+        <span style="font-size:10px;font-weight:700;flex:1;">${s.name}</span>
+        <span style="font-size:11px;font-weight:900;color:var(--pu);">${hrs}s</span>
+        ${diffStr}
+      </div>` : '';
+    }).filter(Boolean).join('');
+
+    resultEl.innerHTML = `
+      <div style="background:rgba(255,255,255,0.04);border-radius:9px;padding:10px 11px;margin-bottom:6px;">
+        <div style="font-size:9px;font-weight:900;color:rgba(0,200,180,0.9);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">📋 Önerilen Haftalık Plan</div>
+        ${planRows}
+      </div>
+      ${parsed.aciklama ? `<div style="font-size:9px;color:rgba(255,255,255,0.55);line-height:1.5;font-style:italic;">💡 ${parsed.aciklama}</div>` : ''}`;
+    resultEl.style.display = 'block';
+    applyBtn.style.display = 'block';
+    btn.textContent = '🔄 Yeniden Oluştur';
+
+  } catch(e) {
+    resultEl.innerHTML = `<div style="color:var(--rd);font-size:10px;background:rgba(229,57,53,0.1);border-radius:8px;padding:8px 10px;">❌ Hata: ${e.message}</div>`;
+    resultEl.style.display = 'block';
+    btn.textContent = '✨ Plan Oluştur';
+  }
+  btn.disabled = false;
+}
+
+function aiApplyPlan(){
+  if(!_aiPlanData) return;
+  Object.entries(_aiPlanData).forEach(([sid, hrs]) => {
+    if(typeof setPlan === 'function') setPlan(sid, hrs);
+  });
+  const applyBtn = document.getElementById('ai-plan-apply');
+  if(applyBtn){ applyBtn.textContent = '✅ Uygulandı!'; applyBtn.style.background = 'rgba(67,160,71,0.35)'; setTimeout(()=>{ if(applyBtn){ applyBtn.textContent='✅ Planı Uygula'; applyBtn.style.background='rgba(67,160,71,0.2)'; } }, 1800); }
+  if(typeof renderPlan === 'function') setTimeout(renderPlan, 200);
+  toast('✅ AI planı haftalık hedeflere uygulandı!');
+}
+
+
 </script>
 
 </body>
