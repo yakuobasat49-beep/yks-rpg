@@ -327,13 +327,17 @@ input::placeholder{color:var(--t3);}
 .boss-daily{background:linear-gradient(135deg,rgba(245,166,35,0.1),rgba(245,166,35,0.04));border:1px solid rgba(245,166,35,0.3);border-radius:12px;padding:10px 12px;margin-bottom:10px;}
 .boss-daily-ttl{font-size:9px;font-weight:900;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
 /* grp tabs */
-.boss-grp-tab{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--c2);font-size:9px;font-weight:800;color:var(--t3);cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;white-space:nowrap;flex-shrink:0;position:relative;}
-.boss-grp-tab.active{color:#fff;border-color:transparent;}
-.boss-grp-tab:active{transform:scale(.96);}
-.boss-tabs-row{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:10px;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(124,77,255,0.3) transparent;}
-.boss-tabs-row::-webkit-scrollbar{height:3px;}
-.boss-tabs-row::-webkit-scrollbar-track{background:transparent;}
-.boss-tabs-row::-webkit-scrollbar-thumb{background:rgba(124,77,255,0.35);border-radius:100px;}
+.boss-grp-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 6px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.07);background:var(--c2);font-size:8px;font-weight:800;color:var(--t3);cursor:pointer;font-family:'Nunito',sans-serif;transition:all .18s;text-align:center;position:relative;min-height:52px;}
+.boss-grp-tab.active{color:#fff;border-color:transparent;transform:scale(1.04);}
+.boss-grp-tab:active{transform:scale(.94);}
+.boss-grp-tab .btab-icon{font-size:16px;line-height:1;}
+.boss-grp-tab .btab-prog{font-size:7px;opacity:0.7;margin-top:1px;}
+.boss-tabs-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.boss-epic-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,#ff6f00cc,#e65100cc);border:1.5px solid rgba(255,160,0,0.4);margin-bottom:10px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
+.boss-epic-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent);animation:epicShimmer 2.5s infinite;}
+@keyframes epicShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.boss-epic-banner:active{transform:scale(.98);}
+.boss-epic-banner.active{box-shadow:0 0 20px rgba(255,111,0,0.5);}
 /* TARGETS */
 .uni-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 /* UNI */
@@ -422,13 +426,17 @@ input::placeholder{color:var(--t3);}
 .boss-daily{background:linear-gradient(135deg,rgba(245,166,35,0.1),rgba(245,166,35,0.04));border:1px solid rgba(245,166,35,0.3);border-radius:12px;padding:10px 12px;margin-bottom:10px;}
 .boss-daily-ttl{font-size:9px;font-weight:900;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
 /* grp tabs */
-.boss-grp-tab{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--c2);font-size:9px;font-weight:800;color:var(--t3);cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;white-space:nowrap;flex-shrink:0;position:relative;}
-.boss-grp-tab.active{color:#fff;border-color:transparent;}
-.boss-grp-tab:active{transform:scale(.96);}
-.boss-tabs-row{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:10px;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(124,77,255,0.3) transparent;}
-.boss-tabs-row::-webkit-scrollbar{height:3px;}
-.boss-tabs-row::-webkit-scrollbar-track{background:transparent;}
-.boss-tabs-row::-webkit-scrollbar-thumb{background:rgba(124,77,255,0.35);border-radius:100px;}
+.boss-grp-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 6px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.07);background:var(--c2);font-size:8px;font-weight:800;color:var(--t3);cursor:pointer;font-family:'Nunito',sans-serif;transition:all .18s;text-align:center;position:relative;min-height:52px;}
+.boss-grp-tab.active{color:#fff;border-color:transparent;transform:scale(1.04);}
+.boss-grp-tab:active{transform:scale(.94);}
+.boss-grp-tab .btab-icon{font-size:16px;line-height:1;}
+.boss-grp-tab .btab-prog{font-size:7px;opacity:0.7;margin-top:1px;}
+.boss-tabs-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.boss-epic-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,#ff6f00cc,#e65100cc);border:1.5px solid rgba(255,160,0,0.4);margin-bottom:10px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
+.boss-epic-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent);animation:epicShimmer 2.5s infinite;}
+@keyframes epicShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.boss-epic-banner:active{transform:scale(.98);}
+.boss-epic-banner.active{box-shadow:0 0 20px rgba(255,111,0,0.5);}
 /* TARGETS */
 .uni-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 .uni-c{background:var(--c1);border:1px solid var(--br);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .15s;}
@@ -1522,14 +1530,14 @@ qs:[
 ]},
 {id:6,name:'Stres Canavarı',emoji:'💢',desc:'Sinirini kabarıyor! Sakin kal ve yen.',hp:380,maxHp:380,unlockXp:2700,reward:380,month:'Genel 7',
 qs:[
-{q:'f(x) = x³ − 3x² için x = 2\'deki türev değeri?',opts:['0','−1','0','−2'],a:0},
+{q:'f(x)=x³−3x²+2 fonksiyonunun x=2\'deki türev değeri?',opts:['0','−12','0','12'],a:0},
 {q:'Mondros Ateşkes Anlaşması hangi yılda imzalanmıştır?',opts:['1916','1917','1918','1919'],a:2},
-{q:'RNA\'da timin yerine hangi baz bulunur?',opts:['Adenin','Sitozin','Guanin','Urasil'],a:3},
-{q:'"Kitapları okuyunca dünya genişliyor." cümlesindeki zarf fiil hangisidir?',opts:['Kitapları','okuyunca','dünya','genişliyor'],a:1},
-{q:'Dünya\'nın atmosferinde en yüksek oranda bulunan gaz hangisidir?',opts:['Oksijen','Azot','Karbondioksit','Argon'],a:1},
-{q:'2⁰ + 2¹ + 2² + 2³ = ?',opts:['8','12','15','16'],a:2},
-{q:'Türk coğrafyasında "yaylaçılık" kavramı ne anlama gelir?',opts:['Tarım yapılması','Mevsimlik göç','Sahil yerleşimi','Kentleşme'],a:1},
-{q:'Divan edebiyatında "Fuzuli" hangi dilde şiirler yazmamıştır?',opts:['Türkçe','Arapça','Farsça','Rumca'],a:3}
+{q:'Mayoz bölünmede homolog kromozomlar hangi evrede ayrılır?',opts:['Profaz I','Metafaz I','Anafaz I','Telofaz II'],a:2},
+{q:'"Kitapları okuyunca dünya genişliyor." cümlesindeki zarf fiil tipi?',opts:['Zaman zarfı','Koşul','Zaman bağlacı','Neden'],a:2},
+{q:'Troposfer katmanında yükseldikçe sıcaklık nasıl değişir?',opts:['Artar','Azalır','Değişmez','Önce artar sonra azalır'],a:1},
+{q:'1/2+1/4+1/8+… sonsuz geometrik dizinin toplamı?',opts:['1/2','3/4','1','2'],a:2},
+{q:'İç Anadolu\'da yağış azlığının temel nedeni hangisidir?',opts:['Yükselti','Dağların deniz etkisini kesmesi','Enlem','Bitki örtüsü'],a:1},
+{q:'Fuzuli\'nin hangi dilde şiir yazmadığı söylenemez?',opts:['Türkçe','Arapça','Farsça','Rumca'],a:3}
 ]},
 {id:7,name:'Karamsarlık Ejderi',emoji:'😔',desc:'Umutsuzluk veriyor! Kararlılığınla yen.',hp:460,maxHp:460,unlockXp:3500,reward:460,month:'Genel 8',
 qs:[
@@ -1664,27 +1672,27 @@ qs:[
 {q:'Fonksiyon f\'nin grafiği x eksenini 3 noktada kesiyorsa fonksiyonun en az kaçıncı dereceden olduğu söylenebilir?',opts:['1. derece','2. derece','3. derece','4. derece'],a:2},
 {q:'f(2x+1) = 4x+5 ise f(x) = ?',opts:['2x+3','2x+1','4x+1','x+3'],a:0}
 ]},
-{id:15,name:'Üstel ve Logaritma Ustası',emoji:'🔬',desc:'[MAT] Üstel ve logaritmik denklemler',hp:225,maxHp:225,unlockXp:1000,reward:80,month:'MAT 4. Ders',
+{id:15,name:'Üstel Sayılar Ustası',emoji:'🔬',desc:'[MAT] Üstel ifadeler ve denklemler — TYT müfredatı',hp:225,maxHp:225,unlockXp:1000,reward:80,month:'MAT 4. Ders',
 qs:[
-{q:'log₃81 = ?',opts:['2','3','4','9'],a:2},
-{q:'log 2 + log 5 = ?',opts:['0,5','0,7','1','10'],a:2},
-{q:'2^(x+1) = 32 ise x = ?',opts:['3','4','5','6'],a:1},
-{q:'log₂(x) = 3 ise x = ?',opts:['6','8','9','16'],a:1},
-{q:'ln(e²) = ?',opts:['1','e','2','e²'],a:2},
-{q:'log₅25 − log₅5 = ?',opts:['0','1','5','25'],a:1},
-{q:'3^x = 27^(x−1) denkleminin çözümü?',opts:['x=3/2','x=2','x=3','x=2/3'],a:0},
-{q:'log₂(8×4) = ?',opts:['3','4','5','6'],a:2}
+{q:'2³ × 2⁴ = ?',opts:['2⁷','2¹²','4⁷','8⁷'],a:0},
+{q:'(3²)³ = ?',opts:['3⁵','3⁶','9⁶','27³'],a:1},
+{q:'2⁻³ = ?',opts:['−8','1/8','−1/8','8'],a:1},
+{q:'√(16 × 25) = ?',opts:['20','40','√41','100'],a:0},
+{q:'2ˣ = 32 denkleminde x = ?',opts:['4','5','6','16'],a:1},
+{q:'(4/9)^(1/2) = ?',opts:['2/3','4/3','16/81','2/81'],a:0},
+{q:'3^(x+1) = 81 ise x = ?',opts:['2','3','4','5'],a:1},
+{q:'5⁰ + 5¹ + 5⁻¹ = ?',opts:['6','6,2','31/5','7'],a:2}
 ]},
-{id:16,name:'Trigonometri Ejderi',emoji:'📐',desc:'[MAT] Trigonometrik fonksiyonlar',hp:250,maxHp:250,unlockXp:1400,reward:90,month:'MAT 5. Ders',
+{id:16,name:'Trigonometri Ejderi',emoji:'📐',desc:'[AYT MAT] Trigonometrik fonksiyonlar ve formüller',hp:250,maxHp:250,unlockXp:1400,reward:90,month:'MAT 5. Ders',
 qs:[
-{q:'sin²(x) + cos²(x) = ?',opts:['0','1','2','Değişir'],a:1},
-{q:'sin(60°) değeri nedir?',opts:['√2/2','√3/2','1/2','1'],a:1},
-{q:'tan(45°) = ?',opts:['0','1/2','1','√3'],a:2},
-{q:'cos(90°) = ?',opts:['0','1','−1','1/2'],a:0},
-{q:'1 + tan²(x) = ?',opts:['cos²x','sin²x','1/cos²x','1/sin²x'],a:2},
-{q:'sin(180° − x) = ?',opts:['sin(x)','−sin(x)','cos(x)','−cos(x)'],a:0},
-{q:'π/3 radyan kaç derecedir?',opts:['45°','60°','90°','120°'],a:1},
-{q:'cos(120°) = ?',opts:['1/2','−1/2','√3/2','−√3/2'],a:1}
+{q:'sinα=3/5 ve α∈(0°,90°) ise tanα=?',opts:['3/4','4/5','3/5','4/3'],a:0},
+{q:'sin(A+B)=sinA·cosB+cosA·sinB formülü ile sin75° hesaplanırsa sonuç?',opts:['(√6+√2)/4','(√6−√2)/4','(√3+1)/4','√3/2'],a:0},
+{q:'cos2x = 1−2sin²x eşitliği kullanılarak cos60° hesaplanırsa?',opts:['1/4','1/2','√3/2','3/4'],a:1},
+{q:'tanα·cosα = ? ',opts:['sinα','cosα','1/sinα','secα'],a:0},
+{q:'2sin²x−sinx−1=0 denkleminin [0°,360°) aralığındaki çözüm sayısı?',opts:['1','2','3','4'],a:2},
+{q:'sin(π−x)=sinx ise sin(210°)=?',opts:['1/2','−1/2','√3/2','−√3/2'],a:1},
+{q:'Bir dik üçgende karşı dik kenar=5, komşu dik kenar=12 ise sin+cos=?',opts:['17/13','15/13','17/12','5/13'],a:0},
+{q:'cos(x+y)=cosxcosy−sinxsiny formülüyle cos105° bulunursa sonuç?',opts:['(√6−√2)/4','(√2−√6)/4','−(√6+√2)/4','(√6+√2)/4'],a:1}
 ]},
 {id:17,name:'Limit Canavarı',emoji:'∞',desc:'[MAT] Limit ve süreklilik',hp:275,maxHp:275,unlockXp:1800,reward:100,month:'MAT 6. Ders',
 qs:[
@@ -1799,14 +1807,14 @@ qs:[
 // ═══ FİZİK BOSSLARI (id 27-41) ═══
 {id:27,name:'Kinematik Canavarı',emoji:'🚀',desc:'[FİZ] Hareket ve kinematik',hp:150,maxHp:150,unlockXp:0,reward:50,month:'FIZ 1. Ders',
 qs:[
-{q:'Ivme birimi SI sisteminde nedir?',opts:['m/s','m/s²','N','kg'],a:1},
-{q:'Sabit hızda giden cismin ivmesi nedir?',opts:['1 m/s²','Sabit pozitif','0','Belirsiz'],a:2},
-{q:'v = v₀ + at formülünde t = 5s, v₀ = 10 m/s, a = 2 m/s² ise v = ?',opts:['15 m/s','20 m/s','25 m/s','30 m/s'],a:1},
-{q:'Serbest düşmede ivme değeri (g ≈ 10 m/s²) nedir?',opts:['5','9,8','10','12'],a:2},
-{q:'2 s\'de 20 m yol alan cismin ortalama hızı?',opts:['5 m/s','10 m/s','20 m/s','40 m/s'],a:1},
-{q:'Düşey atışta zirveye çıkan cismin tepe noktasındaki hızı?',opts:['g','0','v₀','2v₀'],a:1},
-{q:'x = x₀ + v₀t + ½at² formülü hangi hareketi tanımlar?',opts:['Sabit hız','Düzgün ivmeli','Dairesel','Titreşim'],a:1},
-{q:'Yatay atışta yatay hız bileşeni nasıl değişir?',opts:['Artar','Azalır','Sabit kalır','Önce artar sonra azalır'],a:2}
+{q:'Başlangıçta durgun olan cisim 4 s sonra 24 m/s hıza ulaşıyor. İvmesi?',opts:['4 m/s²','6 m/s²','8 m/s²','10 m/s²'],a:1},
+{q:'20 m/s\'lik başlangıç hızıyla düşey yukarı atılan cisim kaç s sonra zirveye ulaşır? (g=10)',opts:['1 s','2 s','4 s','10 s'],a:1},
+{q:'Yatay atışta başlangıç hızı v₀=15 m/s, düşme yüksekliği h=20 m ise yatayda alınan yol? (g=10)',opts:['15 m','20 m','30 m','45 m'],a:2},
+{q:'v-t grafiğinde eğim neyi verir?',opts:['Hız','Yol','İvme','Momentum'],a:2},
+{q:'Eşit zaman aralıklarında alınan yollar sırasıyla 3,5,7,9 m ise hareket nasıldır?',opts:['Sabit hız','Düzgün ivmeli','Düzensiz','Yavaşlama'],a:1},
+{q:'Serbest düşen cisim 2. saniyede kaç m yol alır? (g=10 m/s²)',opts:['10 m','15 m','20 m','25 m'],a:1},
+{q:'Eğimsiz yolda v₀=30 m/s\'den fren yapan araç a=−6 m/s² ile durana kadar kaç m ilerler?',opts:['60 m','75 m','90 m','120 m'],a:1},
+{q:'Dairesel harekette çevrim süresi T=2s ise açısal hız ω=?',opts:['π rad/s','2π rad/s','4π rad/s','π/2 rad/s'],a:0}
 ]},
 {id:28,name:'Newton Yasaları Ejderi',emoji:'⚖️',desc:'[FİZ] Kuvvet ve hareket yasaları',hp:175,maxHp:175,unlockXp:300,reward:60,month:'FIZ 2. Ders',
 qs:[
@@ -1921,14 +1929,14 @@ qs:[
 ]},
 {id:38,name:'Asit-Baz Ejderi',emoji:'🧪',desc:'[KİM] Asit-baz teorileri ve pH',hp:225,maxHp:225,unlockXp:1000,reward:80,month:'KIM 4. Ders',
 qs:[
-{q:'Arrhenius tanımına göre asit nedir?',opts:['Proton veren madde','H⁺ iyonu üreten madde','Elektron çifti veren','Lewis asiti'],a:1},
-{q:'Brønsted-Lowry tanımına göre baz nedir?',opts:['OH⁻ üreten','Proton (H⁺) kabul eden','Elektron çifti kabul eden','Sadece NH₃'],a:1},
-{q:'pH = −log[H⁺] ise [H⁺] = 10⁻⁴ M olan çözeltinin pH\'ı?',opts:['2','4','6','8'],a:1},
-{q:'Nötr çözeltinin pH değeri kaçtır (25°C)?',opts:['0','7','14','Değişir'],a:1},
-{q:'Güçlü asit HCl 0,01 M çözeltide pH kaçtır?',opts:['1','2','4','12'],a:1},
-{q:'Tampon çözelti nedir?',opts:['Asidik iyonlar içeren','pH değişimine karşı dirençli çözelti','Yalnızca bazik çözelti','Saf su'],a:1},
-{q:'Amfoter madde nedir?',opts:['Yalnız asit','Yalnız baz','Hem asit hem baz gibi davranabilen','Nötr madde'],a:2},
-{q:'Ka × Kb = Kw eşitliğinde Kw 25°C\'de nedir?',opts:['1','10⁻⁷','10⁻¹⁴','10⁻⁷ × 10⁻⁷'],a:2}
+{q:'0,01 M HCl çözeltisinin pH\'ı kaçtır?',opts:['1','2','3','4'],a:1},
+{q:'pH=11 olan çözeltinin pOH değeri?',opts:['3','7','11','14'],a:0},
+{q:'Zayıf asidin pKa değeri büyüdükçe asitlik nasıl değişir?',opts:['Artar','Azalır','Değişmez','Önce artar sonra azalır'],a:1},
+{q:'Tampon çözeltinin pH değişimine karşı direnci neye dayanır?',opts:['Güçlü asit-baz çifti','Zayıf asit/baz ile konjuge çifti','Saf su dengesi','Nötralleşme'],a:1},
+{q:'CH₃COOH iyonlaşma denklemi yazıldığında konjuge bazı hangisidir?',opts:['H₃O⁺','OH⁻','CH₃COO⁻','H₂O'],a:2},
+{q:'Kuvvetli asit + kuvvetli baz reaksiyonunda denge sabiti (K) yaklaşık kaçtır?',opts:['1','10⁷','10¹⁴','10⁻¹⁴'],a:2},
+{q:'0,1 M NH₃ çözeltisi (Kb=1,8×10⁻⁵) kaçıncı dereceden baziktir?',opts:['Güçlü baz','Zayıf baz','Nötr','Asit'],a:1},
+{q:'Titrasyon eşdeğerlik noktasında güçlü asit-zayıf baz titrasyonunda pH nasıldır?',opts:['=7','<7','> 7','Tanımsız'],a:1}
 ]},
 {id:39,name:'Kimyasal Denge Canavarı',emoji:'⚖️',desc:'[KİM] Kimyasal denge ve Le Chatelier',hp:250,maxHp:250,unlockXp:1400,reward:90,month:'KIM 5. Ders',
 qs:[
@@ -2010,14 +2018,14 @@ qs:[
 ]},
 {id:46,name:'Genetik Kalıtım Canavarı',emoji:'👨‍👩‍👧',desc:'[BİO] Mendel kalıtımı ve genetik çaprazlama',hp:250,maxHp:250,unlockXp:1400,reward:90,month:'BIO 5. Ders',
 qs:[
-{q:'Aa × Aa çaprazlamasında AA:Aa:aa oranı nedir?',opts:['1:2:1','3:1','1:1','2:1:1'],a:0},
-{q:'Aa × Aa çaprazlamasında dominant fenotip oranı nedir?',opts:['1/4','2/4','3/4','4/4'],a:2},
-{q:'Test çaprazlaması nedir ve amacı nedir?',opts:['AA×AA; homozigot tespiti','Aa×aa; genotip tespiti','Aa×Aa; gen haritası','AA×aa; heterozigot oluşturma'],a:1},
-{q:'X\'e bağlı resesif hastalığın taşıyıcısı anneden oğula geçme olasılığı?',opts:['%0','%25','%50','%100'],a:2},
-{q:'Mendel\'in bağımsız dağılım yasası iki genin hangi özelliğini açıklar?',opts:['Bağlantılı kalıtım','Birbirinden bağımsız aktarım','Dominantlık','Resesiflik'],a:1},
-{q:'AaBb × AaBb çaprazlamasında A_B_ (dominant-dominant) fenotip oranı?',opts:['1/16','3/16','6/16','9/16'],a:3},
-{q:'Tamamlayıcı gen etkisinde AaBb çaprazlamasında 9:7 oranı nasıl açıklanır?',opts:['Epistazi','Kodominantlık','Çok allelizm','Bağlı genler'],a:0},
-{q:'Otozomal dominant hastalıkta hasta bireyin her çocuğuna hastalık geçme olasılığı (partner sağlıklı)?',opts:['%0','%25','%50','%100'],a:2}
+{q:'AaBb × aabb çaprazlamasında AaBb oranı?',opts:['1/16','1/8','1/4','1/2'],a:2},
+{q:'X\'e bağlı resesif bir hastalıkta hasta anne (XʰX) × normal baba (XY) çaprazlamasında hasta erkek oranı?',opts:['0','1/4','1/2','Tümü'],a:2},
+{q:'Bağımsız çeşitlenme (dihybrid) kuralı hangi yasayla açıklanır?',opts:['Mendel\'in 1. yasası','Segregasyon','Bağımsız dağılım','Hardy-Weinberg'],a:2},
+{q:'Aa bireyin ürettiği gamet çeşidi?',opts:['1','2','3','4'],a:1},
+{q:'Kanlı grup O olan (ii) anne × AB olan (IAIᴮ) baba çaprazlamasında hangi kan grubu çıkmaz?',opts:['A','B','AB','O'],a:2},
+{q:'Eşbaskınlıkta (kodominans) Aa bireyin fenotip nasıl belirlenir?',opts:['Yalnız A','Yalnız a','Her ikisi de baskın','Ara form'],a:2},
+{q:'İnsan Y kromozomunda taşınan gen yalnızca kime aktarılır?',opts:['Tüm çocuklara','Yalnız kız çocuklarına','Yalnız erkek çocuklarına','Hiçbirine'],a:2},
+{q:'Poligenik kalıtımda fenotip dağılımı genellikle nasıl görünür?',opts:['2 farklı fenotip','3 farklı fenotip','Normal dağılım eğrisi','Eşit dağılım'],a:2}
 ]},
 {id:47,name:'Evrim ve Ekoloji Ejderi',emoji:'🦕',desc:'[BİO] Doğal seçilim ve ekosistem',hp:275,maxHp:275,unlockXp:1800,reward:100,month:'BIO 6. Ders',
 qs:[
@@ -2347,25 +2355,25 @@ qs:[
 // ═══ İNGİLİZCE (YDT) BOSSLARI (id 76-83) ═══
 {id:76,name:'Grammar Goblin',emoji:'📖',desc:'[İNG] Temel İngilizce dilbilgisi',hp:150,maxHp:150,unlockXp:0,reward:50,month:'ING 1. Ders',
 qs:[
-{q:'Which sentence is grammatically correct?',opts:['She don\'t like coffee.','She doesn\'t likes coffee.','She doesn\'t like coffee.','She not like coffee.'],a:2},
-{q:'Choose the correct verb form: "By the time I arrived, she _____ already left."',opts:['has','had','have','was'],a:1},
-{q:'"Despite _____ tired, she finished her homework." — which word fits?',opts:['be','being','been','to be'],a:1},
-{q:'Which word is a conjunction?',opts:['quickly','beautiful','although','carefully'],a:2},
-{q:'The sentence "She was given a book by her teacher." is in which voice?',opts:['Active','Passive','Imperative','Interrogative'],a:1},
-{q:'"I wish I _____ more time to study." — correct form?',opts:['have','had','will have','would have'],a:1},
-{q:'Choose the correct article: "___ honest person always tells the truth."',opts:['A','An','The','No article'],a:1},
-{q:'Which sentence uses the Present Perfect correctly?',opts:['I have seen that film yesterday.','She have finished her work.','They have lived here for ten years.','He has went to school.'],a:2}
+{q:'The manager insisted that everyone ___ present at the meeting.',opts:['is','was','be','being'],a:2},
+{q:'No sooner ___ he left than it started raining.',opts:['had','has','did','was'],a:0},
+{q:'Choose the sentence with correct subject-verb agreement:',opts:['The data shows a clear trend.','The data show a clear trend.','Both are acceptable.','Neither is correct.'],a:1},
+{q:'"Despite the heavy traffic, she managed to arrive on time." - What does "despite" indicate?',opts:['Reason','Result','Contrast','Condition'],a:2},
+{q:'___ you to study harder, you would pass the exam.',opts:['Were','Had','Should','Would'],a:0},
+{q:'The report ___ by the committee before the deadline.',opts:['has been submitted','had submitted','was submitted','submitted'],a:0},
+{q:'Which word is closest in meaning to "meticulous"?',opts:['Careless','Thorough','Swift','Vague'],a:1},
+{q:'"She is not only intelligent ___ hardworking."',opts:['but also','but even','and also','yet also'],a:0}
 ]},
 {id:77,name:'Vocabulary Vampire',emoji:'🧛',desc:'[İNG] Kelime bilgisi ve bağlam',hp:175,maxHp:175,unlockXp:300,reward:60,month:'ING 2. Ders',
 qs:[
-{q:'The word "benevolent" most closely means:',opts:['cruel','kind and generous','intelligent','strict'],a:1},
-{q:'"The scientist was _____ about the results, refusing to believe them until further tests." — best word?',opts:['enthusiastic','skeptical','optimistic','indifferent'],a:1},
-{q:'Which word is a synonym for "ephemeral"?',opts:['permanent','lasting','short-lived','ancient'],a:2},
-{q:'The prefix "mis-" in "misunderstand" means:',opts:['again','wrongly','before','not enough'],a:1},
-{q:'"Ubiquitous" means:',opts:['rare and unusual','present everywhere','extremely fast','deeply personal'],a:1},
-{q:'Which word is an antonym for "arduous"?',opts:['difficult','effortless','complex','tedious'],a:1},
-{q:'"The politician\'s speech was _____, full of empty promises with no substance." — best word?',opts:['eloquent','hollow','concise','candid'],a:1},
-{q:'The suffix "-tion" usually creates which type of word?',opts:['Adjective','Adverb','Noun','Verb'],a:2}
+{q:'The novel ___ I read last week was written by a Turkish author.',opts:['which','who','whom','whose'],a:0},
+{q:'Scarcely ___ the door when the phone rang.',opts:['I had opened','had I opened','I opened','did I open'],a:1},
+{q:'The scientists are looking forward to ___ the results.',opts:['announce','announced','announcing','have announced'],a:2},
+{q:'Which sentence correctly uses a past perfect?',opts:['She had finished her homework before dinner.','She has finished her homework before dinner.','She finished her homework before dinner had.','She was finishing her homework before dinner.'],a:0},
+{q:'"Ubiquitous" most nearly means:',opts:['Unique','Everywhere present','Unusual','Obsolete'],a:1},
+{q:'It was not until she arrived ___ we started the meeting.',opts:['when','that','which','where'],a:1},
+{q:'Choose the correct conditional: "If he ___ earlier, he would have caught the train."',opts:['leaves','left','had left','has left'],a:2},
+{q:'The passive form of "They will announce the results tomorrow" is:',opts:['The results will be announced tomorrow.','The results would be announced tomorrow.','The results are announced tomorrow.','The results had been announced tomorrow.'],a:0}
 ]},
 {id:78,name:'Reading Demon',emoji:'📜',desc:'[İNG] Okuma anlama ve metin analizi',hp:200,maxHp:200,unlockXp:600,reward:70,month:'ING 3. Ders',
 qs:[
@@ -2438,34 +2446,62 @@ qs:[
 {id:84,name:'Çoklu Zeka Devi',emoji:'🧠',desc:'[EPİK] Tüm derslerden karma sorular! Zirveye çık.',hp:800,maxHp:800,unlockXp:6000,reward:400,month:'Epik 1',
 qs:[
 {q:'log₂(32) = ?',opts:['4','5','6','3'],a:1},
-{q:'"Cumhuriyet" hangi tarihte ilan edildi?',opts:['29 Ekim 1923','23 Nisan 1920','30 Ağustos 1922','1 Kasım 1928'],a:0},
+{q:'Türkiye Cumhuriyeti hangi tarihte ilan edildi?',opts:['29 Ekim 1923','23 Nisan 1920','30 Ağustos 1922','1 Kasım 1928'],a:0},
 {q:'Fotosentezde ışığı absorbe eden pigment nedir?',opts:['Hemoglobin','Klorofil','Melanin','Karoten'],a:1},
-{q:'"Ambiguous" kelimesinin Türkçe karşılığı?',opts:['Kesin','Belirsiz/İki anlamlı','Açık','Net'],a:1},
-{q:'F=ma formülü kimin yasasıdır?',opts:['Einstein','Newton','Galileo','Faraday'],a:1}
+{q:'F=ma formülü kimin yasasıdır?',opts:['Einstein','Newton','Galileo','Faraday'],a:1},
+{q:'Türkçede hangi cümle öğesi yüklem değildir?',opts:['Zarf tümleci','Nesne','Dolaylı tümleç','Özne'],a:3},
+{q:'TYT\'de kaç farklı ders alanından soru sorulur?',opts:['3','4','5','6'],a:1},
+{q:'pH değeri 7\'den küçük olan çözelti nasıl adlandırılır?',opts:['Baz','Asit','Nötr','Tuz'],a:1},
+{q:'Osmanlı Devleti hangi savaştan sonra dağılma sürecine girdi?',opts:['Balkan Savaşları','Birinci Dünya Savaşı','Kurtuluş Savaşı','Çanakkale'],a:1},
+{q:'Bir üçgenin iç açıları toplamı kaç derecedir?',opts:['90°','180°','270°','360°'],a:1},
+{q:'DNA\'da adenin ile hangi baz eşleşir?',opts:['Guanin','Sitozin','Timin','Urasil'],a:2},
+{q:'Anadolu\'nun hangi bölgesi en yüksek nüfus yoğunluğuna sahiptir?',opts:['İç Anadolu','Karadeniz','Marmara','Ege'],a:2},
+{q:'"Çalışkanlık" sözcüğünde kaç ek vardır?',opts:['1','2','3','4'],a:2}
 ]},
 {id:85,name:'Süper Sınav Patronu',emoji:'👑',desc:'[EPİK] YKS\'nin tüm alanlarına meydan oku!',hp:950,maxHp:950,unlockXp:7500,reward:480,month:'Epik 2',
 qs:[
 {q:'Türkiye\'nin yüzölçümü yaklaşık kaç km²?',opts:['581.000','683.000','781.000','481.000'],a:2},
-{q:'pH=7 olan çözelti hangisidir?',opts:['Asit','Baz','Nötr','Tuz'],a:2},
-{q:'x²-5x+6=0 denkleminin kökleri?',opts:['2,3','1,6','1,5','3,4'],a:0},
+{q:'pH=7 olan çözelti nasıl adlandırılır?',opts:['Asit','Baz','Nötr','Tuz'],a:2},
+{q:'x²-5x+6=0 denkleminin kökleri?',opts:['2 ve 3','1 ve 6','1 ve 5','3 ve 4'],a:0},
 {q:'Birinci Dünya Savaşı hangi yılda başladı?',opts:['1912','1914','1916','1918'],a:1},
-{q:'Which sentence is in passive voice?',opts:['She wrote a letter.','A letter was written by her.','She writes letters.','She will write.'],a:1}
+{q:'Lozan Antlaşması hangi yılda imzalanmıştır?',opts:['1920','1921','1923','1925'],a:2},
+{q:'sin(30°) değeri kaçtır?',opts:['√3/2','1/2','√2/2','1'],a:1},
+{q:'Hücrede ATP üretimi hangi organelde gerçekleşir?',opts:['Ribozom','Kloroplast','Mitokondri','Çekirdek'],a:2},
+{q:'Türkçede "ismin -e hali" hangi soruya cevap verir?',opts:['Kimi?','Kimden?','Kime?','Kimde?'],a:2},
+{q:'Türkiye Cumhuriyeti hangi antlaşmayla tanındı?',opts:['Sevr','Mondros','Lozan','Ankara'],a:2},
+{q:'Aşağıdakilerden hangisi kuvvet birimidir?',opts:['Joule','Newton','Watt','Pascal'],a:1},
+{q:'Edebiyatta "roman" türü Türk edebiyatına hangi dönemde girmiştir?',opts:['Divan','Halk','Tanzimat','Cumhuriyet'],a:2},
+{q:'Türkiye\'nin en uzun kıyısı hangi denize aittir?',opts:['Karadeniz','Ege','Akdeniz','Marmara'],a:0}
 ]},
 {id:86,name:'Algoritma Tanrısı',emoji:'⚡',desc:'[EPİK] Mantık ve analitik düşünce seni bekliyor!',hp:1100,maxHp:1100,unlockXp:9500,reward:560,month:'Epik 3',
 qs:[
 {q:'Bir sayının %25 artırılıp sonra %20 azaltılması net kaç % değiştirir?',opts:['%0','%5 artış','%5 azalış','%10 artış'],a:0},
 {q:'A = {1,2,3}, B = {2,3,4} → A∩B = ?',opts:['{1,2,3,4}','{2,3}','{1,4}','{1,2,3}'],a:1},
 {q:'Işığın boşluktaki hızı yaklaşık kaçtır?',opts:['3×10⁸ m/s','3×10⁶ m/s','3×10¹⁰ m/s','3×10⁴ m/s'],a:0},
-{q:'Osmanlı\'da tanzimat fermanı hangi yılda ilan edildi?',opts:['1839','1856','1876','1908'],a:0},
-{q:'Mitoz bölünmede kromozom sayısı nasıl değişir?',opts:['Yarıya iner','Değişmez','İki katına çıkar','Dörde katlanır'],a:1}
+{q:'Tanzimat Fermanı hangi yılda ilan edildi?',opts:['1839','1856','1876','1908'],a:0},
+{q:'Mitoz bölünmede kromozom sayısı nasıl değişir?',opts:['Yarıya iner','Değişmez','İki katına çıkar','Dörde katlanır'],a:1},
+{q:'lim(x→0) sinx/x = ?',opts:['0','1/2','1','∞'],a:2},
+{q:'Toprak alkali metallerin periyodik tablodaki grubu hangisidir?',opts:['1. Grup','2. Grup','17. Grup','18. Grup'],a:1},
+{q:'"Öğretmen" sözcüğünde hangi yapım eki vardır?',opts:['-men','-etmen','-öğret','-(e)t'],a:0},
+{q:'Türkiye\'de illerin yönetiminden sorumlu kişiye ne denir?',opts:['Belediye Başkanı','Vali','Kaymakamlık','Muhtar'],a:1},
+{q:'P(A∪B) = P(A)+P(B)−P(A∩B) hangi kural ile verilmiştir?',opts:['Bayes teoremi','Eklenme kuralı','Çarpma kuralı','Toplam olasılık'],a:1},
+{q:'Türkiye\'nin en büyük gölü hangisidir?',opts:['Beyşehir','Tuz','Van','Eğirdir'],a:2},
+{q:'Işık bir ortamdan daha yoğun ortama geçince hızı nasıl değişir?',opts:['Artar','Azalır','Değişmez','Önce artar sonra azalır'],a:1}
 ]},
 {id:87,name:'Zaman Yiyen Ejder',emoji:'🌀',desc:'[EPİK] Süreye karşı yarış — hızlı düşün!',hp:1200,maxHp:1200,unlockXp:11000,reward:620,month:'Epik 4',
 qs:[
 {q:'sinα=3/5 ise cosα=? (α 1. bölgede)',opts:['4/5','3/4','5/4','1/5'],a:0},
-{q:'Türkçe\'de "yönelme hali" eki hangisidir?',opts:['-den','-de','-e/-a','-i/-ı'],a:2},
+{q:'Türkçede "yönelme hali" eki hangisidir?',opts:['-den','-de','-e/-a','-i/-ı'],a:2},
 {q:'Suyun kaldırma kuvveti hangi yasayla açıklanır?',opts:['Newton','Arşimet','Pascal','Boyle'],a:1},
 {q:'DNA\'da adenin ile hangi baz eşleşir?',opts:['Guanin','Sitozin','Timin','Urasil'],a:2},
-{q:'Which word is a synonym for "exhausted"?',opts:['Energetic','Tired','Happy','Angry'],a:1}
+{q:'2⁵ × 2³ = ?',opts:['2⁸','2¹⁵','4⁸','2²'],a:0},
+{q:'Kurtuluş Savaşı\'nı anlatan destansı şiiri kim yazmıştır?',opts:['Orhan Veli','Tevfik Fikret','Mehmet Akif Ersoy','Necip Fazıl'],a:2},
+{q:'Karbondioksitin (CO₂) karbon sayısı kaçtır?',opts:['1','2','3','4'],a:0},
+{q:'Türkiye\'de zorunlu eğitim kaç yıldır?',opts:['8','10','12','14'],a:2},
+{q:'f(x)=x²+3x+2 fonksiyonunun köklerinden biri hangisidir?',opts:['x=1','x=−1','x=2','x=−3'],a:1},
+{q:'Osmanlı\'da "Hatt-ı Hümayun" ne anlama gelir?',opts:['Padişah kararnamesi','Vergi kanunu','Ticaret anlaşması','Savaş ilanı'],a:0},
+{q:'Hücre zarının temel yapısını oluşturan molekül hangisidir?',opts:['Protein','Kolesterol','Fosfolipid','Glikoprotein'],a:2},
+{q:'Türkiye\'nin yüzölçümü olarak büyüklük sıralamasında dünyada kaçıncıdır?',opts:['27.','32.','37.','42.'],a:2}
 ]},
 
 // ═══ MEGA BOSSLAR (88-99) ═══
@@ -2474,24 +2510,45 @@ qs:[
 {q:'(-3)³ = ?',opts:['9','-9','27','-27'],a:3},
 {q:'Mekke\'nin fethi hangi yılda gerçekleşti?',opts:['625','628','630','632'],a:2},
 {q:'Fotosentezin karanlık reaksiyonları nerede gerçekleşir?',opts:['Tilakoit','Stroma','Mitokondri','Çekirdek'],a:1},
-{q:'İçi boş bir kürenin yüzey alanı formülü?',opts:['πr²','4πr²','2πr²','(4/3)πr³'],a:1},
-{q:'"Çöl iklimi" en çok hangi kıtada görülür?',opts:['Avrupa','Afrika','Asya','Amerika'],a:1}
+{q:'Kürenin yüzey alanı formülü hangisidir?',opts:['πr²','4πr²','2πr²','(4/3)πr³'],a:1},
+{q:'"Çöl iklimi" en çok hangi kıtada görülür?',opts:['Avrupa','Afrika','Asya','Amerika'],a:1},
+{q:'TYT\'de Matematik bölümünde kaç soru sorulur?',opts:['20','25','30','40'],a:0},
+{q:'Türkçede "özne" hangi soruya cevap verir?',opts:['Neyi?','Kim? / Ne?','Kime?','Nasıl?'],a:1},
+{q:'Bir cisim 72 km/h hızla gidiyorsa m/s cinsinden hızı kaçtır?',opts:['10','15','20','25'],a:2},
+{q:'Türkiye\'de en fazla yağış hangi bölgede görülür?',opts:['Marmara','İç Anadolu','Doğu Karadeniz','Güneydoğu'],a:2},
+{q:'x/3 + x/4 = 14 denkleminin çözümü?',opts:['x=24','x=32','x=36','x=48'],a:1},
+{q:'Osmanlı\'da "Devşirme" sistemi hangi kesimden yapılırdı?',opts:['Türk çocukları','Hristiyan çocuklar','Müslüman köylüler','Arap tüccarlar'],a:1},
+{q:'Kandan oksijeni dokulara taşıyan protein hangisidir?',opts:['Albumin','Hemoglobin','Fibrinojen','Globulin'],a:1}
 ]},
 {id:89,name:'AYT Mega Patronu',emoji:'🌊',desc:'[MEGA] AYT\'nin zorlu alan sorularıyla dolu!',hp:1700,maxHp:1700,unlockXp:10000,reward:850,month:'Mega AYT',
 qs:[
 {q:'lim(x→0) sinx/x = ?',opts:['0','1','∞','tanx'],a:1},
 {q:'Elektromanyetik indüksiyonu bulan bilim insanı?',opts:['Ohm','Tesla','Faraday','Volta'],a:2},
-{q:'Gazların kinetik teorisine göre mutlak 0°\'da (0 K) gazın kinetik enerjisi?',opts:['Maksimum','Minimum (sıfır)','Sabit','Belirsiz'],a:1},
-{q:'Hardy-Weinberg dengesi hangi koşulda bozulur?',opts:['Büyük popülasyon','Rassal çiftleşme','Mutasyon varlığı','Göç yok'],a:2},
-{q:'"Synthesis" kelimesinin ön eki "syn-" ne anlama gelir?',opts:['Karşı','Birlikte','Altında','Üstünde'],a:1}
+{q:'Mutlak 0 K\'de (-273°C) gazın kinetik enerjisi nasıldır?',opts:['Maksimum','Sıfıra eşit','Sabit','Belirsiz'],a:1},
+{q:'Hardy-Weinberg dengesi hangi koşulda bozulur?',opts:['Büyük popülasyon','Rastgele çiftleşme','Mutasyon varlığı','Göç yok'],a:2},
+{q:'f(x) = eˣ · ln(x) ise f′(1) = ?',opts:['0','1','e','e+1'],a:2},
+{q:'Türk edebiyatında "Servet-i Fünun" dönemi hangi yıllar arasındadır?',opts:['1839-1876','1860-1896','1896-1901','1911-1923'],a:2},
+{q:'Işığın bir ortamdan diğerine geçerken kırılması hangi yasa ile açıklanır?',opts:['Ohm Yasası','Snell Yasası','Coulomb Yasası','Faraday Yasası'],a:1},
+{q:'Mayoz II hangi bölünmeye benzer?',opts:['Mitoza','Mayoz I\'e','Amitoza','Endomitoza'],a:0},
+{q:'AYT Matematik\'te hangisi konular arasında yer almaz?',opts:['Limit','Türev','İntegral','Olasılık'],a:3},
+{q:'"Tanzimat" sözcüğü ne anlama gelir?',opts:['Yenileşme','Düzenleme/Nizamlar','Bağımsızlık','Anayasa'],a:1},
+{q:'Mol kütlesi 44 g/mol olan bileşik hangisidir?',opts:['H₂O','CO₂','NaCl','O₂'],a:1},
+{q:'Aşağıdakilerden hangisi edebi akım değildir?',opts:['Realizm','Romantizm','Hümanizm','Sembolizm'],a:2}
 ]},
 {id:90,name:'Yıl Sonu Tanrısı',emoji:'💎',desc:'[MEGA] Yıl boyunca öğrendiğin her şeyi kullan!',hp:2000,maxHp:2000,unlockXp:12000,reward:1000,month:'Mega Final',
 qs:[
 {q:'Türkiye\'de en uzun akarsu hangisidir?',opts:['Fırat','Dicle','Kızılırmak','Sakarya'],a:2},
 {q:'y = 2x²-4x+1 parabolünün köşe noktası x koordinatı?',opts:['1','2','-1','-2'],a:0},
-{q:'Hücre zarının yapısındaki "fluid mosaic model" kimin tarafından önerilmiştir?',opts:['Watson-Crick','Singer-Nicolson','Schleiden-Schwann','Hooke-Leeuwenhoek'],a:1},
-{q:'Osmanlı\'da "Devşirme Sistemi" nedir?',opts:['Vergi toplama yöntemi','Hristiyan çocuklarını asker olarak yetiştirme sistemi','Toprak dağıtım sistemi','Ticaret anlaşması'],a:1},
-{q:'Which literary device is used in "The stars danced playfully in the moonlit sky"?',opts:['Simile','Metaphor','Personification','Alliteration'],a:2}
+{q:'Hücre zarı "Akışkan Mozaik Model" kimin çalışmasıdır?',opts:['Watson-Crick','Singer-Nicolson','Schleiden-Schwann','Hooke-Leeuwenhoek'],a:1},
+{q:'"Devşirme Sistemi" nasıl işlerdi?',opts:['Vergi toplama','Hristiyan çocuklarını yetiştirme','Toprak dağıtımı','Ticaret anlaşması'],a:1},
+{q:'∫₀¹ (3x²+2x) dx = ?',opts:['1','2','3','4'],a:1},
+{q:'Türk edebiyatında "Milli Edebiyat" döneminin önemli temsilcisi kimdir?',opts:['Tevfik Fikret','Ömer Seyfettin','Ziya Gökalp','Namık Kemal'],a:1},
+{q:'Kimyasal reaksiyonlarda "aktivasyon enerjisi" nedir?',opts:['Reaksiyonun açığa çıkardığı enerji','Reaksiyonun başlaması için gereken minimum enerji','Katalizörün sağladığı enerji','Ürünlerin enerjisi'],a:1},
+{q:'Türkiye\'de milletvekili seçimleri kaç yılda bir yapılır?',opts:['3','4','5','6'],a:2},
+{q:'Bir kenarı 6 cm olan eşkenar üçgenin alanı kaç cm²dir?',opts:['9√3','12√3','18','9'],a:0},
+{q:'Osmanlı\'da Birinci Meşrutiyet\'i kim ilan etti?',opts:['II. Mahmut','Abdülmecit','II. Abdülhamit','V. Murat'],a:2},
+{q:'"Absürt" tiyatro akımının öncüsü kimdir?',opts:['Shakespeare','Samuel Beckett','Molière','Bertolt Brecht'],a:1},
+{q:'Türkiye\'nin en büyük yarımadası hangisidir?',opts:['Trakya','Biga','Karaburun','Gelibolu'],a:0}
 ]},
 
 // ═══ HAFTALIK DÖNEN BOSSLAR (91-99) ═══
@@ -2547,27 +2604,48 @@ qs:[
 ]},
 {id:97,name:'Karanlık Varlık',emoji:'🌑',desc:'[GİZLİ] Sadece gerçek ustalar bulabilir. Yen!',hp:1300,maxHp:1300,unlockXp:15000,reward:750,month:'Gizli Boss',
 qs:[
-{q:'Euler\'in sayısı e yaklaşık kaçtır?',opts:['2.14','2.71','3.14','1.41'],a:1},
+{q:'Euler sayısı e yaklaşık kaçtır?',opts:['2.14','2.71','3.14','1.41'],a:1},
 {q:'DNA polimerazın sentez yönü nedir?',opts:["3'→5'","5'→3'","Her iki yön","Rastgele"],a:1},
-{q:'"Quark" terimi fizikte neyi ifade eder?',opts:['Atomun dış tabakasındaki elektron','Proton ve nötronun yapıtaşı olan temel parçacık','Çekirdek etrafında dönen parçacık','Işık parçacığı'],a:1},
-{q:'Rönesans döneminde "polimaths" ne anlama gelir?',opts:['Ressam','Birden fazla alanda uzman kişi','Matematikçi','Şair'],a:1},
-{q:'"Laconic" means speaking in a:',opts:['Detailed way','Poetic way','Brief, concise way','Loud voice'],a:2}
+{q:'"Quark" fizikte neyi ifade eder?',opts:['Elektron','Proton ve nötronun yapıtaşı','Foton','Nötron'],a:1},
+{q:'Türk edebiyatında "Haiku" biçimine en yakın şiir türü hangisidir?',opts:['Gazel','Mani','Rubai','Tuyuğ'],a:1},
+{q:'∫eˣ dx = ?',opts:['eˣ','eˣ+C','xeˣ+C','1/eˣ+C'],a:1},
+{q:'"Epigenetik" kavramı ne anlama gelir?',opts:['DNA dizisindeki mutasyonlar','DNA dizisini değiştirmeden gen ifadesindeki değişimler','Protein sentezi','RNA editörleme'],a:1},
+{q:'Tanpınar\'ın "Huzur" romanının ana teması nedir?',opts:['Savaş','Doğu-Batı kimlik çatışması','Aşk üçgeni','Sınıf mücadelesi'],a:1},
+{q:'Periyodik tabloda elektron ilgisi soldan sağa nasıl değişir?',opts:['Azalır','Artar','Değişmez','Önce azalır sonra artar'],a:1},
+{q:'"Sokrates\'in savunması" hangi eserdir?',opts:['Devlet','Şölen','Apologia','Phaidon'],a:2},
+{q:'Türkiye Büyük Millet Meclisi\'nde toplam kaç milletvekili bulunur?',opts:['450','500','550','600'],a:3},
+{q:'Çift sarmal DNA yapısını kim keşfetmiştir?',opts:['Mendel ve Darwin','Watson ve Crick','Hooke ve Schleiden','Fleming ve Chain'],a:1},
+{q:'Aşağıdakilerden hangisi "yapısalcılık" akımına ait bir kavram değildir?',opts:['Gösterge','Anlam','Yapı','Kaos'],a:3}
 ]},
 {id:98,name:'Tanrısal Varlık',emoji:'⚡',desc:'[TANRISAL] Bu patronu yenmek gerçek bir mucize!',hp:1800,maxHp:1800,unlockXp:20000,reward:1000,month:'Tanrısal Boss',
 qs:[
 {q:'∫₀¹ x² dx = ?',opts:['1/2','1/3','2/3','1/4'],a:1},
 {q:'Schrödinger\'in kedisi hangi kavramı açıklar?',opts:['Termodinamik','Kuantum süperpozisyonu','Siyah delikler','DNA replikasyonu'],a:1},
-{q:'Türkiye\'de hangi anayasa referandumu en yüksek katılımla gerçekleşti?',opts:['1961','1982','2007','2017'],a:1},
 {q:'İnsan beynindeki nöron sayısı yaklaşık kaçtır?',opts:['100 milyon','1 milyar','86 milyar','1 trilyon'],a:2},
-{q:'Which rhetorical device repeats a word at the beginning of successive clauses?',opts:['Epistrophe','Anaphora','Chiasmus','Asyndeton'],a:1}
+{q:'"Entropi" termodinamikte ne anlama gelir?',opts:['Sistemin enerjisi','Sistemdeki düzensizlik/belirsizlik ölçüsü','Isı transferi','İş kapasitesi'],a:1},
+{q:'Osmanlı\'dan Türkiye\'ye geçişte "Halifelik" hangi yılda kaldırıldı?',opts:['1922','1923','1924','1925'],a:2},
+{q:'lim(x→∞) (1+1/x)ˣ = ?',opts:['1','e','∞','0'],a:1},
+{q:'Türk edebiyatında "Garip Akımı" (Birinci Yeni) kimler tarafından başlatılmıştır?',opts:['Yahya Kemal-Ahmet Haşim','Necip Fazıl-Cahit Sıtkı','Orhan Veli-Melih Cevdet-Oktay Rifat','Peyami Safa-Halide Edip'],a:2},
+{q:'Bir elementin atom numarası neyi ifade eder?',opts:['Proton+Nötron sayısı','Yalnızca proton sayısı','Yalnızca elektron sayısı','Kütle numarası'],a:1},
+{q:'Çanakkale Savaşı hangi yılda gerçekleşmiştir?',opts:['1914','1915','1916','1917'],a:1},
+{q:'Tarihsel materyalizm hangi düşünüre aittir?',opts:['Hegel','Kant','Marx','Nietzsche'],a:2},
+{q:'Taylor serisi matematikte ne için kullanılır?',opts:['İntegral hesabı','Fonksiyonları polinom olarak yaklaştırma','Matris işlemleri','Olasılık hesabı'],a:1},
+{q:'Türkiye\'nin hangi ili hem Avrupa hem Asya kıtasında yer alır?',opts:['Çanakkale','İstanbul','Edirne','Tekirdağ'],a:1}
 ]},
 {id:99,name:'♾️ Sonsuzluk Efendisi',emoji:'♾️',desc:'[EFSANE] Tarihin en güçlü patronu. Şansını dene!',hp:2500,maxHp:2500,unlockXp:25000,reward:1500,month:'Efsane Final',
 qs:[
 {q:'Riemann hipotezi hangi alanla ilgilidir?',opts:['Biyoloji','Asal sayıların dağılımı','Termodinamik','Genetik'],a:1},
-{q:'Fermat\'ın son teoremi kaç yılda çözülebildi?',opts:['100 yıl','200 yıl','350 yıl','50 yıl'],a:2},
+{q:'Fermat\'ın son teoremi kaç yıl sonra çözülebildi?',opts:['100 yıl','200 yıl','350 yıl','50 yıl'],a:2},
 {q:'Milankovic döngüleri nedir?',opts:['Okyanus akıntıları','Dünya\'nın yörünge ve eğim değişimleri','Güneş lekeleri','Manyetik kutup değişimi'],a:1},
 {q:'"Epistemoloji" neyi inceler?',opts:['Varlık ve anlam','Bilginin kaynağı ve sınırları','Güzellik ve sanat','Ahlak kuralları'],a:1},
-{q:'The phrase "begging the question" originally refers to:',opts:['Asking too many questions','A logical fallacy assuming what you\'re trying to prove','Avoiding the topic','Asking politely'],a:1}
+{q:'Türk tarihindeki ilk yazılı hukuk belgesi hangisidir?',opts:['Orhon Yazıtları','Magna Carta','Uygur Yazıtları','Göktürk Kitabeleri'],a:0},
+{q:'Olasılık teorisinde "koşullu olasılık" P(A|B) ne anlama gelir?',opts:['A ve B\'nin birlikte olasılığı','B gerçekleşmişken A\'nın olasılığı','A veya B olasılığı','A\'nın tümleri olasılığı'],a:1},
+{q:'"Cogito ergo sum" (Düşünüyorum öyleyse varım) kime aittir?',opts:['Kant','Descartes','Hume','Spinoza'],a:1},
+{q:'DNA\'daki genetik bilgi nasıl aktarılır?',opts:['DNA→RNA→Protein','RNA→DNA→Protein','Protein→RNA→DNA','DNA→Protein→RNA'],a:0},
+{q:'Türkiye\'nin GSYH\'si 2020\'li yıllarda dünya sıralamasında yaklaşık kaçıncıdır?',opts:['5-10. arasında','15-20. arasında','25-30. arasında','35-40. arasında'],a:1},
+{q:'Nazım Hikmet hangi eserinde 1941 yılında tutuklu iken şiirler yazmıştır?',opts:['Kuvâyi Milliye','Memleketimden İnsan Manzaraları','835 Satır','Saat 21-22 Şiirleri'],a:1},
+{q:'Schrödinger denklemi hangi alanda kullanılır?',opts:['Termodinamik','Kuantum mekaniği','Genel görelilik','Klasik mekanik'],a:1},
+{q:'Bir asal sayının tanımı nedir?',opts:['Yalnızca 2\'ye bölünen','1\'den büyük, yalnızca 1 ve kendisine bölünen','Çift sayıların üyesi','Karekökü tam sayı olan'],a:1}
 ]},
 
 // ══════════════════════════════════════════════════════════════
@@ -2796,7 +2874,7 @@ qs:[
 {q:'lim(x→2) (x²-4)/(x-2) = ?',opts:['0','2','4','∞'],a:2},
 {q:'f(x)=x³-3x²+2x fonksiyonunun türevi nedir?',opts:['3x²-6x','3x²-6x+2','x²-6x+2','3x³-6x²'],a:1},
 {q:'f(x)=sin(x)\'in türevi nedir?',opts:['-sin(x)','cos(x)','-cos(x)','tan(x)'],a:1},
-{q:'Zincir kuralıyla f(g(x))\'in türevi nedir?',opts:["f'(x)·g'(x)","f'(g(x))·g'(x)","f'(g(x))","g'(f(x))"],a:1},
+{q:'Zincir kuralıyla f(g(x))\'in türevi nedir?',opts:["f′(x)·g′(x)","f'(g(x))·g′(x)","f'(g(x))","g'(f(x))"],a:1},
 {q:'f\'(x)=0 ve f\'\'(x)>0 ise x noktası nedir?',opts:['Maksimum','Minimum','Büküm noktası','Belirsiz'],a:1},
 {q:'y = eˣ fonksiyonunun türevi nedir?',opts:['xeˣ⁻¹','eˣ','e','1'],a:1},
 {q:'lim(x→0) (1-cosx)/x = ?',opts:['0','1','∞','1/2'],a:0},
@@ -5010,6 +5088,7 @@ function mkState(){
     goalId:10,lastGoalReset:null,
     weeklyXp:[0,0,0,0,0,0,0],
     bossHp:Object.fromEntries(BOSSES.map(b=>[b.id,b.maxHp])),bossesBeaten:0,curBoss:0,
+    bossCooldown:{}, // bossId→timestamp: savaş tamamlanmadan çıkılınca 4 saat bekleme
     badges:[],dailyDone:0,
     unis:DEF_UNIS.map(u=>({...u,depts:[],selDept:-1,photo:null})),
     customTasks:[],customTaskId:100,
@@ -5309,7 +5388,9 @@ function load(){
       BOSSES.forEach(b=>{
         const saved=savedBh[b.id];
         if(saved!=null){
-          bh[b.id]=Math.min(Math.max(0,saved),b.maxHp);
+          const clamped=Math.min(Math.max(0,saved),b.maxHp);
+          // Kısmi hasar (ne 0 ne maxHp) → önceki hatalı kayıt, maxHp'ye sıfırla
+          bh[b.id]=(clamped>0&&clamped<b.maxHp)?b.maxHp:clamped;
         } else {
           bh[b.id]=b.maxHp;
         }
@@ -11876,45 +11957,82 @@ let fB=0,fQ=0,fH=0,fD=0,fEnded=false,fWasAlreadyBeaten=false;
 
 // Boss grupları: ders bazlı + genel
 const BOSS_GROUPS=[
-  {id:'genel', name:'Genel', icon:'⚔️', color:'#7c4dff',
-   // BUGFIX: id<12 yerine month'a göre filtrele — id 50-53 (Genel 13-16) kaçıyordu
-   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('Genel')).map(b=>b.id)},
-  {id:'mat', name:'Mat', icon:'➕', color:'#e53935',
-   // MAT ADV 1-4 ve TYT MAT Boss eklendi
-   ids: BOSSES.filter(b=>b.month&&(b.month.startsWith('MAT')||b.month==='TYT MAT Boss')).map(b=>b.id)},
-  {id:'fiz', name:'Fizik', icon:'⚡', color:'#f39c12',
-   // AYT FİZ Boss eklendi
-   ids: BOSSES.filter(b=>b.month&&(b.month.startsWith('FIZ')||b.month==='AYT FİZ Boss')).map(b=>b.id)},
-  {id:'kim', name:'Kimya', icon:'🧪', color:'#8e24aa',
-   // AYT KİM Boss eklendi
-   ids: BOSSES.filter(b=>b.month&&(b.month.startsWith('KIM')||b.month==='AYT KİM Boss')).map(b=>b.id)},
-  {id:'bio', name:'Bio', icon:'🌿', color:'#43a047',
-   // AYT BİO Boss eklendi
-   ids: BOSSES.filter(b=>b.month&&(b.month.startsWith('BIO')||b.month==='AYT BİO Boss')).map(b=>b.id)},
-  {id:'tur', name:'Türkçe', icon:'📝', color:'#1e88e5',
-   // BUGFIX: TÜR (Türkçe ü) prefix ve TYT TÜR Boss kaçıyordu
-   ids: BOSSES.filter(b=>b.month&&(b.month.startsWith('TUR')||b.month.startsWith('TÜR')||b.month==='TYT TÜR Boss')).map(b=>b.id)},
-  {id:'tar', name:'Tarih', icon:'🏛️', color:'#795548',
-   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')).map(b=>b.id)},
-  {id:'cog', name:'Coğraf', icon:'🌍', color:'#2e7d32',
-   // BUGFIX: COĞ (Ğ) prefix kaçıyordu
-   ids: BOSSES.filter(b=>b.month&&(b.month.startsWith('COG')||b.month.startsWith('COĞ'))).map(b=>b.id)},
-  {id:'fels', name:'Felsefe', icon:'🧠', color:'#4527a0',
-   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')).map(b=>b.id)},
-  {id:'geo', name:'Geom', icon:'📐', color:'#00897b',
-   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')).map(b=>b.id)},
-  {id:'ing', name:'İngilizce', icon:'🇬🇧', color:'#0288d1',
-   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('ING')).map(b=>b.id)},
-  // YENİ GRUP: daha önce hiçbir gruba girmeyen Epik/Mega/Sprint/Özel bosslar
-  {id:'epic', name:'Efsane', icon:'💎', color:'#ff6f00',
+  // ── GENEL ──
+  {id:'genel', name:'Genel', icon:'⚔️', color:'#7c4dff', exam:'genel',
+   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('Genel')).sort((a,b2)=>a.id-b2.id).map(b=>b.id)},
+
+  // ══ TYT ══════════════════════════════════════════════════════════════
+  {id:'tur',     name:'Türkçe',   icon:'📝', color:'#1e88e5', exam:'tyt',
+   ids:[60,61,62,63,64,65,117]},
+
+  {id:'tyt-mat', name:'TYT Mat',  icon:'➕', color:'#e53935', exam:'tyt',
+   ids:[12,13,14,15,20,23,112,116]},
+   // 12=Sayılar 13=Cebir 14=Fonksiyon 15=Üstel 20=Permütasyon 23=Karmaşık 112=Olasılık 116=TYT Boss
+
+  // TYT Fizik: Hareket, Newton, Enerji, Elektrik(temel), Dalgalar, Termodinamik/Isı
+  {id:'tyt-fiz', name:'TYT Fizik',icon:'⚡', color:'#f57c00', exam:'tyt',
+   ids:[27,28,29,30,31,32]},
+   // 27=Kinematik 28=Newton 29=Enerji-Momentum 30=Elektrik(temel) 31=Dalgalar-Optik 32=Termodinamik
+
+  // TYT Kimya: Atom, Periyodik, Bağlar, Asit-Baz (temel TYT kimyası)
+  {id:'tyt-kim', name:'TYT Kimya',icon:'🧪', color:'#7b1fa2', exam:'tyt',
+   ids:[35,36,37,38]},
+   // 35=Atom 36=Periyodik 37=Bağlar 38=Asit-Baz
+
+  // Biyoloji: TYT+AYT ortak müfredat (PDF'de tek liste)
+  {id:'bio',     name:'Biyoloji', icon:'🌿', color:'#43a047', exam:'tyt',
+   ids:[42,43,44,45,46,47,48,49,118]},
+
+  {id:'tar',     name:'Tarih',    icon:'🏛️', color:'#795548', exam:'tyt',
+   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('TAR')).sort((a,b2)=>a.id-b2.id).map(b=>b.id)},
+
+  {id:'cog',     name:'Coğrafya', icon:'🌍', color:'#2e7d32', exam:'tyt',
+   ids: BOSSES.filter(b=>b.month&&(b.month.startsWith('COG')||b.month.startsWith('COĞ'))).sort((a,b2)=>a.id-b2.id).map(b=>b.id)},
+
+  {id:'fels',    name:'Felsefe',  icon:'🧠', color:'#4527a0', exam:'tyt',
+   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('FELS')).sort((a,b2)=>a.id-b2.id).map(b=>b.id)},
+
+  // ══ AYT ══════════════════════════════════════════════════════════════
+  // AYT Fizik: Modern Fizik, Atom, Radyoaktivite, Çembersel, Harmonik, Elektromanyetik indüksiyon
+  {id:'ayt-fiz', name:'AYT Fizik',icon:'⚡', color:'#e65100', exam:'ayt',
+   ids:[33,34,120]},
+   // 33=Modern Fizik(Atom/Radyoaktivite) 34=Fizik Son Boss 120=AYT FİZ Boss
+
+  // AYT Kimya: Denge, Kinetik, Gazlar, Organik, Elektrokimya
+  {id:'ayt-kim', name:'AYT Kimya',icon:'🧪', color:'#4a148c', exam:'ayt',
+   ids:[39,40,41,119]},
+   // 39=Kimyasal Denge 40=Kinetik 41=Kimya Son Boss 119=AYT KİM Boss
+
+  // AYT Matematik: Trigonometri, Logaritma, Limit, Türev, İntegral, Diziler, Analitik Geo...
+  {id:'ayt-mat', name:'AYT Mat',  icon:'∫',  color:'#c62828', exam:'ayt',
+   ids:[16,17,18,19,21,22,24,25,26,113,114,115]},
+   // 16=Trig 17=Limit 18=Türev 19=İntegral 21=Vektör/Analitik 22=Dizi-Seriler
+   // 24=Matris 25=Koordinat 26=Mat SonBoss 113=AnalitikGeo 114=Limit-Türev 115=İntegral
+
+  // Geometri: TYT+AYT ortak
+  {id:'geo',     name:'Geometri', icon:'📐', color:'#00897b', exam:'ayt',
+   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('GEO')).sort((a,b2)=>a.id-b2.id).map(b=>b.id)},
+
+  // Türk Dili ve Edebiyatı AYT: Edebiyat dönemleri, şiir bilgisi, edebi sanatlar
+  {id:'tur-ayt', name:'Edebiyat', icon:'📚', color:'#ad1457', exam:'ayt',
+   ids:[100,101,102,103,104,105]},
+
+  // İngilizce YDT
+  {id:'ing',     name:'İngilizce',icon:'🇬🇧', color:'#0288d1', exam:'ayt',
+   ids: BOSSES.filter(b=>b.month&&b.month.startsWith('ING')).sort((a,b2)=>a.id-b2.id).map(b=>b.id)},
+
+  // ══ EFSANE ══════════════════════════════════════════════════════════
+  // Efsane Arena: min 5000 XP gerekli (ilk epik boss zaten 6000 XP istiyor)
+  {id:'epic', name:'Efsane', icon:'💎', color:'#ff6f00', exam:'epic',
+   epicUnlockXp: 5000,   // tüm arena için XP barajı
    ids: BOSSES.filter(b=>b.month&&(
      b.month.startsWith('Epik')||b.month.startsWith('Mega')||
-     b.month.startsWith('Sprint')||b.month.startsWith('Sayısal')||
-     b.month.startsWith('Sözel')||b.month==='EA Boss'||
-     b.month.startsWith('Gizli')||b.month.startsWith('Tanrısal')||
-     b.month.startsWith('Efsane Final')||b.month.startsWith('Haftalık')||
-     b.month.startsWith('YKS Sim')||b.month.startsWith('KARMA')||
-     b.month.startsWith('KÜLTÜR')
+     b.month.startsWith('Efsane')||b.month==='Gizli Boss'||
+     b.month==='Tanrısal Boss'||b.month==='Sprint'||
+     b.month.startsWith('Haftalık')||b.month.startsWith('Sayısal')||
+     b.month.startsWith('Sözel')||b.month.startsWith('EA')||
+     b.month.startsWith('KARMA')||b.month.startsWith('KÜLTÜR')||
+     b.month.startsWith('YKS Sim')
    )).sort((a,b2)=>a.id-b2.id).map(b=>b.id)},
 ];
 
@@ -11922,6 +12040,17 @@ function renderBoss(){
   const grpId=S.curBossGrp||'genel';
   const grp=BOSS_GROUPS.find(g=>g.id===grpId)||BOSS_GROUPS[0];
   const grpBosses=grp.ids.map(id=>BOSSES.find(b=>b.id===id)).filter(Boolean);
+  const examFilter=window._bossExamTab||'tyt';
+  // Legacy id fix: old 'mat' id no longer exists
+  // Legacy grpId migration
+  if(grpId==='mat') {S.curBossGrp='tyt-mat';S.curBossLocal=0;}
+  if(grpId==='ayt-fiz'||grpId==='ayt-kim'||grpId==='ayt-bio') {
+    S.curBossGrp=grpId.replace('ayt-','');S.curBossLocal=0;}
+  if(grpId==='tur'&&examFilter==='ayt') {S.curBossGrp='tur-ayt';S.curBossLocal=0;}
+  // filteredTabs: exam sekme filtresi için (Efsane hariç)
+  const filteredGroups=BOSS_GROUPS.filter(g=>g.exam===examFilter&&g.id!=='epic');
+  // grpId geçerli değilse: o sekmedeki ilk grubu seç
+  const activeGrp=BOSS_GROUPS.find(g=>g.id===grpId)||BOSS_GROUPS[0];
 
   const grpIdx=Math.max(0,Math.min(grpBosses.length-1,S.curBossLocal||0));
   const boss=grpBosses[grpIdx];
@@ -11931,8 +12060,9 @@ function renderBoss(){
   }
   const idx=boss.id;
   const rawHp=S.bossHp[idx]!=null?S.bossHp[idx]:boss.maxHp;
-  const hp=Math.min(Math.max(0,rawHp),boss.maxHp);
-  // Fix corrupted HP silently
+  let hp=Math.min(Math.max(0,rawHp),boss.maxHp);
+  // Kısmi hasar varsa (savaştan çıkılmış/eski kayıt) → tam HP'ye sıfırla ve kaydet
+  if(hp>0&&hp<boss.maxHp){hp=boss.maxHp;}
   if(rawHp!==hp){S.bossHp[idx]=hp;save();}
   const hpPct=Math.round(hp/boss.maxHp*100);
   // BUGFIX: hp null/undefined iken null<=0 true döner — hp (clamp'li) kullan
@@ -11942,14 +12072,18 @@ function renderBoss(){
   if(S.bossHp[idx]==null){
     S.bossHp[idx]=boss.maxHp;
   }
-
-  // Unlock logic: genel = toplam XP bazlı, ders bossları = o dersteki XP bazlı
+  // Unlock logic:
+  // - genel: toplam XP esigi
+  // - epic:  artan XP baraji (15000, 16000, 17000...)
+  // - ders:  ders XP esigi
   let locked=false;
   if(grpId==='genel'){
-    const totalXp=S.xp;
-    locked=totalXp<boss.unlockXp&&!beaten;
+    locked=S.xp<boss.unlockXp&&!beaten;
+  } else if(grpId==='epic'){
+    // Her efsane boss için giderek artan XP baraji: 15000 + index*1000
+    const epicXpReq=15000+grpIdx*1000;
+    locked=S.xp<epicXpReq&&!beaten;
   } else {
-    // Ders bossları: o dersteki XP'ye göre sıralı açılır (savaşmadan HP azalmaz)
     const subjXp=(S.subjects&&S.subjects[grpId]&&S.subjects[grpId].xp)||0;
     locked=subjXp<boss.unlockXp&&!beaten;
   }
@@ -11961,25 +12095,59 @@ function renderBoss(){
   const gc=grp.color;
   const gcDim=gc+'28';
 
-  // Ders sekmeleri
-  const grpTabs=BOSS_GROUPS.map(g=>{
+  // Ders sekmeleri — Efsane özel banner, diğerleri 4-sütun grid
+  const regularGroups=BOSSES.length?BOSS_GROUPS.filter(g=>g.exam==='genel'):[];
+  const epicGroup=BOSS_GROUPS.find(g=>g.id==='epic');
+  // Filtered tabs for TYT/AYT exam view
+  const filteredTabGroups=BOSS_GROUPS.filter(g=>g.exam===examFilter&&g.id!=='epic');
+  const makeTab=(g)=>{
     const gBosses=g.ids.map(id=>BOSSES.find(b=>b.id===id)).filter(Boolean);
-    const beatenCount=gBosses.filter(b=>S.bossHp[b.id]<=0).length;
+    const beatenCount=gBosses.filter(b=>(S.bossHp[b.id]!=null&&S.bossHp[b.id]<=0)).length;
     const active=g.id===grpId;
-    return`<button onclick="setBossGrp('${g.id}')" class="boss-grp-tab${active?' active':''}" style="${active?`background:${g.color};box-shadow:0 2px 12px ${g.color}55;`:''}">
-      ${g.icon} ${g.name}${beatenCount>0?` <span style="background:var(--gr);color:#fff;font-size:7px;border-radius:50%;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;margin-left:2px;">${beatenCount}</span>`:''}
-    </button>`;
-  }).join('');
+    return`<button onclick="setBossGrp('${g.id}')" class="boss-grp-tab${active?' active':''}" style="${active?`background:${g.color};box-shadow:0 2px 14px ${g.color}66;border-color:transparent;`:''}">`
+      +`<span class="btab-icon">${g.icon}</span>`
+      +`<span style="font-size:8px;font-weight:900;">${g.name}</span>`
+      +(beatenCount>0?`<span class="btab-prog" style="color:${active?'rgba(255,255,255,0.85)':'var(--gr)'}">${beatenCount}/${gBosses.length}</span>`:`<span class="btab-prog">${gBosses.length} boss</span>`)
+      +`</button>`;
+  };
+  const filteredTabs=filteredTabGroups.map(makeTab).join('');
+  const grpTabs=regularGroups.map(makeTab).join('');
+  const eBosses=epicGroup?epicGroup.ids.map(id=>BOSSES.find(b=>b.id===id)).filter(Boolean):[];
+  const eBeaten=eBosses.filter(b=>(S.bossHp[b.id]!=null&&S.bossHp[b.id]<=0)).length;
+  const isEpicActive=grpId==='epic';
+  const _epicXpReq=(epicGroup&&epicGroup.epicUnlockXp)||5000;
+  const _epicLocked=S.xp<_epicXpReq;
+  const epicBanner=epicGroup?(()=>{
+    if(_epicLocked){
+      return`<div style="background:rgba(255,111,0,0.08);border:1.5px solid rgba(255,111,0,0.2);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:8px;opacity:.6;">`
+        +`<div style="font-size:28px;">🔒</div>`
+        +`<div style="flex:1;"><div style="font-size:11px;font-weight:900;color:#ff9800;">⚔️ EFSANE ARENASI — KİLİTLİ</div>`
+        +`<div style="font-size:9px;color:rgba(255,200,100,0.8);margin-top:2px;">Açmak için <b>${_epicXpReq.toLocaleString()} Toplam XP</b> gerekli</div>`
+        +`<div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px;">Şu an: ${S.xp.toLocaleString()} XP · Eksik: ${(_epicXpReq-S.xp).toLocaleString()} XP</div></div></div>`;
+    }
+    return`<div onclick="setBossGrp('epic')" class="boss-epic-banner${isEpicActive?' active':''}">`
+      +`<div style="font-size:30px;">💎</div>`
+      +`<div style="flex:1;"><div style="font-size:12px;font-weight:900;color:#fff;text-shadow:0 0 10px rgba(255,160,0,0.8);">⚔️ EFSANE ARENASI</div>`
+      +`<div style="font-size:9px;color:rgba(255,200,100,0.9);margin-top:1px;">Epik · Mega · Tanrısal · Gizli Boss'lar</div>`
+      +`<div style="font-size:8px;color:rgba(255,255,255,0.6);margin-top:3px;">${eBeaten}/${eBosses.length} yenildi · ${eBosses.length-eBeaten} kalan</div></div>`
+      +`<div style="font-size:20px;opacity:0.8;">${isEpicActive?'✅':'▶'}</div></div>`;
+  })():'';
 
   // Mini boss listesi
   const miniList=grpBosses.map((b,i)=>{
     // BUGFIX: rawBHp/clampedBHp'yi önce hesapla, beaten'ı bundan çıkar
     const rawBHp=S.bossHp[b.id]!=null?S.bossHp[b.id]:b.maxHp;
-    const clampedBHp=Math.min(Math.max(0,rawBHp),b.maxHp);
+    let clampedBHp=Math.min(Math.max(0,rawBHp),b.maxHp);
+    // Kısmi hasar → tam HP göster
+    if(clampedBHp>0&&clampedBHp<b.maxHp){clampedBHp=b.maxHp;}
     const bBeaten=clampedBHp<=0;
     let bLocked=false;
     if(grpId==='genel'){
       bLocked=S.xp<b.unlockXp&&!bBeaten;
+    } else if(grpId==='epic'){
+      // Artan XP baraji: 15000, 16000, 17000...
+      const epicXpReq2=15000+i*1000;
+      bLocked=S.xp<epicXpReq2&&!bBeaten;
     } else {
       const subjXp2=(S.subjects&&S.subjects[grpId]&&S.subjects[grpId].xp)||0;
       bLocked=subjXp2<b.unlockXp&&!bBeaten;
@@ -11992,7 +12160,7 @@ function renderBoss(){
         <div style="font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${bBeaten?'var(--gr)':bLocked?'var(--t3)':'var(--t1)'};">${b.name}</div>
         ${!bBeaten&&!bLocked?`<div style="height:3px;background:rgba(255,255,255,0.07);border-radius:100px;margin-top:3px;overflow:hidden;"><div style="height:100%;width:${100-bHpPct}%;background:${gc};border-radius:100px;transition:width .4s;"></div></div>`:''}
         ${bBeaten?`<div style="font-size:8px;color:var(--gr);font-weight:700;">✅ +${b.reward} XP alındı</div>`:''}
-        ${bLocked?(grpId==='genel'?`<div style="font-size:8px;color:var(--t3);">🔒 ${b.unlockXp} XP gerekli</div>`:`<div style="font-size:8px;color:var(--t3);">🔒 Önceki bossu yen</div>`):''}
+        ${bLocked?(grpId==='epic'?`<div style="font-size:8px;color:var(--t3);">🔒 ${(15000+i*1000).toLocaleString()} XP · Şu an: ${S.xp.toLocaleString()}</div>`:`<div style="font-size:8px;color:var(--t3);">🔒 ${b.unlockXp.toLocaleString()} XP gerekli</div>`):''}\
         ${!bBeaten&&!bLocked?`<div style="font-size:8px;color:var(--t3);">❤️ ${clampedBHp}/${b.maxHp} · 🏆 +${b.reward}XP</div>`:''}
       </div>
       ${active?`<div style="color:${gc};font-size:12px;">▶</div>`:''}
@@ -12029,11 +12197,27 @@ function renderBoss(){
   document.getElementById('page').innerHTML=heroH()+
     // Günlük meydan okuma
     dailyChallengeHTML+
-    // Ders sekmeleri
-    `<div class="boss-tabs-row">
-      ${grpTabs}
-    </div>
-    <div style="display:flex;gap:9px;align-items:flex-start;">
+    // Sınav sekmesi (TYT/AYT) + Efsane banner + ders sekmeleri grid
+    `<div style="display:flex;gap:5px;margin-bottom:8px;">
+      ${['genel','tyt','ayt'].map(ex=>{
+        const labels={genel:'⚔️ Genel',tyt:'📋 TYT',ayt:'🎯 AYT'};
+        const colors={genel:'#7c4dff',tyt:'#1e88e5',ayt:'#c62828'};
+        const isAct=examFilter===ex;
+        return`<button onclick="window._bossExamTab='${ex}';renderBoss()"
+          style="flex:1;padding:7px 4px;border-radius:9px;border:1.5px solid ${isAct?colors[ex]+'aa':'rgba(255,255,255,0.08)'};
+          background:${isAct?colors[ex]+'22':'rgba(255,255,255,0.04)'};color:${isAct?colors[ex]:'var(--t3)'};
+          font-size:9px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;transition:all .15s;">
+          ${labels[ex]}</button>`;
+      }).join('')}
+    </div>`+
+    (examFilter==='genel'||examFilter==='epic'?epicBanner:'')+
+    (()=>{
+      const _tabs=examFilter==='genel'?grpTabs:filteredTabs;
+      const _count=filteredTabGroups.length||1;
+      const _cols=examFilter==='genel'?1:(_count<=3?_count:_count<=6?3:4);
+      return`<div class="boss-tabs-row" style="grid-template-columns:repeat(${_cols},1fr);">${_tabs}</div>`;
+    })()+
+    `<div style="display:flex;gap:9px;align-items:flex-start;">
       <!-- Sol: boss listesi -->
       <div style="width:155px;flex-shrink:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
@@ -12071,18 +12255,38 @@ function renderBoss(){
           ${beaten
             ?`<div class="boss-bt">✅ Boss yenildi! +${boss.reward} XP kazanıldı!</div>`
             :locked
-              ?(grpId==='genel'
-                ?`<div class="boss-lock">🔒 Bu boss için <b style="color:${gc};">${boss.unlockXp} Toplam XP</b> gerekli<br><span style="font-size:9px;">Şu an: ${S.xp} XP · Eksik: ${boss.unlockXp-S.xp} XP</span></div>`
-                :`<div class="boss-lock">🔒 Bu boss için <b style="color:${gc};">${boss.unlockXp} Ders XP</b> gerekli<br><span style="font-size:9px;">Şu an: ${(S.subjects&&S.subjects[grpId]&&S.subjects[grpId].xp)||0} Ders XP · Eksik: ${boss.unlockXp-((S.subjects&&S.subjects[grpId]&&S.subjects[grpId].xp)||0)} XP</span></div>`)
-              :`<button class="boss-atk" onclick="startFight(${idx})" style="--boss-col:${gc};">⚔️ Savaşa Gir!</button>
-                <div class="boss-rw">🏆 Ödül: <b>+${boss.reward} XP</b></div>`}
+              ?(grpId==='epic'
+                ?(()=>{const _eXpR=15000+grpIdx*1000;return`<div class="boss-lock">🔒 Bu Efsane boss için <b style="color:#ff9800;">${_eXpR.toLocaleString()} Toplam XP</b> gerekli<br><span style="font-size:9px;">Şu an: ${S.xp.toLocaleString()} XP · Eksik: ${(_eXpR-S.xp).toLocaleString()} XP</span></div>`})()
+                :grpId==='genel'
+                ?`<div class="boss-lock">🔒 Bu boss için <b style="color:${gc};">${boss.unlockXp.toLocaleString()} Toplam XP</b> gerekli<br><span style="font-size:9px;">Şu an: ${S.xp.toLocaleString()} XP · Eksik: ${(boss.unlockXp-S.xp).toLocaleString()} XP</span></div>`
+                :`<div class="boss-lock">🔒 Bu boss için <b style="color:${gc};">${boss.unlockXp.toLocaleString()} Ders XP</b> gerekli<br><span style="font-size:9px;">Şu an: ${(S.subjects&&S.subjects[grpId]&&S.subjects[grpId].xp)||0} Ders XP · Eksik: ${boss.unlockXp-((S.subjects&&S.subjects[grpId]&&S.subjects[grpId].xp)||0)} XP</span></div>`)
+              :((()=>{
+                    const _bcd=(S.bossCooldown||{})[idx]||0;
+                    const _bcl=Math.max(0,_bcd-Date.now());
+                    const _bch=Math.floor(_bcl/3600000);
+                    const _bcm=Math.floor((_bcl%3600000)/60000);
+                    if(_bcl>0)return `<div style="background:rgba(229,57,53,0.12);border:1px solid rgba(229,57,53,0.3);border-radius:12px;padding:12px;text-align:center;"><div style="font-size:20px;margin-bottom:6px;">⏳</div><div style="font-size:11px;font-weight:900;color:#ef5350;">Bekleme Kilidi</div><div style="font-size:10px;color:var(--t3);margin-top:4px;">Boss yenilmeden ayrıldın — HP sıfırlandı</div><div style="font-size:14px;font-weight:900;color:#ef5350;margin-top:6px;">${_bch}s ${_bcm}dk kaldı</div></div><div class="boss-rw">🏆 Ödül: <b>+${boss.reward} XP</b></div>`;
+                    return `<button class="boss-atk" onclick="startFight(${idx})" style="--boss-col:${gc};">⚔️ Savaşa Gir!</button><div class="boss-rw">🏆 Ödül: <b>+${boss.reward} XP</b></div>`;
+                  })()
+                )}
         </div>
       </div>
     </div>`;
 }
 
 function setBossGrp(id){
-  S.curBossGrp=id;S.curBossLocal=0;save();renderBoss();
+  if(id==='epic'){
+    const eg=BOSS_GROUPS.find(g=>g.id==='epic');
+    const xpReq=(eg&&eg.epicUnlockXp)||5000;
+    if(S.xp<xpReq){
+      toast('⚔️ Efsane Arenası için '+xpReq.toLocaleString()+' XP gerekli! ('+S.xp.toLocaleString()+' XP mevcut)','#ff6f00');
+      return;
+    }
+  }
+  S.curBossGrp=id;S.curBossLocal=0;
+  const grp=BOSS_GROUPS.find(g=>g.id===id);
+  if(grp&&grp.exam&&grp.exam!=='epic') window._bossExamTab=grp.exam;
+  save();renderBoss();
 }
 
 function startDailyChallenge(idx){
@@ -12211,6 +12415,15 @@ function playBossSound(type){
 }
 
 function startFight(idx){
+  if(!S.bossCooldown)S.bossCooldown={};
+  const _cdU=S.bossCooldown[idx]||0;
+  const _cdL=Math.max(0,_cdU-Date.now());
+  if(_cdL>0){
+    const _h=Math.floor(_cdL/3600000);
+    const _m=Math.floor((_cdL%3600000)/60000);
+    toast('⏳ Bekleme kilidi: '+_h+'s '+_m+'dk kaldı. Boss yenilmeden ayrıldın, yenilendi!','#e53935');
+    return;
+  }
   fB=idx;fQ=0;
   const boss=BOSSES.find(b=>b.id===idx)||BOSSES[idx];
   const savedHp=S.bossHp[idx];
@@ -12304,8 +12517,19 @@ function answerFight(chosen,correct,btn){
   const nxt=document.getElementById('fi-nxt');
   nxt.style.display='block';
   if(isLast){
-    S.bossHp[fB]=fH;
-    save();
+    if(!fEnded){
+      if(bossDefeated){
+        S.bossHp[fB]=0;
+        if(!S.bossCooldown)S.bossCooldown={};
+        delete S.bossCooldown[fB];
+      } else {
+        const bossRef=BOSSES.find(b=>b.id===fB);
+        S.bossHp[fB]=bossRef?bossRef.maxHp:fH;
+        if(!S.bossCooldown)S.bossCooldown={};
+        S.bossCooldown[fB]=Date.now()+4*60*60*1000;
+      }
+      save();
+    }
     if(bossDefeated&&chosen===correct){
       res.innerHTML+=' <b style="color:#ffd700;font-size:13px;">🏆 Boss yenildi!</b>';
     }
@@ -12326,15 +12550,31 @@ function handleFightNext(){
 function endFight(){
   const boss=BOSSES.find(b=>b.id===fB)||BOSSES[fB];const won=fH<=0;
   const alreadyBeaten=fWasAlreadyBeaten;
+  // ── HP KAYDET: Girmediğinde tam HP göster ──
+  if(!S.bossCooldown)S.bossCooldown={};
+  if(won){
+    S.bossHp[fB]=0;
+    delete S.bossCooldown[fB];
+  } else {
+    S.bossHp[fB]=boss.maxHp; // Boss kaçtı → HP sıfırla (tam göster)
+    S.bossCooldown[fB]=Date.now()+4*60*60*1000;
+  }
+  save();
   // Boss görselini güncelle
   const em=document.getElementById('fi-boss-em');
   if(em){
     if(won){em.textContent='💀';em.style.animation='none';em.style.filter='grayscale(1) opacity(0.4)';}
     else{em.textContent=boss.emoji;em.style.animation='bossLaugh .6s ease-in-out 3';}
   }
+    const _cdUntil=(S.bossCooldown||{})[fB]||0;
+  const _cdLeft=Math.max(0,_cdUntil-Date.now());
+  const _cdHr=Math.floor(_cdLeft/3600000);
+  const _cdMin=Math.floor((_cdLeft%3600000)/60000);
   document.getElementById('fi-q').textContent=won
     ?`🎉 ${boss.name} yenildi! Tebrikler!`
-    :`💨 Boss zayıfladı ama kaçtı! HP: ${fH}/${boss.maxHp}. Tekrar girince farklı sorular çıkacak!`;
+    :(_cdLeft>0
+      ?`💨 Boss kacti! HP sifirlandı — ${_cdHr}s ${_cdMin}dk sonra tekrar savasabilirsin.`
+      :`💨 Boss kacti! Tekrar savasabilirsin.`);
   document.getElementById('fi-opts').innerHTML='';
   const res=document.getElementById('fi-res');res.style.display='none';
   const nxt=document.getElementById('fi-nxt');
@@ -14872,15 +15112,15 @@ const KONU_OZETI = {
 • Toplam/fark: (f ± g)' = f' ± g'
 • Çarpım: (fg)' = f'g + fg'
 • Bölüm: (f/g)' = (f'g − fg') / g²
-• Zincir: (f(g(x)))' = f'(g(x))·g'(x)
+• Zincir: (f(g(x)))' = f'(g(x))·g′(x)
 
 <b>Özel Türevler:</b>
 • (sin x)' = cos x | (cos x)' = −sin x
 • (eˣ)' = eˣ | (ln x)' = 1/x
 
 <b>Uygulamalar:</b>
-• f'(x)=0 → kritik nokta (max/min)
-• f'(x)>0 → artan, f'(x)<0 → azalan`,
+• f′(x)=0 → kritik nokta (max/min)
+• f′(x)>0 → artan, f′(x)<0 → azalan`,
       sorular:[
         {q:'(x³ + 2x)\'nin türevi?', a:'3x² + 2'},
         {q:'Türev geometrik olarak ne anlama gelir?', a:'O noktadaki teğet doğrusunun eğimi'},
@@ -21020,18 +21260,26 @@ if(!S.myName)S.myName='YKS Savaşçısı';
 // Bozuk boss HP'leri onar (maxHp'yi aşanları veya negatif olanları düzelt)
 (function repairBossHp(){
   let fixed=false;
+  if(!S.bossCooldown) S.bossCooldown={};
   BOSSES.forEach(b=>{
     const cur=S.bossHp[b.id];
-    // Temel düzeltme: null, negatif veya maxHp'yi aşan
-    if(cur==null||cur>b.maxHp||cur<0){
-      S.bossHp[b.id]=(cur!=null&&cur<=0)?0:b.maxHp;
-      fixed=true;
-    }
-    // Yenilmemiş ama kısmen hasarlı bossları tam HP'ye sıfırla
-    // (savaştan yarıda çıkılınca kalan bozuk HP'leri temizle)
-    if(S.bossHp[b.id]>0&&S.bossHp[b.id]<b.maxHp){
+    if(cur==null||cur>b.maxHp){
       S.bossHp[b.id]=b.maxHp;
       fixed=true;
+    }
+    if(typeof cur==='number'&&cur<0){
+      S.bossHp[b.id]=0;
+      fixed=true;
+    }
+    // Migration: partial HP without active cooldown → reset to maxHp
+    // (old fight sessions that were abandoned before cooldown system existed)
+    if(typeof cur==='number'&&cur>0&&cur<b.maxHp){
+      const cdUntil=S.bossCooldown[b.id]||0;
+      if(Date.now()>cdUntil){
+        // No active cooldown → this was an old partial value, reset silently
+        S.bossHp[b.id]=b.maxHp;
+        fixed=true;
+      }
     }
   });
   if(fixed)save();
@@ -27482,8 +27730,19 @@ function _fxRemaining(id){
 }
 
 function _getInv(){
-  try{return JSON.parse(localStorage.getItem('yks_inv')||'[]');}
-  catch(e){return[];}
+  let inv=[];
+  try{inv=JSON.parse(localStorage.getItem('yks_inv')||'[]');}catch(e){inv=[];}
+  // Merge S.inventory as fallback (prevents items disappearing on quota errors)
+  try{
+    if(typeof S!=='undefined'&&S.inventory&&Array.isArray(S.inventory)){
+      S.inventory.forEach(si=>{
+        const ex=inv.find(i=>i.id===si.id);
+        if(!ex&&(si.n||0)>0) inv.push({...si});
+        else if(ex&&(si.n||0)>(ex.n||0)) ex.n=si.n;
+      });
+    }
+  }catch(e){}
+  return inv;
 }
 
 function _saveInv(inv){
@@ -28272,33 +28531,45 @@ function renderInventoryFull(){
   }catch(e){}
 
   const rarityColor={yaygın:'#78909c',seyrek:'#43a047',nadir:'#1e88e5',efsanevi:'#f5a623'};
+  const rarityLabel={yaygın:'YAYGIN',seyrek:'SEYREk',nadir:'NADİR',efsanevi:'EFSANEVİ'};
+  const rarityOrder={efsanevi:0,nadir:1,seyrek:2,yaygın:3};
   const items = typeof ITEMS !== 'undefined' ? ITEMS : {};
-  const cards = Object.values(items).map(def=>{
+  // Separate owned vs undiscovered
+  const ownedItems = Object.values(items).filter(def=>(inv.find(i=>i.id===def.id)?.n||0)>0)
+    .sort((a,b)=>(rarityOrder[a.rarity]||9)-(rarityOrder[b.rarity]||9));
+  const unownedItems = Object.values(items).filter(def=>!((inv.find(i=>i.id===def.id)?.n||0)>0))
+    .sort((a,b)=>(rarityOrder[a.rarity]||9)-(rarityOrder[b.rarity]||9));
+  const makeCard = (def, owned)=>{
     const slot = inv.find(i=>i.id===def.id);
     const count = slot?.n||0;
     const rc = rarityColor[def.rarity]||'#546e7a';
     const isActive = typeof _hasFx === 'function' && _hasFx(def.id);
-    return `<div style="background:${count>0?def.color+'12':'rgba(255,255,255,0.02)'};
-      border:1px solid ${count>0?def.color+'55':'rgba(255,255,255,0.06)'};
-      border-radius:11px;padding:11px;position:relative;${count===0?'opacity:.45;':''}">
-      ${isActive?`<div style="position:absolute;top:6px;right:6px;background:#43a047;
-        border-radius:100px;font-size:7px;font-weight:900;color:#fff;padding:2px 6px;">✅</div>`:''}
+    if(!owned) return `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:11px;padding:11px;opacity:.28;filter:grayscale(.7);">
+      <div style="font-size:24px;text-align:center;margin-bottom:4px;">${def.icon}</div>
+      <div style="font-size:7.5px;font-weight:900;color:${rc};text-transform:uppercase;text-align:center;margin-bottom:2px;">${rarityLabel[def.rarity]||def.rarity}</div>
+      <div style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.5);text-align:center;">???</div>
+    </div>`;
+    return `<div style="background:${def.color}18;border:1.5px solid ${def.color}66;border-radius:11px;padding:11px;position:relative;">
+      ${isActive?`<div style="position:absolute;top:6px;right:6px;background:#43a047;border-radius:100px;font-size:7px;font-weight:900;color:#fff;padding:2px 6px;">AKTİF ✅</div>`:''}
       <div style="font-size:28px;text-align:center;margin-bottom:5px;">${def.icon}</div>
-      <div style="font-size:7.5px;font-weight:900;color:${rc};letter-spacing:1px;
-        text-transform:uppercase;text-align:center;margin-bottom:2px;">${def.rarity}</div>
+      <div style="font-size:7.5px;font-weight:900;color:${rc};letter-spacing:1px;text-transform:uppercase;text-align:center;margin-bottom:2px;">${rarityLabel[def.rarity]||def.rarity}</div>
       <div style="font-size:10px;font-weight:900;color:#fff;text-align:center;margin-bottom:4px;">${def.name}</div>
       <div style="font-size:8.5px;color:var(--t3);text-align:center;line-height:1.4;margin-bottom:8px;">${def.desc}</div>
-      ${count>0?`<div style="display:flex;align-items:center;gap:5px;">
-        <div style="font-size:9px;color:var(--t3);background:rgba(255,255,255,0.06);
-          border-radius:6px;padding:3px 6px;font-weight:800;">×${count}</div>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <div style="font-size:9px;color:var(--t3);background:rgba(255,255,255,0.06);border-radius:6px;padding:3px 6px;font-weight:800;">×${count}</div>
         <button onclick="${typeof useItem==='function'?'useItem':'window.useItem'}('${def.id}')"
-          style="flex:1;padding:6px;border-radius:7px;border:none;
-          background:linear-gradient(135deg,${def.color},${def.color}aa);
-          color:#fff;font-size:9px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">
+          style="flex:1;padding:6px;border-radius:7px;border:none;background:linear-gradient(135deg,${def.color},${def.color}aa);color:#fff;font-size:9px;font-weight:900;cursor:pointer;font-family:Nunito,sans-serif;">
           ▶ Kullan</button>
-      </div>`:`<div style="text-align:center;font-size:8.5px;color:var(--t3);">Sahip değilsin</div>`}
+      </div>
     </div>`;
-  }).join('');
+  };
+  const cards = [
+    ownedItems.length>0?`<div style="font-size:10px;font-weight:900;color:var(--gr);margin-bottom:8px;letter-spacing:1px;">✅ SAHİP OLDUKLARIM (${ownedItems.length})</div>`:'',
+    ownedItems.length===0?`<div style="text-align:center;padding:20px;color:var(--t3);font-size:11px;">Henüz eşyan yok!<br>Boss yen, rozet kazan, seri kır — eşyalar düşer.</div>`:'',
+    `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;">${ownedItems.map(d=>makeCard(d,true)).join('')}</div>`,
+    unownedItems.length>0?`<div style="font-size:10px;font-weight:900;color:var(--t3);margin-bottom:8px;letter-spacing:1px;">🔒 KEŞFEDİLMEDİ (${unownedItems.length})</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${unownedItems.map(d=>makeCard(d,false)).join('')}</div>`:''
+  ].join('');
 
   const shopContainer = document.createElement('div');
 
