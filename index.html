@@ -19461,7 +19461,7 @@ function _showBossQModal(bossId,gb,q,atkCount){
     const onClick="_bossAns("+i+","+q.a+",'" + bossId + "')";
     return '<button id="_bOpt'+i+'" onclick="'+onClick+'" style="display:block;width:100%;margin-bottom:8px;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;font-size:10.5px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;text-align:left;">'+letters[i]+'. '+o+'</button>';
   }).join('');
-  const gc=gb.color||'#7c4dff';
+  const gc=gb.col||'#7c4dff';
   el.innerHTML='<div style="background:linear-gradient(135deg,#1a0a30,#0a1520);border:2px solid '+gc+';border-radius:20px;padding:22px;max-width:360px;width:100%;box-shadow:0 0 40px '+gc+'44;" onclick="event.stopPropagation()">'+
     '<div style="text-align:center;margin-bottom:14px;">'+
       '<div style="font-size:38px;">'+gb.icon+'</div>'+
@@ -19499,27 +19499,58 @@ async function _bossAns(chosen, correct, bossId){
   setTimeout(async()=>{
     document.getElementById('_bossQMod')?.remove();
     try{
-      if(!doc)return;
+      if(!doc){toast('Firebase bağlantısı yok!');return;}
+
+      // 1. Boss haftalık belgesini hazırla
       await _gbEnsureWeekly(bossId);
+
+      // 2. Kendi fighter kaydını güncelle
       const myRef=doc(window._fbDb,'leaderboard',_fbUser.uid);
       const mySnap=await getDoc(myRef);
       const prev=mySnap.exists()?(mySnap.data()['bossFighter_'+bossId]||{}):{};
       const prevDmg=(prev.weekKey===wk?(prev.dmg||0):0);
-      const upd={};
-      upd['bossFighter_'+bossId]={uid:_fbUser.uid,name:S.myName||'YKS Savaşçısı',avatar:S.avatarEmoji||'⚔️',dmg:prevDmg+totalDmg,ts:Date.now(),level:myLevel,weekKey:wk};
-      await setDoc(myRef,upd,{merge:true});
-      const myTotal=prevDmg+totalDmg;
-      if(myTotal>=gb.maxHp){
-        const ratio=Math.min(1,myTotal/gb.maxHp);
-        const myXp=Math.max(50,Math.round(gb.xpReward*ratio));
-        S.xp+=myXp;addWXP(myXp);save();maybeLU(S.xp-myXp);
-        toast('🏆 Boss yenildi! +'+myXp+' XP!');
+      const newMyDmg=prevDmg+totalDmg;
+      const fupd={};
+      fupd['bossFighter_'+bossId]={uid:_fbUser.uid,name:S.myName||'YKS Savaşçısı',
+        avatar:S.avatarEmoji||'⚔️',dmg:newMyDmg,ts:Date.now(),level:myLevel,weekKey:wk};
+      await setDoc(myRef,fupd,{merge:true});
+
+      // 3. Boss HP belgesini güncelle (hasar düş)
+      const bossDocRef=doc(window._fbDb,'leaderboard','__boss_'+bossId+'_'+wk);
+      const bossSnap=await getDoc(bossDocRef);
+      const bossData=bossSnap.exists()?bossSnap.data():{hp:gb.maxHp,maxHp:gb.maxHp};
+      const alreadyDefeated=bossData.defeated||false;
+      const oldBossHp=bossData.hp??gb.maxHp;
+      const newHp=Math.max(0,oldBossHp-totalDmg);
+      const justDefeated=!alreadyDefeated&&newHp<=0;
+      await setDoc(bossDocRef,{
+        hp:newHp,maxHp:gb.maxHp,bossId,weekKey:wk,
+        lastHit:Date.now(),lastHitBy:_fbUser.uid,
+        defeated:alreadyDefeated||justDefeated,
+        ...(justDefeated?{defeatedAt:Date.now(),defeatUid:_fbUser.uid}:{})
+      },{merge:true});
+
+      // 4. Bildirim + XP
+      if(justDefeated){
+        // Katkı oranında XP ver
+        const myRatio=Math.min(1,newMyDmg/gb.maxHp);
+        const myXp=Math.max(50,Math.round(gb.xpReward*myRatio));
+        const ox=S.xp; S.xp+=myXp; addWXP(myXp); save(); maybeLU(ox);
+        toast('🏆 BOSS YENİLDİ! Katkın: %'+Math.round(myRatio*100)+' → +'+myXp+' XP!');
         if(typeof pushFeedEvent==='function')pushFeedEvent('boss',{bossName:gb.name,bossIcon:gb.icon,xp:myXp});
+      } else if(alreadyDefeated){
+        toast('⚔️ '+totalDmg+' hasar! (Boss bu hafta zaten yenildi) '+newAtkN+'/'+_GB_DAILY_LIMIT);
       } else {
-        toast((isOk?'✅ Doğru! ':'❌ Yanlış. ')+totalDmg+' hasar! '+newAtkN+'/'+_GB_DAILY_LIMIT+' saldırı');
+        const remHp=newHp.toLocaleString();
+        const contribPct=Math.round((newMyDmg/gb.maxHp)*100);
+        toast((isOk?'✅ Doğru! ':'❌ Yanlış. ')+'⚔️ '+totalDmg+' hasar! 🩸 '+remHp+' HP kaldı · Katkın %'+contribPct);
       }
+
       await renderGroupBoss(bossId);
-    }catch(e){toast('Saldırı hatası: '+e.message);}
+    }catch(e){
+      console.error('[GBoss saldırı]',e);
+      toast('Saldırı hatası: '+e.message);
+    }
   },900);
 }
 
@@ -19546,13 +19577,12 @@ async function renderGroupBoss(selectedId){
       // Haftalık reset kontrolü + boss HP
       const bd=await _gbEnsureWeekly(selectedId);
       if(bd) bossData={...bossData,...bd};
-      // Fighters — bu haftaki (weekKey === wk)
-      const lbSnap=await extra.getDocs(extra.query(
-        extra.collection(window._fbDb,'leaderboard'),
-        extra.where(`bossFighter_${selectedId}.weekKey`,'==',wk)
-      ));
+      // Fighters — tüm leaderboard dokümanlarını çek, client-side filtrele
+      // (nested field where sorgusunda composite index gerektirmez)
+      const lbSnap=await extra.getDocs(extra.collection(window._fbDb,'leaderboard'));
       fighters=lbSnap.docs
-        .map(d=>{const f=d.data()[`bossFighter_${selectedId}`];return f?{id:d.id,...f}:null;})
+        .filter(d=>!d.id.startsWith('__boss_'))
+        .map(d=>{const f=d.data()[`bossFighter_${selectedId}`];return f&&f.weekKey===wk?{id:d.id,...f}:null;})
         .filter(Boolean)
         .sort((a,b)=>(b.dmg||0)-(a.dmg||0));
     }catch(e){
@@ -19584,6 +19614,18 @@ async function renderGroupBoss(selectedId){
   const canFight=myLevel>=gb.minLevel;
   const myFighter=fighters.find(f=>f.id===_fbUser?.uid);
   const isJoined=!!myFighter;
+
+  // ── Yenilmiş boss XP dağıtımı: kendi payını ver (henüz verilmediyse)
+  if(defeated && myFighter && myFighter.dmg>0){
+    const rewardKey='__gbRwd_'+selectedId+'_'+wk;
+    if(!localStorage.getItem(rewardKey)){
+      localStorage.setItem(rewardKey,'1');
+      const myRatio=Math.min(1,(myFighter.dmg||0)/maxHp);
+      const myXp=Math.max(50,Math.round(gb.xpReward*myRatio));
+      const ox=S.xp; S.xp+=myXp; addWXP(myXp); save(); maybeLU(ox);
+      toast('🏆 Boss bu hafta yenildi! Katkın: %'+Math.round(myRatio*100)+' → +'+myXp+' XP!');
+    }
+  }
   const myDmg=myFighter?.dmg||0;
   const totalDmg=fighters.reduce((a,f)=>a+(f.dmg||0),0);
   const myContrib=totalDmg>0?Math.round((myDmg/maxHp)*100):0;
@@ -26218,7 +26260,7 @@ window.addEventListener('storage', function(e){
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, deleteDoc, addDoc, collection, getDocs, query, orderBy, limit, onSnapshot, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, addDoc, collection, getDocs, query, orderBy, limit, onSnapshot, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
@@ -26227,7 +26269,7 @@ const db   = getFirestore(app);
 window._fbAuth = auth;
 window._fbDb   = db;
 window._fbAuth2    = { signInWithPopup, signOut, GoogleAuthProvider };
-window._fbFirestore = { doc, setDoc, getDoc, deleteDoc };
+window._fbFirestore = { doc, setDoc, getDoc, updateDoc, deleteDoc };
 window._fbFirestoreExtra = { collection, getDocs, query, orderBy, limit, deleteDoc, doc, addDoc, onSnapshot, where };
 
 const overlay = document.getElementById('fb-login-overlay');
