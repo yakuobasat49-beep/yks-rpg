@@ -19344,29 +19344,12 @@ function _gbGetAtkCount(bossId){return parseInt(localStorage.getItem(_gbTodayKey
 function _gbIncAtk(bossId){const n=_gbGetAtkCount(bossId)+1;_lsSet(_gbTodayKey(bossId),n);return n;}
 
 // ── Boss haftalık reset kontrolü ──
+// HP artık savaşçı hasarlarından hesaplandığı için shared doc gerekmez
 async function _gbEnsureWeekly(bossId){
-  // BUGFIX: 'feed' koleksiyonuna yazma izni yok → 'leaderboard/__boss_*' kullan
-  const {doc,getDoc,setDoc}=window._fbFirestore||{};
-  if(!doc||!window._fbDb) return null;
-  const wk=_gbWeekKey();
-  // Özel boss-state dokümanı: leaderboard koleksiyonunda __boss_ prefixli
-  const ref=doc(window._fbDb,'leaderboard','__boss_'+bossId+'_'+wk);
-  let snap;
-  try{ snap=await getDoc(ref); }catch(e){ return _gbLocalBossData(bossId,wk); }
-  const gb=GROUP_BOSSES.find(b=>b.id===bossId);
-  if(!snap.exists()){
-    const fresh={hp:gb.maxHp,maxHp:gb.maxHp,bossId,weekKey:wk,
-      defeated:false,defeatedAt:null,defeatUid:null,lastHit:null,lastHitBy:null};
-    try{ await setDoc(ref,fresh); }catch(e){}
-    return fresh;
-  }
-  return snap.data();
+  return null; // no-op — HP toplam hasardan hesaplanıyor
 }
-// Fallback: Firebase yazamazsa local state döndür
 function _gbLocalBossData(bossId,wk){
   const gb=GROUP_BOSSES.find(b=>b.id===bossId);
-  const key='__gboss_'+bossId+'_'+wk;
-  try{ const d=JSON.parse(localStorage.getItem(key)||'null'); if(d) return d; }catch(e){}
   return {hp:gb.maxHp,maxHp:gb.maxHp,bossId,weekKey:wk,defeated:false};
 }
 
@@ -19501,49 +19484,59 @@ async function _bossAns(chosen, correct, bossId){
     try{
       if(!doc){toast('Firebase bağlantısı yok!');return;}
 
-      // 1. Boss haftalık belgesini hazırla
-      await _gbEnsureWeekly(bossId);
-
-      // 2. Kendi fighter kaydını güncelle
+      // Sadece KENDİ dokümanına yaz (permission sorunu olmaz)
       const myRef=doc(window._fbDb,'leaderboard',_fbUser.uid);
       const mySnap=await getDoc(myRef);
       const prev=mySnap.exists()?(mySnap.data()['bossFighter_'+bossId]||{}):{};
       const prevDmg=(prev.weekKey===wk?(prev.dmg||0):0);
       const newMyDmg=prevDmg+totalDmg;
       const fupd={};
-      fupd['bossFighter_'+bossId]={uid:_fbUser.uid,name:S.myName||'YKS Savaşçısı',
-        avatar:S.avatarEmoji||'⚔️',dmg:newMyDmg,ts:Date.now(),level:myLevel,weekKey:wk};
+      fupd['bossFighter_'+bossId]={
+        uid:_fbUser.uid,
+        name:S.myName||'YKS Savaşçısı',
+        avatar:S.avatarEmoji||'⚔️',
+        dmg:newMyDmg,
+        ts:Date.now(),
+        level:myLevel,
+        weekKey:wk
+      };
       await setDoc(myRef,fupd,{merge:true});
 
-      // 3. Boss HP belgesini güncelle (hasar düş)
-      const bossDocRef=doc(window._fbDb,'leaderboard','__boss_'+bossId+'_'+wk);
-      const bossSnap=await getDoc(bossDocRef);
-      const bossData=bossSnap.exists()?bossSnap.data():{hp:gb.maxHp,maxHp:gb.maxHp};
-      const alreadyDefeated=bossData.defeated||false;
-      const oldBossHp=bossData.hp??gb.maxHp;
-      const newHp=Math.max(0,oldBossHp-totalDmg);
-      const justDefeated=!alreadyDefeated&&newHp<=0;
-      await setDoc(bossDocRef,{
-        hp:newHp,maxHp:gb.maxHp,bossId,weekKey:wk,
-        lastHit:Date.now(),lastHitBy:_fbUser.uid,
-        defeated:alreadyDefeated||justDefeated,
-        ...(justDefeated?{defeatedAt:Date.now(),defeatUid:_fbUser.uid}:{})
-      },{merge:true});
+      // HP'yi tüm savaşçıların toplam hasarından hesapla (shared doc yok = no permission error)
+      // Güncel fighters listesini çek
+      const extra=window._fbFirestoreExtra||{};
+      let allFighters=[];
+      try{
+        const lbSnap=await extra.getDocs(extra.collection(window._fbDb,'leaderboard'));
+        allFighters=lbSnap.docs
+          .filter(d=>!d.id.startsWith('__boss_'))
+          .map(d=>{const f=d.data()['bossFighter_'+bossId];return f&&f.weekKey===wk?{id:d.id,...f}:null;})
+          .filter(Boolean);
+      }catch(e2){
+        // Fallback: sadece kendi hasarımızı bil
+        allFighters=[{id:_fbUser.uid,dmg:newMyDmg,weekKey:wk}];
+      }
+      const totalDmgAll=allFighters.reduce((a,f)=>a+(f.dmg||0),0);
+      const newHp=Math.max(0,gb.maxHp-totalDmgAll);
+      const justDefeated=newHp<=0 && prevDmg<gb.maxHp; // bu saldırı ile yenildi
 
-      // 4. Bildirim + XP
-      if(justDefeated){
-        // Katkı oranında XP ver
-        const myRatio=Math.min(1,newMyDmg/gb.maxHp);
-        const myXp=Math.max(50,Math.round(gb.xpReward*myRatio));
-        const ox=S.xp; S.xp+=myXp; addWXP(myXp); save(); maybeLU(ox);
-        toast('🏆 BOSS YENİLDİ! Katkın: %'+Math.round(myRatio*100)+' → +'+myXp+' XP!');
-        if(typeof pushFeedEvent==='function')pushFeedEvent('boss',{bossName:gb.name,bossIcon:gb.icon,xp:myXp});
-      } else if(alreadyDefeated){
-        toast('⚔️ '+totalDmg+' hasar! (Boss bu hafta zaten yenildi) '+newAtkN+'/'+_GB_DAILY_LIMIT);
+      // XP + bildirim
+      if(newHp<=0){
+        // Boss yenildi: katkı oranında XP (zaten verildiyse verme)
+        const rewardKey='__gbRwd_'+bossId+'_'+wk;
+        if(!localStorage.getItem(rewardKey)){
+          localStorage.setItem(rewardKey,'1');
+          const myRatio=Math.min(1,newMyDmg/gb.maxHp);
+          const myXp=Math.max(50,Math.round(gb.xpReward*myRatio));
+          const ox=S.xp; S.xp+=myXp; addWXP(myXp); save(); maybeLU(ox);
+          toast('🏆 BOSS YENİLDİ! Katkın: %'+Math.round(myRatio*100)+' → +'+myXp+' XP!');
+          if(typeof pushFeedEvent==='function')pushFeedEvent('boss',{bossName:gb.name,bossIcon:gb.icon,xp:myXp});
+        } else {
+          toast('⚔️ '+totalDmg+' hasar! (Boss bu hafta zaten yenildi)');
+        }
       } else {
-        const remHp=newHp.toLocaleString();
         const contribPct=Math.round((newMyDmg/gb.maxHp)*100);
-        toast((isOk?'✅ Doğru! ':'❌ Yanlış. ')+'⚔️ '+totalDmg+' hasar! 🩸 '+remHp+' HP kaldı · Katkın %'+contribPct);
+        toast((isOk?'✅ Doğru! ':'❌ Yanlış. ')+'⚔️ '+totalDmg+' hasar! 🩸 '+newHp.toLocaleString()+' HP kaldı · Katkın %'+contribPct);
       }
 
       await renderGroupBoss(bossId);
@@ -19574,11 +19567,7 @@ async function renderGroupBoss(selectedId){
     const {doc,getDoc}=window._fbFirestore||{};
     const extra=window._fbFirestoreExtra||{};
     try{
-      // Haftalık reset kontrolü + boss HP
-      const bd=await _gbEnsureWeekly(selectedId);
-      if(bd) bossData={...bossData,...bd};
-      // Fighters — tüm leaderboard dokümanlarını çek, client-side filtrele
-      // (nested field where sorgusunda composite index gerektirmez)
+      // Fighters — sadece leaderboard/{uid} dokümanlarına yaz/oku (permission sorunu yok)
       const lbSnap=await extra.getDocs(extra.collection(window._fbDb,'leaderboard'));
       fighters=lbSnap.docs
         .filter(d=>!d.id.startsWith('__boss_'))
@@ -19586,30 +19575,24 @@ async function renderGroupBoss(selectedId){
         .filter(Boolean)
         .sort((a,b)=>(b.dmg||0)-(a.dmg||0));
     }catch(e){
-      // Fallback: boss HP + kendi fighter verisini doğrudan çek
+      // Fallback: sadece kendi kaydını çek
       try{
-        const {doc,getDoc}=window._fbFirestore||{};
-        // Boss HP — artık leaderboard koleksiyonunda
-        const bossRef=doc(window._fbDb,'leaderboard','__boss_'+selectedId+'_'+wk);
-        const bossSnap=await getDoc(bossRef);
-        if(bossSnap.exists()) bossData={...bossData,...bossSnap.data()};
-        // Kendi fighter verisini doğrudan uid ile çek (composite index gerektirmez)
-        if(_fbUser){
-          const myRef=doc(window._fbDb,'leaderboard',_fbUser.uid);
-          const mySnap=await getDoc(myRef);
-          if(mySnap.exists()){
-            const myFD=mySnap.data()[`bossFighter_${selectedId}`];
-            if(myFD&&myFD.weekKey===wk) fighters=[{id:_fbUser.uid,...myFD}];
-          }
+        const myRef=doc(window._fbDb,'leaderboard',_fbUser.uid);
+        const mySnap=await getDoc(myRef);
+        if(mySnap.exists()){
+          const myFD=mySnap.data()[`bossFighter_${selectedId}`];
+          if(myFD&&myFD.weekKey===wk) fighters=[{id:_fbUser.uid,...myFD}];
         }
       }catch(e2){console.warn('[GroupBoss]',e2.message);}
     }
   }
 
-  const hp=Math.max(0,bossData.hp??gb.maxHp);
-  const maxHp=bossData.maxHp||gb.maxHp;
+  // HP'yi savaşçı hasarlarının toplamından hesapla (shared doc gerektirmez)
+  const maxHp=gb.maxHp;
+  const totalDmgAll=fighters.reduce((a,f)=>a+(f.dmg||0),0);
+  const hp=Math.max(0,maxHp-totalDmgAll);
   const hpPct=Math.max(0,Math.round((hp/maxHp)*100));
-  const defeated=bossData.defeated||hp<=0;
+  const defeated=hp<=0;
   const myLevel=getLvl(S.xp);
   const canFight=myLevel>=gb.minLevel;
   const myFighter=fighters.find(f=>f.id===_fbUser?.uid);
@@ -27694,12 +27677,12 @@ const ITEMS={
       _sfx('powerup');
       toast('🧿 Boss Büyüsü aktif! Sonraki boss zayıflamış başlar!');
     }},
-  lucky_coin:{id:'lucky_coin',name:'Şans Jeton',icon:'🪙',rarity:'seyrek',color:'#ffd54f',
+  lucky_coin:{id:'lucky_coin',name:'Şans Jeton',icon:'💰',rarity:'seyrek',color:'#ffd54f',
     desc:'Sonraki boss ödülü 2× XP kazandırır.',
     use(){
       _setFx('lucky_coin',24*60*60*1000);
       _sfx('powerup');
-      toast('🪙 Şans Jeton aktif! Sonraki boss 2× ödül!');
+      toast('💰 Şans Jeton aktif! Sonraki boss 2× ödül!');
     }},
   streak_gem:{id:'streak_gem',name:'Seri Kristali',icon:'🔮',rarity:'nadir',color:'#ab47bc',
     desc:'Streakini 3 gün daha devam eder sayar (koşulsuz koruma).',
@@ -27848,13 +27831,23 @@ function _rollDrop(src){
 
 function useItem(itemId){
   const inv=_getInv();
-  const idx=inv.findIndex(i=>i.id===itemId); if(idx<0) return;
+  const idx=inv.findIndex(i=>i.id===itemId); if(idx<0){toast('Envanterde bulunamadı!');return;}
   const def=ITEMS[itemId]; if(!def) return;
   def.use();
   inv[idx].n=(inv[idx].n||1)-1;
   if(inv[idx].n<=0) inv.splice(idx,1);
   _saveInv(inv);
-  if(S.curTab==='envanter') renderInventory();
+  // S.inventory ile senkronize et
+  if(S.inventory){
+    const sIdx=S.inventory.findIndex(i=>i.id===itemId);
+    if(sIdx>=0){
+      S.inventory[sIdx].n=(S.inventory[sIdx].n||1)-1;
+      if(S.inventory[sIdx].n<=0) S.inventory.splice(sIdx,1);
+    }
+  }
+  save();
+  if(S.curTab==='envanter' && typeof window.renderInventoryFull==='function')
+    window.renderInventoryFull();
 }
 
 // ═══════════════════════════════════════════════════
@@ -28404,6 +28397,19 @@ setTimeout(()=>{
 // Sayfa zaten home'da ise kartları enjekte et
 if(S&&S.curTab==='home') setTimeout(_injectHomeCards,500);
 
+// ── Global scope'a aç (renderInventoryFull + onclick handler'ları erişebilsin) ──
+window.ITEMS       = ITEMS;
+window._getInv     = _getInv;
+window._saveInv    = _saveInv;
+window._addItem    = _addItem;
+window.useItem     = useItem;
+window._hasFx      = _hasFx;
+window._fxRemaining= _fxRemaining;
+window._rollDrop   = _rollDrop;
+window._itemDropBanner = _itemDropBanner;
+window.renderInventory = renderInventory;
+window._setFx      = _setFx;
+
 })();
 </script>
 
@@ -28504,9 +28510,10 @@ function buyShopItem(itemId){
   S.xp -= def.price;
   if(typeof addWXP === 'function') addWXP(-def.price);
   if(typeof save === 'function') save();
-  if(typeof _addItem === 'function') _addItem(itemId);
+  const addItemFn = window._addItem || (typeof _addItem === 'function' ? _addItem : null);
+  if(addItemFn) addItemFn(itemId);
   toast(`🛒 ${def.name} satın alındı! -${def.price} XP`);
-  if(S.curTab === 'envanter') renderInventoryFull();
+  if(S.curTab === 'envanter' && typeof window.renderInventoryFull === 'function') window.renderInventoryFull();
 }
 window.buyShopItem = buyShopItem;
 
@@ -28544,7 +28551,8 @@ function renderShopTab(container){
 // Envanter sayfasını sekme yapısına çevir
 function renderInventoryFull(){
   const pg = document.getElementById('page');
-  const inv = typeof _getInv === 'function' ? _getInv() : [];
+  const getInvFn = window._getInv || (typeof _getInv === 'function' ? _getInv : null);
+  const inv = getInvFn ? getInvFn() : [];
 
   // Tab state
   const tab = window._invTab || 'inv';
@@ -28560,7 +28568,7 @@ function renderInventoryFull(){
         <div style="font-size:8.5px;font-weight:900;color:#43a047;letter-spacing:1px;
           text-transform:uppercase;margin-bottom:5px;">⚡ AKTİF EFEKTLERİ</div>
         ${active.map(([id,exp])=>{
-          const def = typeof ITEMS !== 'undefined' ? ITEMS[id] : null;
+          const def = (window.ITEMS || (typeof ITEMS!=='undefined'?ITEMS:{}))[id] || null;
           const rem = Math.ceil((exp-Date.now())/60000);
           return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
             <span style="font-size:16px;">${def?def.icon:'⚡'}</span>
@@ -28575,7 +28583,7 @@ function renderInventoryFull(){
   const rarityColor={yaygın:'#78909c',seyrek:'#43a047',nadir:'#1e88e5',efsanevi:'#f5a623'};
   const rarityLabel={yaygın:'YAYGIN',seyrek:'SEYREk',nadir:'NADİR',efsanevi:'EFSANEVİ'};
   const rarityOrder={efsanevi:0,nadir:1,seyrek:2,yaygın:3};
-  const items = typeof ITEMS !== 'undefined' ? ITEMS : {};
+  const items = window.ITEMS || (typeof ITEMS !== 'undefined' ? ITEMS : {});
   // Separate owned vs undiscovered
   const ownedItems = Object.values(items).filter(def=>(inv.find(i=>i.id===def.id)?.n||0)>0)
     .sort((a,b)=>(rarityOrder[a.rarity]||9)-(rarityOrder[b.rarity]||9));
@@ -28585,7 +28593,8 @@ function renderInventoryFull(){
     const slot = inv.find(i=>i.id===def.id);
     const count = slot?.n||0;
     const rc = rarityColor[def.rarity]||'#546e7a';
-    const isActive = typeof _hasFx === 'function' && _hasFx(def.id);
+    const hasFxFn = window._hasFx || (typeof _hasFx === 'function' ? _hasFx : null);
+    const isActive = hasFxFn ? hasFxFn(def.id) : false;
     if(!owned) return `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:11px;padding:11px;opacity:.28;filter:grayscale(.7);">
       <div style="font-size:24px;text-align:center;margin-bottom:4px;">${def.icon}</div>
       <div style="font-size:7.5px;font-weight:900;color:${rc};text-transform:uppercase;text-align:center;margin-bottom:2px;">${rarityLabel[def.rarity]||def.rarity}</div>
