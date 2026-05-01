@@ -3089,46 +3089,37 @@ qs:[
 ];
 
 // ═══ SORU TEKRAR ÖNLEME ═══
-// Her boss için görülen soru indekslerini localStorage'da sakla
-// Tüm sorular görüldüğünde otomatik sıfırla
+// Her giriş için tüm soruları farklı sırayla göster
+// Önceki girişten farklı shuffle garantisi
 (function _patchStartFight(){
   if(typeof startFight !== 'function') return;
   const _origSF = startFight;
   window.startFight = function(idx){
-    // Boss ve soru havuzunu bul
     const boss = BOSSES.find(b=>b.id===idx)||BOSSES[idx];
     if(!boss||!boss.qs||boss.qs.length===0){ _origSF(idx); return; }
 
-    const pool = boss.qs;
-    const histKey = 'bqh_' + idx;
-    let seen = [];
-    try { seen = JSON.parse(localStorage.getItem(histKey)||'[]'); } catch(e) {}
+    // Attempt sayacını artır (her girişte farklı shuffle için)
+    const attKey = 'bqAtt_' + idx;
+    let att = 0;
+    try { att = parseInt(localStorage.getItem(attKey)||'0')+1; } catch(e) {}
+    try { localStorage.setItem(attKey, att); } catch(e) {}
 
-    // Henüz gösterilmemiş soru indeksleri
-    let available = pool.map((_,i)=>i).filter(i=>!seen.includes(i));
-
-    // Hepsi gösterilmişse sıfırla
-    if(available.length < Math.min(5, pool.length)){
-      seen = [];
-      available = pool.map((_,i)=>i);
-      try { localStorage.removeItem(histKey); } catch(e) {}
-    }
-
-    // Karıştır, 5 seç
-    const shuffled = shuffleArr(available);
-    const selectedIdxs = shuffled.slice(0, Math.min(5, shuffled.length));
-    const selectedQs = selectedIdxs.map(i=>pool[i]);
-
-    // Seçilenleri geçmişe yaz
-    const newSeen = [...seen, ...selectedIdxs];
-    try { localStorage.setItem(histKey, JSON.stringify(newSeen)); } catch(e) {}
-
-    // Orijinal startFight'ı çalıştır ama fQList'i patch'le
+    // Orijinal startFight'ı çalıştır (fCorrect/fWrong sıfırlanır, vs.)
     _origSF(idx);
-    // Override fQList hemen sonra (startFight içinde shuffleArr tekrar çalışmadan önce override)
-    fQList = selectedQs;
+
+    // Tüm soruları farklı sırayla (att seed ile) sırala
+    const pool = [...boss.qs];
+    // Seeded Fisher-Yates
+    let seed = idx * 9973 + att * 1009;
+    for(let i=pool.length-1;i>0;i--){
+      seed = (seed * 1664525 + 1013904223) & 0x7fffffff;
+      const j = seed % (i+1);
+      [pool[i],pool[j]]=[pool[j],pool[i]];
+    }
+    fQList = pool; // Tüm sorular, yeni sırayla
     fD = Math.floor(boss.maxHp / fQList.length);
-    // Ekran güncelle
+    window._fWinThreshold = Math.ceil(fQList.length * 0.66);
+    fCorrect = 0; fWrong = 0; fQ = 0;
     if(typeof showFightQ === 'function') showFightQ();
   };
 })();
@@ -11953,7 +11944,7 @@ function restoreTotals(targetXP, targetQ){
 }
 
 // ═══════════════════ BOSS FIGHT ═══════════════════
-let fB=0,fQ=0,fH=0,fD=0,fEnded=false,fWasAlreadyBeaten=false;
+let fB=0,fQ=0,fH=0,fD=0,fCorrect=0,fWrong=0,fEnded=false,fWasAlreadyBeaten=false;
 
 // Boss grupları: ders bazlı + genel
 const BOSS_GROUPS=[
@@ -12248,7 +12239,7 @@ function renderBoss(){
               </div>
               <div style="display:flex;justify-content:space-between;margin-top:3px;">
                 <span style="font-size:8px;color:${gc};font-weight:800;">%${100-hpPct} hasar verildi</span>
-                <span style="font-size:8px;color:var(--t3);">${boss.qs.length} soru</span>
+                <span style="font-size:8px;color:var(--t3);">${boss.qs.length} soru · ${Math.ceil(boss.qs.length*0.66)}/${boss.qs.length} doğru = kazanır</span>
               </div>
             </div>`:''}
           <div class="boss-dc">${boss.desc}</div>
@@ -12424,15 +12415,23 @@ function startFight(idx){
     toast('⏳ Bekleme kilidi: '+_h+'s '+_m+'dk kaldı. Boss yenilmeden ayrıldın, yenilendi!','#e53935');
     return;
   }
-  fB=idx;fQ=0;
+  fB=idx;fQ=0;fCorrect=0;fWrong=0;
   const boss=BOSSES.find(b=>b.id===idx)||BOSSES[idx];
   const savedHp=S.bossHp[idx];
   fWasAlreadyBeaten=(savedHp!=null&&savedHp<=0);
   fH=(savedHp!=null&&savedHp>0&&savedHp<=boss.maxHp)?savedHp:boss.maxHp;
-  // Her savaşta boss'un soru havuzundan rastgele 5 soru seç
+  // Her savaşta tüm soruları göster, farklı sıralamayla (öncekinden farklı seed)
   const pool=boss.qs||[];
-  fQList=shuffleArr(pool).slice(0,Math.min(5,pool.length));
+  // fightSeed: boss+gün+kaç kez girildi → her seferinde farklı sıralama
+  if(!window._fightAttempts) window._fightAttempts={};
+  window._fightAttempts[idx]=(window._fightAttempts[idx]||0)+1;
+  const seed=idx*1000+window._fightAttempts[idx];
+  const seededShuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=(seed*9301+49297)%(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+  fQList=seededShuffle(pool); // Tüm sorular, her seferinde farklı sıra
+  // Hasar: boss HP'sini soru sayısına böl (her doğru cevap o kadar hasar)
   fD=Math.floor(boss.maxHp/fQList.length);
+  // Kazanma eşiği: soruların %66'sı (en az)
+  window._fWinThreshold=Math.ceil(fQList.length*0.66);
   fEnded=false;
   const nxt=document.getElementById('fi-nxt');
   nxt.onclick=handleFightNext;
@@ -12448,7 +12447,21 @@ function showFightQ(){
   const q=fQList[fQ];
   if(!q){endFight();return;}
   document.getElementById('fi-lb').textContent=`${boss.emoji} ${boss.name} — Soru ${fQ+1}/${fQList.length}`;
-  document.getElementById('fi-dots').innerHTML=fQList.map((_,i)=>`<div class="fi-d${i<fQ?' done':i===fQ?' cur':''}"></div>`).join('');
+  // Çok soru varsa küçük dot göster
+  const dotSize=fQList.length>8?'6px':'8px';
+  const dotEl=document.getElementById('fi-dots');
+  dotEl.style.flexWrap='wrap';
+  dotEl.innerHTML=fQList.map((_,i)=>`<div class="fi-d${i<fQ?' done':i===fQ?' cur':''}" style="width:${dotSize};height:${dotSize};min-width:${dotSize};"></div>`).join('');
+  // Skor barı — eşik bilgisi
+  let scoreEl=document.getElementById('fi-score-bar');
+  if(!scoreEl){
+    scoreEl=document.createElement('div');
+    scoreEl.id='fi-score-bar';
+    scoreEl.style.cssText='text-align:center;font-size:10px;padding:4px 0 2px;letter-spacing:.5px;';
+    document.getElementById('fi-dots')?.after(scoreEl);
+  }
+  const wt=window._fWinThreshold||Math.ceil(fQList.length*0.66);
+  scoreEl.innerHTML=`<span style="color:#4caf50;">✓ ${fCorrect}</span> <span style="color:#e53935;">✗ ${fWrong}</span> <span style="color:var(--t3);margin-left:8px;">Kazanmak için: ${wt}/${fQList.length} doğru</span>`;
   document.getElementById('fi-q').textContent=q.q;
   // Boss emoji güncelle
   const em=document.getElementById('fi-boss-em');
@@ -12508,34 +12521,33 @@ function answerFight(chosen,correct,btn){
     if(em){em.style.animation='bossLaugh .5s ease-in-out 2';setTimeout(()=>{if(em&&fH>0)em.style.animation='bossIdle 2s ease-in-out infinite';},1100);}
   }
   res.style.display='block';
+  if(chosen===correct) fCorrect++; else fWrong++;
   fQ++;
-  // Can sıfıra düştüyse savaş hemen biter — kalan sorular sorulmaz
-  const bossDefeated=fH<=0;
+  const winThreshold=window._fWinThreshold||Math.ceil(fQList.length*0.66);
   const questionsFinished=fQ>=fQList.length;
-  const isLast=bossDefeated||questionsFinished;
-  fEnded=isLast;
+  // Skor barı güncelle
+  const scoreEl=document.getElementById('fi-score-bar');
+  if(scoreEl){
+    scoreEl.innerHTML=`<span style="color:#4caf50;">✓ ${fCorrect}</span> <span style="color:#e53935;">✗ ${fWrong}</span> <span style="color:var(--t3);margin-left:8px;">Eşik: ${winThreshold}/${fQList.length}</span>`;
+  }
   const nxt=document.getElementById('fi-nxt');
   nxt.style.display='block';
-  if(isLast){
-    if(!fEnded){
-      if(bossDefeated){
-        S.bossHp[fB]=0;
-        if(!S.bossCooldown)S.bossCooldown={};
-        delete S.bossCooldown[fB];
-      } else {
-        const bossRef=BOSSES.find(b=>b.id===fB);
-        S.bossHp[fB]=bossRef?bossRef.maxHp:fH;
-        if(!S.bossCooldown)S.bossCooldown={};
-        S.bossCooldown[fB]=Date.now()+4*60*60*1000;
-      }
-      save();
-    }
-    if(bossDefeated&&chosen===correct){
-      res.innerHTML+=' <b style="color:#ffd700;font-size:13px;">🏆 Boss yenildi!</b>';
-    }
-    nxt.textContent=fH<=0?'🏆 Boss Yenildi! Ödülü Al ➡️':'Sonucu Gör ➡️';
-  }else{
+  if(!questionsFinished){
+    // Henüz bitmedi — sadece sonraki soruya geç
     nxt.textContent=`Sonraki Soru (${fQ+1}/${fQList.length}) ➡️`;
+    fEnded=false;
+  } else {
+    // Tüm sorular bitti — şimdi kazan/kaybet kararı ver
+    fEnded=true;
+    const bossDefeated=fCorrect>=winThreshold;
+    if(bossDefeated){
+      fH=0;
+      res.innerHTML+=' <b style="color:#ffd700;font-size:13px;">🏆 Boss yenildi!</b>';
+      nxt.textContent='🏆 Boss Yenildi! Ödülü Al ➡️';
+    } else {
+      res.innerHTML+='<b style="color:#e53935;font-size:13px;">💀 Yeterli değil! ('+fCorrect+'/'+fQList.length+')</b>';
+      nxt.textContent='Sonucu Gör ➡️';
+    }
   }
 }
 
@@ -12548,15 +12560,22 @@ function handleFightNext(){
 }
 
 function endFight(){
-  const boss=BOSSES.find(b=>b.id===fB)||BOSSES[fB];const won=fH<=0;
+  const boss=BOSSES.find(b=>b.id===fB)||BOSSES[fB];
+  const winThreshold=window._fWinThreshold||Math.ceil(fQList.length*0.66);
+  const won=fCorrect>=winThreshold; // eşik bazlı kazanma
   const alreadyBeaten=fWasAlreadyBeaten;
   // ── HP KAYDET: Girmediğinde tam HP göster ──
   if(!S.bossCooldown)S.bossCooldown={};
   if(won){
     S.bossHp[fB]=0;
+    if(!S.bossCooldown) S.bossCooldown={};
     delete S.bossCooldown[fB];
+    if(!window._fightAttempts) window._fightAttempts={};
+    window._fightAttempts[fB]=0;
   } else {
-    S.bossHp[fB]=boss.maxHp; // Boss kaçtı → HP sıfırla (tam göster)
+    S.bossHp[fB]=boss.maxHp; // Tam HP göster
+    // Kaybedince 4 saat cooldown
+    if(!S.bossCooldown) S.bossCooldown={};
     S.bossCooldown[fB]=Date.now()+4*60*60*1000;
   }
   save();
@@ -12565,6 +12584,11 @@ function endFight(){
   if(em){
     if(won){em.textContent='💀';em.style.animation='none';em.style.filter='grayscale(1) opacity(0.4)';}
     else{em.textContent=boss.emoji;em.style.animation='bossLaugh .6s ease-in-out 3';}
+    // Skor özeti
+    const scoreSum=document.getElementById('fi-score-bar');
+    if(scoreSum) scoreSum.innerHTML=won
+      ? `<span style="color:#ffd700;font-weight:900;">🏆 KAZANDIN! ${fCorrect}/${fQList.length} doğru (%${Math.round(fCorrect/fQList.length*100)})</span>`
+      : `<span style="color:#e53935;font-weight:900;">💀 Kaybettin — ${fCorrect}/${fQList.length} doğru · Eşik: ${winThreshold} · ⏳ 4 saat bekleme başladı</span>`;
   }
     const _cdUntil=(S.bossCooldown||{})[fB]||0;
   const _cdLeft=Math.max(0,_cdUntil-Date.now());
@@ -18992,8 +19016,10 @@ async function pushTourneyScore(week, xp){
   if(!_fbUser||!window._fbDb) return;
   const {doc,setDoc}=window._fbFirestore||{};
   if(!doc||!setDoc) return;
+  if(!week) week = getTourneyWeek();
+  if(!(xp>0)) xp = S.tourneyXp||0;
+  if(!(xp>0)) return; // 0 XP ile kaydetme
   try{
-    // Kendi leaderboard dokümanına yazıyoruz (izin var)
     const ref=doc(window._fbDb,'leaderboard',_fbUser.uid);
     await setDoc(ref,{
       tourneyWeek:week,
@@ -19016,7 +19042,7 @@ async function fetchTourneyScores(week){
     const snap=await getDocs(collection(window._fbDb,'leaderboard'));
     return snap.docs
       .map(d=>({id:d.id,...d.data()}))
-      .filter(d=>d.tourneyWeek===week && (d.tourneyXp||0)>0)
+      .filter(d=>d.tourneyWeek===week && (d.tourneyXp||0)>0 && !d.id.startsWith('__boss_'))
       .sort((a,b)=>(b.tourneyXp||0)-(a.tourneyXp||0))
       .slice(0,50);
   }catch(e){
@@ -19027,8 +19053,10 @@ async function fetchTourneyScores(week){
 
 async function renderTourney(){
   checkTourneyReset();
-  // Skoru Firebase'e gönder — sadece xp>0 ise push et
-  if(_fbUser && (S.tourneyXp||0)>0) pushTourneyScore(S.tourneyWeek, S.tourneyXp||0).catch(()=>{});
+  // Her açılışta skoru push et (diğerleri görebilsin)
+  if(_fbUser && (S.tourneyXp||0)>0){
+    await pushTourneyScore(S.tourneyWeek||getTourneyWeek(), S.tourneyXp||0).catch(()=>{});
+  }
 
   const pg=document.getElementById('page');
   pg.innerHTML=`<div style="text-align:center;padding:40px;color:var(--t3);">⏳ Turnuva yükleniyor...</div>`;
@@ -20486,8 +20514,10 @@ async function pushGlobalLb(){
       }catch(e){}
     }
 
-    // 3. Kendi kaydımızı yaz
+    // 3. Kendi kaydımızı yaz (turnuva verisi de dahil)
     const ref = doc(window._fbDb,'leaderboard',_fbUser.uid);
+    const wk2=typeof getTourneyWeek==='function'?getTourneyWeek():(S.tourneyWeek||'');
+    const txp2=S.tourneyXp||0;
     await setDoc(ref,{
       name:S.myName||'YKS Savaşçısı',
       xp:S.xp||0,
@@ -20500,6 +20530,8 @@ async function pushGlobalLb(){
       weekXpKey:curWeekKey(),
       uid:_fbUser.uid,
       code:S.friendCode||'',
+      // Turnuva verisi
+      ...(txp2>0?{tourneyWeek:wk2,tourneyXp:txp2}:{}),
       // ── Soru istatistikleri (artık Firestore'a yazılıyor) ──
       questions:S.questions||0,
       correct:S.correct||0,
@@ -20517,7 +20549,7 @@ async function pushGlobalLb(){
           xp:v.xp||0
         }])
       )
-    });
+    },{merge:true});
   }catch(e){console.warn('[GlobalLb push]',e);}
 }
 
@@ -27583,24 +27615,44 @@ function _getSeasonData(){
     const raw=localStorage.getItem('yks_season');
     if(raw){
       const d=JSON.parse(raw);
-      if(d.key===key) return d;
+      if(d.key===key){
+        // Anlık sezon XP'sini her zaman S.xp - startXp'den hesapla
+        if(d.startXp!=null) d.xp=Math.max(0,(typeof S!=='undefined'?S.xp:0)-d.startXp);
+        return d;
+      }
       // Yeni sezon — eskiyi arşivle
       const hist=JSON.parse(localStorage.getItem('yks_season_hist')||'[]');
+      // Geçen sezonun final XP'sini kaydet
+      if(d.startXp!=null) d.xp=Math.max(0,d.finalXp||d.xp||0);
       hist.unshift(d); if(hist.length>6) hist.pop();
       _lsSet('yks_season_hist',JSON.stringify(hist));
     }
   }catch(e){}
-  const fresh={key:_seasonKey(),xp:0,startedAt:Date.now()};
+  // Yeni sezon başlat — başlangıç XP'sini kaydet
+  const startXp=typeof S!=='undefined'?S.xp:0;
+  const fresh={key:_seasonKey(),xp:0,startXp,startedAt:Date.now()};
   _lsSet('yks_season',JSON.stringify(fresh));
   return fresh;
 }
 
 function _addSeasonXp(amt){
-  if(amt<=0||amt>5000) return; // sanity check
+  // Artık sadece startXp güncelleniyor, XP otomatik hesaplanıyor
+  // Bu fonksiyon backward compat için tutuluyor ama bir şey yapmıyor
+}
+
+function _syncSeasonStartXp(){
+  // startXp yoksa şimdi ayarla (eski kullanıcı migration)
   try{
-    const d=_getSeasonData();
-    d.xp=(d.xp||0)+amt;
-    localStorage.setItem('yks_season',JSON.stringify(d));
+    const raw=localStorage.getItem('yks_season');
+    if(raw){
+      const d=JSON.parse(raw);
+      if(d.key===_seasonKey()&&d.startXp==null){
+        // Eski format — startXp bilinmiyor, mevcut xp'yi koru
+        // En az şimdi'den itibaren sayar
+        d.startXp=Math.max(0,(typeof S!=='undefined'?S.xp:0)-(d.xp||0));
+        _lsSet('yks_season',JSON.stringify(d));
+      }
+    }
   }catch(e){}
 }
 
@@ -28013,16 +28065,36 @@ window.streakUpd=function(){
   }
 };
 
-// XP save hook — season XP tracking
-let _prevXp=0;
+// XP save hook — season sync (startXp-based)
 const _origSave=window.save;
 window.save=function(){
   if(_origSave) _origSave.call(this);
-  const diff=S.xp-_prevXp;
-  if(diff>0&&diff<5000) _addSeasonXp(diff);
-  _prevXp=S.xp;
+  // Sezon final XP'sini canlı güncelle (arşivleme için)
+  try{
+    const raw=localStorage.getItem('yks_season');
+    if(raw){
+      const d=JSON.parse(raw);
+      if(d.key===_seasonKey()){
+        d.finalXp=S.xp-(d.startXp||0);
+        localStorage.setItem('yks_season',JSON.stringify(d));
+      }
+    }
+  }catch(e){}
 };
-setTimeout(()=>{_prevXp=S.xp;},300);
+// Migration: eski kullanıcılar için startXp hesapla
+setTimeout(()=>{ if(typeof _syncSeasonStartXp==='function') _syncSeasonStartXp(); },400);
+
+// Turnuva skoru — her save() sonrası debounced push (30sn cooldown)
+window._tourneyLastPushTs=window._tourneyLastPushTs||0;
+const _origSave2=window.save;
+window.save=function(){
+  if(_origSave2) _origSave2.apply(this,arguments);
+  const now=Date.now();
+  if(now-window._tourneyLastPushTs>30000 && typeof pushTourneyScore==='function' && typeof _fbUser!=='undefined' && _fbUser && (S.tourneyXp||0)>0){
+    window._tourneyLastPushTs=now;
+    pushTourneyScore(S.tourneyWeek||getTourneyWeek(), S.tourneyXp||0).catch(()=>{});
+  }
+};
 
 // ═══════════════════════════════════════════════════
 // 5. MASTERY ÇARKI (Canvas radar)
@@ -28252,6 +28324,8 @@ function _injectHomeCards(){
 
   const ev=_getDailyEvent();
   const season=_getSeasonData();
+  const season_xp=season.startXp!=null?Math.max(0,S.xp-season.startXp):(season.xp||0);
+  season.xp=season_xp; // normalize for downstream usage
   const tier=_seasonTier(season.xp);
   const nextT=_seasonNextTier(season.xp);
   const d=new Date();
@@ -28760,12 +28834,14 @@ function renderMasteryFull(){
   }).join('');
 
   // Current season card
+  // Sezon XP = S.xp - startXp (gerçek zamanlı)
   const season = typeof _getSeasonData === 'function' ? _getSeasonData() : {xp:0};
-  const tier = typeof _seasonTier === 'function' ? _seasonTier(season.xp) : {icon:'🥉',name:'Acemi',color:'#78909c',min:0};
-  const nextT = typeof _seasonNextTier === 'function' ? _seasonNextTier(season.xp) : null;
+  const seasonXp = season.startXp!=null ? Math.max(0,(typeof S!=='undefined'?S.xp:0)-season.startXp) : (season.xp||0);
+  const tier = typeof _seasonTier === 'function' ? _seasonTier(seasonXp) : {icon:'🥉',name:'Acemi',color:'#78909c',min:0};
+  const nextT = typeof _seasonNextTier === 'function' ? _seasonNextTier(seasonXp) : null;
   const d = new Date();
   const daysLeft = new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate();
-  const seasonPct = nextT ? Math.min(100,Math.round(((season.xp-tier.min)/(nextT.min-tier.min))*100)) : 100;
+  const seasonPct = nextT ? Math.min(100,Math.round(((seasonXp-tier.min)/(nextT.min-tier.min))*100)) : 100;
 
   pg.innerHTML = `
     <div style="font-size:13px;font-weight:900;margin-bottom:3px;">🌟 Mastery & Sezon</div>
@@ -28784,7 +28860,7 @@ function renderMasteryFull(){
           <div style="font-size:13px;font-weight:900;color:#fff;">${tier.name}</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:13px;font-weight:900;color:${tier.color};">${(season.xp||0).toLocaleString()}</div>
+          <div style="font-size:13px;font-weight:900;color:${tier.color};">${seasonXp.toLocaleString()}</div>
           <div style="font-size:8px;color:var(--t3);">XP · ${daysLeft} gün</div>
         </div>
       </div>
@@ -28793,7 +28869,7 @@ function renderMasteryFull(){
           border-radius:100px;transition:width .6s;"></div>
       </div>
       <div style="font-size:8px;color:var(--t3);">
-        ${nextT?`${nextT.icon} ${nextT.name} için ${(nextT.min-season.xp).toLocaleString()} XP daha`
+        ${nextT?`${nextT.icon} ${nextT.name} için ${(nextT.min-seasonXp).toLocaleString()} XP daha`
           :'👑 Zirve sezonu!'}
       </div>
     </div>
