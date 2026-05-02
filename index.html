@@ -5684,21 +5684,79 @@ function maybeLU(ox){
     },600);
   }
 }
-// XP bonus multiplier from skill tree
-function xpBonus(base,type){
-  const sk=S.skills||{};
-  let mul=1;
-  if(type==='xp'||type==='general'){
-    if(sk.xp3)mul+=0.50;else if(sk.xp2)mul+=0.30;else if(sk.xp1)mul+=0.15;
+// XP bonus multiplier from skill tree + active item effects
+function xpBonus(base, type, extraCtx){
+  const sk = S.skills||{};
+  const hfx = window._hasFx || (typeof _hasFx==='function'?_hasFx:()=>false);
+  let mul = 1;
+  let flat = 0;
+
+  // ── Genel XP skill bonusu (her kazanımda uygulanır) ──
+  if(sk.xp4) mul += 0.75;
+  else if(sk.xp3) mul += 0.50;
+  else if(sk.xp2) mul += 0.30;
+  else if(sk.xp1) mul += 0.15;
+
+  // ── Eşya: XP büyüsü +50% ──
+  if(hfx('xp_boost')) mul += 0.50;
+  // ── Eşya: Çift XP iksiri ──
+  if(hfx('double_xp')) mul += 1.00;
+  // ── Eşya: XP Mıknatısı ──
+  if(hfx('xp_magnet')) mul += 0.25;
+
+  // ── Deneme XP bonusu ──
+  if(type==='den'){
+    if(sk.den3) mul += 0.60;
+    else if(sk.den1||sk.den2) mul += 0.25;
+    // Net bazlı bonus (extraCtx.net varsa)
+    if(sk.den2 && extraCtx?.net > 0) flat += Math.floor(extraCtx.net * 1);
+    if(sk.den4 && extraCtx?.net >= 35) flat += 200;
   }
-  if(type==='den'&&(sk.den3))mul+=0.60;
-  else if(type==='den'&&sk.den2)mul+=0.25;  
-  else if(type==='den'&&sk.den1)mul+=0.25;
-  if(type==='boss'&&sk.boss2)mul+=0.40;
-  return Math.round(base*mul);
+
+  // ── Boss XP bonusu ──
+  if(type==='boss'){
+    if(sk.boss4) mul += 0.80;
+    else if(sk.boss2) mul += 0.40;
+    // Şans jeton: sonraki boss 2x
+    if(hfx('lucky_coin')) mul += 1.00;
+  }
+
+  // ── Görev bonus ──
+  if(type==='task'){
+    if(sk.gorev1) flat += 3;
+  }
+
+  // ── Konu tamamlama bonusu ──
+  if(type==='topic'){
+    if(sk.konu3) flat += 30;
+    else if(sk.konu2) flat += 15;
+    else if(sk.konu1) flat += 5;
+  }
+
+  // ── Çalışma süresi bonusu ──
+  if(type==='minute'){
+    if(sk.study1) mul += 0.20;
+  }
+
+  // ── Seri bonusu ──
+  if(type==='streak'){
+    const streak = S.streak||0;
+    if(sk.streak4 && streak >= 30) flat += 75;
+    else if(sk.streak3 && streak >= 7) flat += 25;
+  }
+
+  return Math.round(base * mul) + flat;
 }
 // Check if streak shield should absorb a break
 function consumeStreakShield(){
+  // Önce item: streak_saver
+  const hfx_s = window._hasFx||(typeof _hasFx==='function'?_hasFx:()=>false);
+  if(hfx_s('streak_saver')){
+    try{ const fxD=JSON.parse(localStorage.getItem('yks_fx')||'{}'); delete fxD['streak_saver']; localStorage.setItem('yks_fx',JSON.stringify(fxD)); }catch(e){}
+    toast('🧿 Seri Koruyucu eşyası devreye girdi! Seriniz korundu.');
+    return true;
+  }
+  // Sonra skill: streak1
   if((S.skills||{}).streak1&&!(S.shieldUsed)){S.shieldUsed=true;save();toast('🛡️ Seri Kalkanı devreye girdi! Seriniz korundu.');return true;}
   return false;
 }
@@ -7359,6 +7417,16 @@ function addTask(){
     if(topic)S.subjects[S.selSubj].topics[topic]=true;
     desc=topic?`${s.icon} ${s.name}: "${topic}"`:`${s.icon} ${s.name}: konu`;
   }
+  // Yetenek + eşya bonusları uygula
+  // study_potion/time_boost item efekti — dakika XP'yi artır
+  const hfx_t = window._hasFx||(typeof _hasFx==='function'?_hasFx:()=>false);
+  if(type==='minute'){
+    if(hfx_t('study_potion')||hfx_t('time_boost')) xp = Math.round(xp*1.5);
+  }
+  const xpType = (type==='minute')?'minute':(type==='question')?'general':'task';
+  const xpAfterBonus = xpBonus(xp, xpType);
+  const xpDiff = xpAfterBonus - xp;
+  if(xpDiff>0) xp = xpAfterBonus; // Görev kaydı bonuslu XP ile
   const ox=S.xp;S.xp+=xp;S.tasks+=1;S.subjects[S.selSubj].xp+=xp;S.subjects[S.selSubj].tasks+=1;
   streakUpd();addWXP(xp);
   const qCount=(type==='question')?(correct+wrong):(type==='minute'?(correct+wrong):0);
@@ -8836,7 +8904,8 @@ function toggleTopic(sid,encodedTopic){
     // Konu haritasına eklenince bankalarda da işaretle
     (S.soruBankalari||[]).filter(b=>b.subjId===sid).forEach(b=>{b.topics.forEach(t=>{if(t.name===topic)t.done=true;});});
     (S.fasikuller||[]).filter(f=>f.subjId===sid).forEach(f=>{f.bolumler.forEach(b=>{if(b.name===topic)b.done=true;});});
-    addWXP(10);streakUpd();addLog((SUBJ.find(x=>x.id===sid)?.icon||'📚'),`Konu: ${topic}`,10); // CRASH fix
+    const txp1=xpBonus(10,'topic');S.xp+=(txp1-10);
+    addWXP(txp1);streakUpd();addLog((SUBJ.find(x=>x.id===sid)?.icon||'📚'),`Konu: ${topic}`,txp1); // CRASH fix
     addDailyLog(10,0,0,sid); // Bug 18: dailyLog.xp güncelle
     chkBdgs();maybeLU(ox);toast(`"${topic}" tamamlandı! +10 XP ✅`);
   }
@@ -8862,7 +8931,8 @@ function toggleBankaTopic(bid,ti){
     if(s)S.subjects[s.id].xp+=15;
     // Konu haritasına da ekle/işaretle
     if(s){if(!S.subjects[s.id].topics)S.subjects[s.id].topics={};S.subjects[s.id].topics[topicName]=true;}
-    addWXP(15);streakUpd();addLog(ders?ders.icon:'📚',`${b.name}: ${topicName}`,15);
+    const txp2=xpBonus(15,'topic');S.xp+=(txp2-15);
+    addWXP(txp2);streakUpd();addLog(ders?ders.icon:'📚',`${b.name}: ${topicName}`,txp2);
     addDailyLog(15,0,0,s?s.id:null);
     chkBdgs();maybeLU(ox);toast(`"${topicName}" tamamlandı! +15 XP ✅`);
   }else{
@@ -9353,10 +9423,11 @@ function saveBransDeneme(bransId,btn){
   const d={id:S.denemeId++,tur:'BRANS',bransId,nets,totalNet,note,date:new Date().toLocaleDateString('tr-TR')};
   if(!S.denemeler)S.denemeler=[];
   S.denemeler.push(d);
-  const xp=Math.max(15,Math.round(Math.abs(totalNet)));
+  let xp=Math.max(15,Math.round(Math.abs(totalNet)));
+  xp=xpBonus(xp,'den',{net:totalNet});
   const ox=S.xp;S.xp+=xp;addWXP(xp);streakUpd();
   addLog(brans.icon,`${brans.name} branş: ${totalNet.toFixed(1)} net`,xp);
-  addDailyLog(xp,0,0); // Bug 27: dailyLog.xp güncelle
+  addDailyLog(xp,0,0);
   chkBdgs();save();toast(`${brans.name} denemesi kaydedildi! +${xp} XP 📊`);maybeLU(ox);renderDeneme();
 }
 
@@ -9374,10 +9445,11 @@ function saveDeneme(tur,btn){
   const d={id:S.denemeId++,tur,nets,totalNet,note,date:new Date().toLocaleDateString('tr-TR')};
   if(!S.denemeler)S.denemeler=[];
   S.denemeler.push(d);
-  const xp=Math.max(20,Math.round(Math.abs(totalNet)));
+  let xp=Math.max(20,Math.round(Math.abs(totalNet)));
+  xp=xpBonus(xp,'den',{net:totalNet});
   const ox=S.xp;S.xp+=xp;addWXP(xp);streakUpd();
   addLog('📊',`${tur} Denemesi: ${totalNet.toFixed(1)} net`,xp);
-  addDailyLog(xp,0,0); // Bug 19: dailyLog.xp güncelle
+  addDailyLog(xp,0,0);
   chkBdgs();save();toast(`Deneme kaydedildi! +${xp} XP 📊`);maybeLU(ox);renderDeneme();
   // renderDeneme butonu yeniden oluşturur, disabled sıfırlamaya gerek yok
 }
@@ -12352,54 +12424,59 @@ let fQList=[]; // Bu savaştaki rastgele seçilmiş soru listesi
 
 // ═══ BOSS SES EFEKTLERİ (Web Audio API) ═══
 function playBossSound(type){
+  if(localStorage.getItem('yks_sfx')==='off') return;
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    // Master volume — düşük ve yumuşak
+    const master=ctx.createGain();
+    // Fade-in koruması: ani başlama önlenir
+    master.gain.setValueAtTime(0, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(0.18, ctx.currentTime+0.06); // yavaş fade-in
+    master.connect(ctx.destination);
+
     if(type==='pain'){
-      // Boss acı çığlığı — yüksek perdeli, kesik çığlık
-      const osc1=ctx.createOscillator();
-      const osc2=ctx.createOscillator();
+      // Boss hasar sesi — yumuşak, alçak, kısa唸り
+      const osc=ctx.createOscillator();
       const gain=ctx.createGain();
-      const dist=ctx.createWaveShaper();
-      // Distortion curve
-      const curve=new Float32Array(256);
-      for(let i=0;i<256;i++){const x=i*2/256-1;curve[i]=x<0?-Math.pow(-x,0.4):Math.pow(x,0.4);}
-      dist.curve=curve;
-      osc1.connect(dist);osc2.connect(dist);dist.connect(gain);gain.connect(ctx.destination);
-      osc1.type='sawtooth';osc2.type='square';
-      // Pitch: starts high, drops fast — pain screech
-      osc1.frequency.setValueAtTime(900,ctx.currentTime);
-      osc1.frequency.exponentialRampToValueAtTime(200,ctx.currentTime+0.4);
-      osc2.frequency.setValueAtTime(700,ctx.currentTime);
-      osc2.frequency.exponentialRampToValueAtTime(150,ctx.currentTime+0.35);
-      gain.gain.setValueAtTime(0.0,ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.55,ctx.currentTime+0.02);
-      gain.gain.setValueAtTime(0.55,ctx.currentTime+0.12);
+      // Low-pass filtre: yüksek frekansları kes, sert sesler yumuşasın
+      const lpf=ctx.createBiquadFilter();
+      lpf.type='lowpass';
+      lpf.frequency.setValueAtTime(600,ctx.currentTime);
+      osc.connect(lpf);lpf.connect(gain);gain.connect(master);
+      osc.type='sine'; // sawtooth yerine sine — çok daha yumuşak
+      osc.frequency.setValueAtTime(280,ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120,ctx.currentTime+0.5);
+      gain.gain.setValueAtTime(1.0,ctx.currentTime);
       gain.gain.linearRampToValueAtTime(0.0,ctx.currentTime+0.55);
-      osc1.start(ctx.currentTime);osc2.start(ctx.currentTime);
-      osc1.stop(ctx.currentTime+0.55);osc2.stop(ctx.currentTime+0.55);
-      setTimeout(()=>ctx.close(),700);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime+0.55);
+      // Master fade-out
+      master.gain.setValueAtTime(0.18,ctx.currentTime+0.3);
+      master.gain.linearRampToValueAtTime(0.0,ctx.currentTime+0.65);
+      setTimeout(()=>ctx.close(),800);
+
     } else if(type==='laugh'){
-      // Boss kötü kahkahası — düşük, titreşen, tekrarlayan
-      const laughSteps=4;
-      for(let s=0;s<laughSteps;s++){
+      // Boss gülen ses — hafif, yumuşak titreme
+      const steps=3; // 4'ten 3'e indir
+      for(let s=0;s<steps;s++){
         const osc=ctx.createOscillator();
-        const lfo=ctx.createOscillator();
-        const lfoGain=ctx.createGain();
         const gain=ctx.createGain();
-        lfo.connect(lfoGain);lfoGain.connect(osc.frequency);
-        osc.connect(gain);gain.connect(ctx.destination);
-        osc.type='sawtooth';lfo.type='sine';
-        const t=ctx.currentTime+s*0.18;
-        osc.frequency.setValueAtTime(180+s*15,t);
-        osc.frequency.setValueAtTime(130+s*10,t+0.12);
-        lfo.frequency.setValueAtTime(8,t);
-        lfoGain.gain.setValueAtTime(30,t);
+        const lpf=ctx.createBiquadFilter();
+        lpf.type='lowpass';
+        lpf.frequency.setValueAtTime(500,ctx.currentTime);
+        osc.connect(lpf);lpf.connect(gain);gain.connect(master);
+        osc.type='triangle'; // sawtooth yerine triangle — çok daha yumuşak
+        const t=ctx.currentTime+s*0.22;
+        osc.frequency.setValueAtTime(160+s*10,t);
+        osc.frequency.linearRampToValueAtTime(120+s*8,t+0.16);
         gain.gain.setValueAtTime(0.0,t);
-        gain.gain.linearRampToValueAtTime(0.4,t+0.02);
-        gain.gain.linearRampToValueAtTime(0.0,t+0.15);
-        osc.start(t);lfo.start(t);
-        osc.stop(t+0.18);lfo.stop(t+0.18);
+        gain.gain.linearRampToValueAtTime(0.8,t+0.05); // yavaş yüksel
+        gain.gain.linearRampToValueAtTime(0.0,t+0.18);
+        osc.start(t);
+        osc.stop(t+0.20);
       }
+      master.gain.setValueAtTime(0.18,ctx.currentTime+0.5);
+      master.gain.linearRampToValueAtTime(0.0,ctx.currentTime+0.9);
       setTimeout(()=>ctx.close(),1200);
     }
   }catch(e){}
@@ -12416,6 +12493,10 @@ function startFight(idx){
     return;
   }
   fB=idx;fQ=0;fCorrect=0;fWrong=0;
+  // Joker hakkı (skill boss1 = 1, boss3 = +1 daha)
+  const sk_j=S.skills||{};
+  window._fJokers=(sk_j.boss3?2:sk_j.boss1?1:0);
+  window._fJokersLeft=window._fJokers;
   const boss=BOSSES.find(b=>b.id===idx)||BOSSES[idx];
   const savedHp=S.bossHp[idx];
   fWasAlreadyBeaten=(savedHp!=null&&savedHp<=0);
@@ -12514,11 +12595,31 @@ function answerFight(chosen,correct,btn){
     if(wrap){wrap.style.position='relative';wrap.appendChild(dmgEl);setTimeout(()=>dmgEl.remove(),1000);}
   }else{
     btn.classList.add('wrong');
-    res.innerHTML='❌ Yanlış! Doğru: <b style="color:#4caf50;">'+fQList[fQ].opts[correct]+'</b>';
-    res.style.color='#e53935';
-    // Boss kötü kahkahası
-    playBossSound('laugh');
-    if(em){em.style.animation='bossLaugh .5s ease-in-out 2';setTimeout(()=>{if(em&&fH>0)em.style.animation='bossIdle 2s ease-in-out infinite';},1100);}
+    // Joker kontrolü — boss1 veya combo_shield varsa yanlışı yutabilir
+    const hfx_j = window._hasFx||(typeof _hasFx==='function'?_hasFx:()=>false);
+    const hasComboShield = hfx_j('combo_shield');
+    const jokersLeft = window._fJokersLeft||0;
+    if(jokersLeft>0){
+      window._fJokersLeft--;
+      res.innerHTML='🃏 Joker! Yanlış cevap yutuldu! ('+window._fJokersLeft+' joker kaldı) — Doğru: <b style="color:#4caf50;">'+fQList[fQ].opts[correct]+'</b>';
+      res.style.color='#f5a623';
+      // Joker = yanlış saymıyoruz, doğru gibi say
+      fCorrect++;
+    } else if(hasComboShield){
+      // combo_shield tek seferlik yanlış koruması
+      try{ const fxD=JSON.parse(localStorage.getItem('yks_fx')||'{}'); delete fxD['combo_shield']; localStorage.setItem('yks_fx',JSON.stringify(fxD)); }catch(e){}
+      res.innerHTML='🛡️ Combo Kalkanı! Yanlış cevap engellendi! — Doğru: <b style="color:#4caf50;">'+fQList[fQ].opts[correct]+'</b>';
+      res.style.color='#64b5f6';
+      fCorrect++;
+    } else {
+      res.innerHTML='❌ Yanlış! Doğru: <b style="color:#4caf50;">'+fQList[fQ].opts[correct]+'</b>';
+      res.style.color='#e53935';
+    }
+    // Boss kötü kahkahası (joker yoksa)
+    if(jokersLeft<=0&&!hasComboShield){
+      playBossSound('laugh');
+      if(em){em.style.animation='bossLaugh .5s ease-in-out 2';setTimeout(()=>{if(em&&fH>0)em.style.animation='bossIdle 2s ease-in-out infinite';},1100);}
+    }
   }
   res.style.display='block';
   if(chosen===correct) fCorrect++; else fWrong++;
@@ -12614,12 +12715,20 @@ function endFight(){
       if(typeof boss.id==='number'&&boss.id<=11){
         S.bossesBeaten=(S.bossesBeaten||0)+1;
       }
-      const ox=S.xp;S.xp+=boss.reward;
-      addWXP(boss.reward);streakUpd();
-      addLog(boss.emoji,`Boss yenildi: ${boss.name}!`,boss.reward);
-      addDailyLog(boss.reward,0,0); // Bug 23: dailyLog.xp güncelle
+      let bossXp = xpBonus(boss.reward, 'boss');
+      // lucky_coin: 2x boss ödülü, kullanıldıktan sonra tüket
+      const hfx2 = window._hasFx || (typeof _hasFx==='function'?_hasFx:()=>false);
+      if(hfx2('lucky_coin')){
+        const lc_inv = window._getInv?window._getInv():[];
+        const lci = lc_inv.findIndex(i=>i.id==='lucky_coin');
+        if(lci>=0){ if(typeof window.useItem==='function') window.useItem('lucky_coin'); }
+      }
+      const ox=S.xp;S.xp+=bossXp;
+      addWXP(bossXp);streakUpd();
+      addLog(boss.emoji,`Boss yenildi: ${boss.name}!`,bossXp);
+      addDailyLog(bossXp,0,0);
       if(S.curBoss<BOSSES.length-1)S.curBoss=(S.curBoss||0)+1;
-      chkBdgs();save();toast(`+${boss.reward} XP! Boss yenildi! 🏆`);maybeLU(ox);
+      chkBdgs();save();toast(`+${bossXp} XP! Boss yenildi! 🏆`);maybeLU(ox);
       if(typeof window._onBossKill==='function') window._onBossKill();
     }else if(won&&alreadyBeaten){
       toast('Bu boss zaten yenilmişti!');
@@ -18834,8 +18943,9 @@ function updateChainProgress(type,subjId,amount){
       m.completedToday=true;anyDone=true;
       m.streak=(m.streak||0)+1;
       if(m.streak>=m.streakReq){
-        // Zincir TAMAMEN tamamlandı
-        const xp=m.xpReward;
+        // Zincir TAMAMEN tamamlandı — yetenek bonusu ekle
+        const rawChainXp=m.xpReward;
+        const xp=xpBonus(rawChainXp,'general');
         S.xp+=xp;addWXP(xp);S.tourneyXp=(S.tourneyXp||0)+xp;
         m._done=true;
         save();maybeLU(S.xp-xp);
@@ -18951,6 +19061,29 @@ function renderChain(){
   const comboAge = Date.now() - (S.comboLastTs||0);
   const comboActive = comboAge < COMBO_WINDOW_MS;
   const comboLeft = comboActive ? Math.ceil((COMBO_WINDOW_MS - comboAge)/60000) : 0;
+  // Aktif item efektleri
+  const hfx_c = window._hasFx||(typeof _hasFx==='function'?_hasFx:()=>false);
+  const fxRem = window._fxRemaining||(typeof _fxRemaining==='function'?_fxRemaining:(id)=>0);
+  const activeItems = [];
+  const itemDefs = window.ITEMS||(typeof ITEMS!=='undefined'?ITEMS:{});
+  Object.keys(itemDefs).forEach(id=>{
+    if(hfx_c(id)){
+      const rem = fxRem(id);
+      const mins = rem>0?Math.ceil(rem/60000):0;
+      const label = mins>60?`${Math.floor(mins/60)}s ${mins%60}dk`:`${mins}dk`;
+      activeItems.push(`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <span style="font-size:18px;">${itemDefs[id].icon||'✨'}</span>
+        <div style="flex:1;"><div style="font-size:10px;font-weight:800;color:#fff;">${itemDefs[id].name}</div>
+        <div style="font-size:9px;color:var(--t3);">${itemDefs[id].desc}</div></div>
+        <span style="font-size:9px;color:#f5a623;font-weight:700;">⏳ ${label}</span>
+      </div>`);
+    }
+  });
+  const itemsHtml = activeItems.length ? `<div style="background:rgba(245,166,35,0.05);border:1px solid rgba(245,166,35,0.2);border-radius:14px;padding:12px;margin-bottom:12px;">
+    <div style="font-size:9px;font-weight:800;color:#f5a623;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">✨ Aktif Eşya Efektleri (${activeItems.length})</div>
+    ${activeItems.join('')}
+  </div>` : '';
+
   const comboHTML = `<div style="background:linear-gradient(135deg,rgba(245,166,35,0.1),rgba(124,77,255,0.08));
     border:1px solid rgba(245,166,35,0.3);border-radius:14px;padding:14px;margin-bottom:14px;">
     <div style="display:flex;align-items:center;gap:10px;">
@@ -18967,6 +19100,7 @@ function renderChain(){
   </div>`;
 
   pg.innerHTML = `
+    ${itemsHtml}
     <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">⚡ COMBO</div>
     ${comboHTML}
     <div style="font-size:10px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">🔗 AKTİVİTE ZİNCİRLERİ (${activeChains.length} aktif)</div>
@@ -25872,6 +26006,15 @@ function cloudSave(){
       // S.log Firestore'a yazılmıyor (1MB limit aşılıyor) — ayrı localStorage'da saklanıyor
       delete data.log;
       delete data.qLog;
+      // Sezon startXp'i cloud'a ekle (Mastery sayfası için)
+      try{
+        const rawSeason=localStorage.getItem('yks_season');
+        if(rawSeason){
+          const sd=JSON.parse(rawSeason);
+          if(sd.startXp!=null) data.seasonStartXp=sd.startXp;
+          if(sd.key) data.seasonKey=sd.key;
+        }
+      }catch(_){}
       const { doc, setDoc } = window._fbFirestore;
       if(!doc || !setDoc) throw new Error('Firestore fonksiyonları hazır değil');
       const ref = doc(window._fbDb, 'users', _fbUser.uid, 'data', 'state');
@@ -25900,8 +26043,11 @@ async function cloudLoad({ forceLoad = false } = {}){
     if(!remote){ return false; }
     // forceLoad=true ise (hesap geçişi) XP kıyaslaması yapma — cloud her zaman kazanır
     // Sadece XP farkı varsa cloud kazanır; ama arkadaş/rozet/log merge HER ZAMAN çalışır
+    // XP eşit veya cloud yüksekse merge yap; aynı XP'de de subject/streak sync gerekir
     const cloudHasHigherXp = (remote.xp||0) >= (S.xp||0);
-    if(forceLoad || cloudHasHigherXp){
+    const cloudHasMoreQuestions = (remote.questions||0) > (S.questions||0);
+    const cloudHasMoreStreak = (remote.streak||0) > (S.streak||0);
+    if(forceLoad || cloudHasHigherXp || cloudHasMoreQuestions || cloudHasMoreStreak){
       const p = remote;
       const ms = {};
       SUBJ.forEach(sb => {
@@ -26056,10 +26202,14 @@ async function cloudLoad({ forceLoad = false } = {}){
         loc.xp=Math.max(loc.xp||0, rem.xp||0);
         ms[sid]=loc;
       });
-      const mergedQuestions=Math.max(p.questions||0, S.questions||0, SUBJ_IDS_MERGE.reduce((a,sid)=>a+(ms[sid]?.questions||0),0));
-      const mergedCorrect=Math.max(p.correct||0, S.correct||0, SUBJ_IDS_MERGE.reduce((a,sid)=>a+(ms[sid]?.correct||0),0));
-      const mergedWrong=Math.max(p.wrong||0, S.wrong||0, SUBJ_IDS_MERGE.reduce((a,sid)=>a+(ms[sid]?.wrong||0),0));
-      const mergedTotalNet=Math.max(p.totalNet||0, S.totalNet||0, parseFloat((mergedCorrect-(mergedWrong/4)).toFixed(2)));
+      // Soru sayıları: subjects toplamı ile global sayıcı arasında büyük olanı al
+      const subjQSum = SUBJ_IDS_MERGE.reduce((a,sid)=>a+(ms[sid]?.questions||0),0);
+      const subjCSum = SUBJ_IDS_MERGE.reduce((a,sid)=>a+(ms[sid]?.correct||0),0);
+      const subjWSum = SUBJ_IDS_MERGE.reduce((a,sid)=>a+(ms[sid]?.wrong||0),0);
+      const mergedQuestions = Math.max(p.questions||0, S.questions||0, subjQSum);
+      const mergedCorrect   = Math.max(p.correct||0,   S.correct||0,   subjCSum);
+      const mergedWrong     = Math.max(p.wrong||0,     S.wrong||0,     subjWSum);
+      const mergedTotalNet  = Math.max(p.totalNet||0, S.totalNet||0, parseFloat((mergedCorrect-(mergedWrong/4)).toFixed(2)));
 
       // ── Merge uygula ──
       S = {
@@ -26089,15 +26239,38 @@ async function cloudLoad({ forceLoad = false } = {}){
       };
       // Yerel korunan alanları geri yaz — cloud bu alanları asla ezemez
       Object.assign(S,_activeTimer); // timer her zaman yerel (çalışıyor olsun ya da olmasın)
-      // Streak: yerel lastDay daha yeni veya eşitse yerel kazan
-      const _cloudLastDayTs=S.lastDay?new Date(S.lastDay).getTime():0;
-      const _localLastDayTs=_localStreak.lastDay?new Date(_localStreak.lastDay).getTime():0;
-      if(_localLastDayTs>=_cloudLastDayTs) Object.assign(S,_localStreak);
+      // Streak: büyük olan kazanır (timestamp değil değer — yeni cihazda 0 streak cloud'u ezmez)
+      const _cloudStreak = p.streak||0;
+      const _localStreakVal = _localStreak.streak||0;
+      if(_localStreakVal >= _cloudStreak){
+        Object.assign(S,_localStreak); // Yerel daha yüksekse yerel kazan
+      } else {
+        // Cloud daha yüksek — cloud streak'i koru ama timer/shield yerel kalır
+        S.streak = _cloudStreak;
+        S.streakRecord = Math.max(p.streakRecord||0, _localStreak.streakRecord||0);
+        S.lastDay = p.lastDay || _localStreak.lastDay;
+        S.shieldUsed = p.shieldUsed || _localStreak.shieldUsed;
+      }
       // dailyMins: en büyük değer kazanır, today kontrolüyle
       S.dailyMins=_bestDailyMins;
       S.dailyMinsDay=(_bestDailyMins>0)?_localToday:(p.dailyMinsDay||S.dailyMinsDay);
       if(!S.unis||!S.unis.length) S.unis = [...DEF_UNIS.map(u=>({...u,depts:[],selDept:-1,photo:null}))];
       _restorePhotos();
+      // Sezon startXp: cloud'dan gelen değer localStorage'a yaz (yeni cihazda doğru hesaplansın)
+      try{
+        const cloudSeasonStartXp = p.seasonStartXp;
+        const cloudSeasonKey     = p.seasonKey;
+        if(cloudSeasonStartXp!=null && cloudSeasonKey){
+          const rawSeason=localStorage.getItem('yks_season');
+          let sd={};
+          try{ sd=JSON.parse(rawSeason||'{}'); }catch(_){}
+          // Sadece aynı sezon için uygula, startXp yoksa veya cloud daha düşükse yaz
+          if(sd.key!==cloudSeasonKey || sd.startXp==null){
+            sd.key=cloudSeasonKey; sd.startXp=cloudSeasonStartXp;
+            localStorage.setItem('yks_season',JSON.stringify(sd));
+          }
+        }
+      }catch(_){}
       // Merge sonrası tutarlılığı garantile
       if(typeof repairWeekData==='function') repairWeekData();
       if(typeof recalcSubjectStatsFromLog==='function') recalcSubjectStatsFromLog();
@@ -26709,12 +26882,26 @@ function openSkillTree(){
       <button onclick="closeOv('ov-skill')" style="background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--t2);font-size:15px;cursor:pointer;font-family:'Nunito',sans-serif;">✕</button>
     </div>
 
+    <!-- Aktif bonuslar -->
+    ${(()=>{const sk_a=S.skills||{};const efx=[];
+      if(sk_a.xp4)efx.push('⚡ +75% XP');else if(sk_a.xp3)efx.push('⚡ +50% XP');else if(sk_a.xp2)efx.push('⚡ +30% XP');else if(sk_a.xp1)efx.push('⚡ +15% XP');
+      if(sk_a.boss4)efx.push('🐉 +80% Boss XP');else if(sk_a.boss2)efx.push('🐉 +40% Boss XP');
+      if(sk_a.boss3||sk_a.boss1)efx.push('🃏 '+(sk_a.boss3?'2':'1')+' Joker');
+      if(sk_a.streak1)efx.push('🛡️ Seri Kalkanı');if(sk_a.streak3)efx.push('💫 +25 Seri XP');
+      if(sk_a.gorev1)efx.push('✅ +3 Görev XP');if(sk_a.konu3)efx.push('📚 +30 Konu XP');else if(sk_a.konu1)efx.push('📚 +5 Konu XP');
+      if(sk_a.den4)efx.push('💎 Net≥35 +200XP');if(sk_a.study1)efx.push('🎯 +20% Süre XP');
+      return efx.length?`<div style="background:rgba(124,77,255,0.07);border:1px solid rgba(124,77,255,0.2);border-radius:12px;padding:10px 12px;margin-bottom:14px;">
+        <div style="font-size:8px;color:var(--t3);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">⚡ Aktif Bonuslar</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">${efx.map(e=>`<span style="background:rgba(124,77,255,0.2);border:1px solid rgba(124,77,255,0.35);border-radius:20px;padding:2px 8px;font-size:9px;color:#ce93d8;font-weight:700;">${e}</span>`).join('')}</div>
+      </div>`:'';
+    })()}
+
     <!-- Puan banner -->
     <div style="background:linear-gradient(135deg,rgba(245,166,35,0.18),rgba(245,166,35,0.06));border:1px solid rgba(245,166,35,0.35);border-radius:13px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">
       <div style="font-size:28px;">🌟</div>
       <div style="flex:1;">
         <div style="font-size:16px;font-weight:900;color:var(--gold);">${pts} Yetenek Puanı</div>
-        <div style="font-size:9px;color:var(--t3);margin-top:1px;">Her level atladığında +1 puan kazanırsın</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:1px;">Her level atladığında +1 puan kazanırsın · Bonuslar anında aktif!</div>
       </div>
       ${pts>0?`<div style="background:var(--gold);color:#1a1a2e;border-radius:20px;padding:3px 10px;font-size:9px;font-weight:900;">Harca!</div>`:''}
     </div>
@@ -27611,50 +27798,55 @@ function _seasonKey(){
 
 function _getSeasonData(){
   const key=_seasonKey();
+  // dailyLog'dan sezon XP'sini hesapla (en güvenilir kaynak — cloud'dan sync edilir)
+  function _calcSeasonXpFromLog(){
+    if(typeof S==='undefined') return 0;
+    const dl=S.dailyLog||{};
+    // Sezon anahtarı: "2026-05" → ayın 1'inden itibaren toplam XP
+    const parts=key.split('-'); // ['2026','05']
+    if(parts.length<2) return 0;
+    const yr=parseInt(parts[0]), mo=parseInt(parts[1])-1; // JS month 0-based
+    const seasonStart=new Date(yr,mo,1);
+    let total=0;
+    Object.entries(dl).forEach(([dayStr,entry])=>{
+      try{
+        const d=new Date(dayStr);
+        if(d>=seasonStart && (entry.xp||0)>0) total+=entry.xp;
+      }catch(_){}
+    });
+    return total;
+  }
+
   try{
     const raw=localStorage.getItem('yks_season');
-    if(raw){
-      const d=JSON.parse(raw);
-      if(d.key===key){
-        // Anlık sezon XP'sini her zaman S.xp - startXp'den hesapla
-        if(d.startXp!=null) d.xp=Math.max(0,(typeof S!=='undefined'?S.xp:0)-d.startXp);
-        return d;
-      }
-      // Yeni sezon — eskiyi arşivle
-      const hist=JSON.parse(localStorage.getItem('yks_season_hist')||'[]');
-      // Geçen sezonun final XP'sini kaydet
-      if(d.startXp!=null) d.xp=Math.max(0,d.finalXp||d.xp||0);
-      hist.unshift(d); if(hist.length>6) hist.pop();
-      _lsSet('yks_season_hist',JSON.stringify(hist));
+    let d={};
+    if(raw) d=JSON.parse(raw);
+
+    // Mevcut sezon için dailyLog'dan XP hesapla
+    if(!d.key||d.key===key){
+      const logXp=_calcSeasonXpFromLog();
+      // Cloud'dan gelen startXp varsa ve mantıklıysa onu da dene
+      const S_ref=typeof S!=='undefined'?S:{};
+      const cloudXp=(S_ref.seasonKey===key&&S_ref.seasonStartXp!=null)?
+        Math.max(0,(S_ref.xp||0)-S_ref.seasonStartXp):0;
+      // En büyük değer kazanır (log en güvenilir, cloud backup)
+      const xp=Math.max(logXp, cloudXp);
+      const result={key,xp,startedAt:d.startedAt||Date.now()};
+      return result;
     }
+    // Yeni sezon — eskiyi arşivle
+    const hist=JSON.parse(localStorage.getItem('yks_season_hist')||'[]');
+    if(d.key) hist.unshift({...d,xp:d.xp||0});
+    if(hist.length>6) hist.pop();
+    _lsSet('yks_season_hist',JSON.stringify(hist));
   }catch(e){}
-  // Yeni sezon başlat — başlangıç XP'sini kaydet
-  const startXp=typeof S!=='undefined'?S.xp:0;
-  const fresh={key:_seasonKey(),xp:0,startXp,startedAt:Date.now()};
+  const fresh={key,xp:_calcSeasonXpFromLog(),startedAt:Date.now()};
   _lsSet('yks_season',JSON.stringify(fresh));
   return fresh;
 }
 
-function _addSeasonXp(amt){
-  // Artık sadece startXp güncelleniyor, XP otomatik hesaplanıyor
-  // Bu fonksiyon backward compat için tutuluyor ama bir şey yapmıyor
-}
-
-function _syncSeasonStartXp(){
-  // startXp yoksa şimdi ayarla (eski kullanıcı migration)
-  try{
-    const raw=localStorage.getItem('yks_season');
-    if(raw){
-      const d=JSON.parse(raw);
-      if(d.key===_seasonKey()&&d.startXp==null){
-        // Eski format — startXp bilinmiyor, mevcut xp'yi koru
-        // En az şimdi'den itibaren sayar
-        d.startXp=Math.max(0,(typeof S!=='undefined'?S.xp:0)-(d.xp||0));
-        _lsSet('yks_season',JSON.stringify(d));
-      }
-    }
-  }catch(e){}
-}
+function _addSeasonXp(amt){ /* no-op — artık dailyLog'dan hesaplanıyor */ }
+function _syncSeasonStartXp(){ /* no-op — artık dailyLog'dan hesaplanıyor */ }
 
 function _seasonTier(xp){
   let t=SEASON_TIERS[0];
@@ -28065,24 +28257,7 @@ window.streakUpd=function(){
   }
 };
 
-// XP save hook — season sync (startXp-based)
-const _origSave=window.save;
-window.save=function(){
-  if(_origSave) _origSave.call(this);
-  // Sezon final XP'sini canlı güncelle (arşivleme için)
-  try{
-    const raw=localStorage.getItem('yks_season');
-    if(raw){
-      const d=JSON.parse(raw);
-      if(d.key===_seasonKey()){
-        d.finalXp=S.xp-(d.startXp||0);
-        localStorage.setItem('yks_season',JSON.stringify(d));
-      }
-    }
-  }catch(e){}
-};
-// Migration: eski kullanıcılar için startXp hesapla
-setTimeout(()=>{ if(typeof _syncSeasonStartXp==='function') _syncSeasonStartXp(); },400);
+// Season XP artık dailyLog'dan hesaplanıyor — save hook gerekmez
 
 // Turnuva skoru — her save() sonrası debounced push (30sn cooldown)
 window._tourneyLastPushTs=window._tourneyLastPushTs||0;
@@ -28323,9 +28498,7 @@ function _injectHomeCards(){
   document.getElementById('_gsHome')?.remove();
 
   const ev=_getDailyEvent();
-  const season=_getSeasonData();
-  const season_xp=season.startXp!=null?Math.max(0,S.xp-season.startXp):(season.xp||0);
-  season.xp=season_xp; // normalize for downstream usage
+  const season=_getSeasonData(); // XP artık dailyLog'dan hesaplanıyor
   const tier=_seasonTier(season.xp);
   const nextT=_seasonNextTier(season.xp);
   const d=new Date();
@@ -28834,9 +29007,8 @@ function renderMasteryFull(){
   }).join('');
 
   // Current season card
-  // Sezon XP = S.xp - startXp (gerçek zamanlı)
   const season = typeof _getSeasonData === 'function' ? _getSeasonData() : {xp:0};
-  const seasonXp = season.startXp!=null ? Math.max(0,(typeof S!=='undefined'?S.xp:0)-season.startXp) : (season.xp||0);
+  const seasonXp = season.xp||0; // dailyLog'dan hesaplanmış, doğrudan kullan
   const tier = typeof _seasonTier === 'function' ? _seasonTier(seasonXp) : {icon:'🥉',name:'Acemi',color:'#78909c',min:0};
   const nextT = typeof _seasonNextTier === 'function' ? _seasonNextTier(seasonXp) : null;
   const d = new Date();
